@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 幫我裝潢，管家幫我開門</title>
+</head>
+
+<body>
+  <div>
+    <div></div>
+
+    <div>
+      <h1>我的小房子</h1>
+      <p>請點選管家，讓他幫你開門。</p>
+
+      <!-- 門 SVG -->
+      <div>
+        <svg width="120" height="160" viewBox="0 0 120 160">
+          <rect x="20" y="10" width="80" height="140" rx="8" fill="#8b4513" />
+          <circle cx="85" cy="85" r="6" fill="#ffd700" />
+          <text x="60" y="150" text-anchor="middle" fill="white" font-size="16">
+            關門
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 管家 SVG -->
+    <svg width="120" height="160" viewBox="0 0 120 160">
+      <!-- 頭 -->
+      <circle cx="60" cy="30" r="20" fill="#f1c27d" />
+
+      <!-- 頭髮 -->
+      <path d="M40 25 Q60 5 80 25" fill="#333" />
+
+      <!-- 身體 -->
+      <rect x="35" y="55" width="50" height="70" rx="10" fill="#222" />
+
+      <!-- 襯衫 -->
+      <polygon points="45,55 60,90 75,55" fill="white" />
+
+      <!-- 領結 -->
+      <polygon points="55,70 60,75 55,80" fill="#c0392b" />
+      <polygon points="65,70 60,75 65,80" fill="#c0392b" />
+
+      <!-- 手 -->
+      <line x1="35" y1="70" x2="15" y2="100" stroke="#f1c27d" stroke-width="8" />
+      <line x1="85" y1="70" x2="105" y2="100" stroke="#f1c27d" stroke-width="8" />
+
+      <!-- 腳 -->
+      <line x1="50" y1="125" x2="45" y2="155" stroke="#222" stroke-width="10" />
+      <line x1="70" y1="125" x2="75" y2="155" stroke="#222" stroke-width="10" />
+
+      <text x="60" y="150" text-anchor="middle" fill="#333" font-size="14">
+        管家
+      </text>
+    </svg>
+
+    <div>管家正在等待指令...</div>
+  </div>
+</body>
+</html>
