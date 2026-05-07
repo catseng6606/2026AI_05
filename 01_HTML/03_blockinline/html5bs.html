@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Html5 New tag - Pure Bootstrap 5</title>
+    <!-- 引入 Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    
+    <!-- 頁首 (Header) -->
+    <header class="bg-primary bg-gradient text-white py-5 text-center">
+        <div class="container">
+            <h1 class="display-3 fw-bold mb-3">HTML5 語意化結構</h1>
+            <p class="lead">完全使用 Bootstrap 5 內建類別打造</p>
+        </div>
+    </header>
+
+    <!-- 導覽列 (Nav) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">Antigravity</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#">首頁</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">關於我們</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">服務項目</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">聯絡資訊</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容區 (Main) -->
+    <main class="container my-5">
+        <div class="row">
+            <!-- 左側主要內容 (Section & Article) -->
+            <div class="col-lg-8">
+                <section id="main-section" class="bg-white p-4 rounded shadow-sm mb-4">
+                    <h2 class="h3 text-primary mb-3">這是 Section 區塊</h2>
+                    <p class="text-muted"><code>&lt;section&gt;</code> 標籤用於對內容進行分組。這是純 Bootstrap 類別樣式。</p>
+                    <hr>
+                    <p>使用了 <code>bg-white p-4 rounded shadow-sm mb-4</code> 等類別。</p>
+                </section>
+
+                <article id="featured-article" class="bg-white p-4 rounded shadow-sm mb-4">
+                    <h2 class="h3 text-success mb-3">這是 Article 區塊</h2>
+                    <p class="text-muted">這是一個獨立的內容區塊，同樣使用 Bootstrap 內建類別進行排版。</p>
+                    <p>外層容器使用了響應式網格 <code>col-lg-8</code>。</p>
+                    <button class="btn btn-outline-success">閱讀更多</button>
+                </article>
+            </div>
+            
+            <!-- 右側側欄 (Aside) -->
+            <div class="col-lg-4">
+                <aside id="sidebar" class="bg-white p-4 rounded shadow-sm mb-4">
+                    <h2 class="h4 text-info mb-3">這是 Aside 側欄</h2>
+                    <p class="small text-muted">側欄內容使用了 <code>col-lg-4</code> 寬度。</p>
+                    <ul class="list-group list-group-flush mt-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            熱門文章 <span class="badge bg-primary rounded-pill">14</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            最新消息 <span class="badge bg-secondary rounded-pill">2</span>
+                        </li>
+                    </ul>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- 頁尾 (Footer) -->
+    <footer class="bg-dark text-secondary py-5 text-center mt-5">
+        <div class="container">
+            <p class="mb-2 text-white">© 2026 Antigravity 課程教學團隊</p>
+            <div class="small">
+                本頁面不包含任何自定義 CSS，完全採用 Bootstrap 5 Utility Classes。
+            </div>
+        </div>
+    </footer>
+
+    <!-- 引入 Bootstrap 5 JS Bundle CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

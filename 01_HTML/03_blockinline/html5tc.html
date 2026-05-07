@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Html5 New tag - Tailwind CSS</title>
+    <!-- 引入 Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    
+    <!-- 頁首 (Header) -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-16 text-center shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight">HTML5 語意化結構</h1>
+            <p class="text-lg md:text-xl text-indigo-100">完全使用 Tailwind CSS 類別打造的現代化設計</p>
+        </div>
+    </header>
+
+    <!-- 導覽列 (Nav) -->
+    <nav class="bg-gray-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#" class="text-xl font-bold tracking-wider">Antigravity</a>
+                </div>
+                <div class="hidden md:block">
+                    <ul class="flex space-x-8">
+                        <li><a href="#" class="hover:text-indigo-400 transition duration-300">首頁</a></li>
+                        <li><a href="#" class="hover:text-indigo-400 transition duration-300">關於我們</a></li>
+                        <li><a href="#" class="hover:text-indigo-400 transition duration-300">服務項目</a></li>
+                        <li><a href="#" class="hover:text-indigo-400 transition duration-300">聯絡資訊</a></li>
+                    </ul>
+                </div>
+                <!-- 移動端選單按鈕 (僅示意) -->
+                <div class="md:hidden">
+                    <button class="p-2 rounded-md hover:bg-gray-800">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容區 (Main) -->
+    <main class="container mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- 左側主要內容 (Section & Article) -->
+            <div class="lg:col-span-2 space-y-8">
+                <section class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                    <h2 class="text-2xl font-bold text-indigo-600 mb-4 border-b border-gray-50 pb-2">這是 Section 區塊</h2>
+                    <p class="text-gray-600 leading-relaxed mb-4">
+                        <code class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">&lt;section&gt;</code> 標籤用於對內容進行分組。在 Tailwind CSS 中，我們可以使用 <code class="text-pink-500">grid</code> 與 <code class="text-pink-500">gap</code> 輕易完成排版。
+                    </p>
+                    <p class="text-gray-500">這是一個使用了豐富陰影與圓角的卡片式設計。</p>
+                </section>
+
+                <article class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                    <h2 class="text-2xl font-bold text-emerald-600 mb-4 border-b border-gray-50 pb-2">這是 Article 區塊</h2>
+                    <p class="text-gray-600 leading-relaxed mb-6">
+                        這是一個獨立的內容區塊。透過 Tailwind 的顏色類別，如 <code class="text-emerald-500 font-mono">text-emerald-600</code>，可以快速設定精美的色調。
+                    </p>
+                    <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300 shadow-md hover:shadow-lg">
+                        閱讀完整文章
+                    </button>
+                </article>
+            </div>
+            
+            <!-- 右側側欄 (Aside) -->
+            <div class="lg:col-span-1">
+                <aside class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
+                    <h2 class="text-xl font-bold text-cyan-600 mb-6">側欄內容 (Aside)</h2>
+                    <p class="text-sm text-gray-500 mb-6">這部分通常放置側邊資訊、分類或是熱門標籤。</p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                            <span class="font-medium">熱門文章</span>
+                            <span class="bg-indigo-600 text-white text-xs px-2.5 py-1 rounded-full">12</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                            <span class="font-medium">最新消息</span>
+                            <span class="bg-emerald-500 text-white text-xs px-2.5 py-1 rounded-full">New</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                            <span class="font-medium">資源下載</span>
+                            <span class="bg-gray-400 text-white text-xs px-2.5 py-1 rounded-full">5</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 頁尾 (Footer) -->
+    <footer class="bg-gray-900 text-gray-400 py-12 mt-12 border-t border-gray-800">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-white font-semibold mb-4 text-lg">Antigravity 課程教學團隊</p>
+            <p class="text-sm mb-6">© 2026 Antigravity. All rights reserved.</p>
+            <div class="flex justify-center space-x-6">
+                <a href="#" class="hover:text-white transition">Facebook</a>
+                <a href="#" class="hover:text-white transition">Twitter</a>
+                <a href="#" class="hover:text-white transition">Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
