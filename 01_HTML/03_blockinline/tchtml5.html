@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 語意化標籤教學 - Tailwind CSS 版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#f9f7f2] text-stone-800 min-h-screen flex flex-col">
+
+    <!-- Header: 頁首區塊 -->
+    <header class="bg-white border-b border-stone-200 py-8 px-6 text-center shadow-sm">
+        <h1 class="text-3xl font-bold tracking-tight text-stone-900">HTML5 語意化標籤展示</h1>
+        <p class="text-stone-500 mt-2">這是一個使用 &lt;header&gt; 定義的區域</p>
+    </header>
+
+    <!-- Nav: 導覽列 -->
+    <nav class="bg-white border-b border-stone-100 sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4">
+            <ul class="flex justify-center space-x-8 py-4">
+                <li><a href="#" class="text-stone-600 hover:text-stone-900 transition-colors font-medium border-b-2 border-transparent hover:border-stone-400 pb-1">首頁資訊</a></li>
+                <li><a href="#" class="text-stone-600 hover:text-stone-900 transition-colors font-medium border-b-2 border-transparent hover:border-stone-400 pb-1">主要內容</a></li>
+                <li><a href="#" class="text-stone-600 hover:text-stone-900 transition-colors font-medium border-b-2 border-transparent hover:border-stone-400 pb-1">側邊欄位</a></li>
+                <li><a href="#" class="text-stone-600 hover:text-stone-900 transition-colors font-medium border-b-2 border-transparent hover:border-stone-400 pb-1">聯絡頁腳</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main: 主要內容區 -->
+    <main class="flex-grow max-w-5xl mx-auto w-full p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- 左側主體 (Section & Article) -->
+        <div class="md:col-span-2 space-y-8">
+            <!-- Section -->
+            <section class="bg-white p-8 rounded-2xl border border-stone-200 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <span class="w-2 h-6 bg-stone-800 rounded-full mr-3"></span>
+                    &lt;section&gt; 區段內容
+                </h2>
+                <p class="leading-relaxed text-stone-600">
+                    這是主要內容中的一個區段。在 HTML5 中，&lt;section&gt; 用於對頁面中的內容進行分塊，通常包含一個標題。
+                </p>
+            </section>
+
+            <!-- Article -->
+            <article class="bg-white p-8 rounded-2xl border border-stone-200 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">&lt;article&gt; 文章內容</h2>
+                <p class="leading-relaxed text-stone-600 mb-4">
+                    這是獨立的文章內容塊。&lt;article&gt; 標籤代表文件中一個獨立的、完整的內容，例如部落格貼文、新聞報導或評論。
+                </p>
+                <div class="bg-stone-50 p-4 rounded-lg border border-stone-100 italic text-stone-500">
+                    「好的排版能讓資訊傳遞更精準。」
+                </div>
+            </article>
+        </div>
+
+        <!-- Aside: 側邊欄 -->
+        <aside class="space-y-6">
+            <div class="bg-stone-100 p-6 rounded-2xl border border-stone-200">
+                <h3 class="font-bold text-stone-900 mb-3">&lt;aside&gt; 輔助資訊</h3>
+                <p class="text-sm text-stone-600 leading-relaxed">
+                    側邊欄通常放置與主內容相關但可獨立存在的資訊，例如廣告、標籤雲、或作者簡介。
+                </p>
+                <ul class="mt-4 space-y-2 text-sm">
+                    <li class="flex items-center text-stone-500 hover:text-stone-800 cursor-pointer">
+                        <span class="mr-2">→</span> 相關連結一
+                    </li>
+                    <li class="flex items-center text-stone-500 hover:text-stone-800 cursor-pointer">
+                        <span class="mr-2">→</span> 相關連結二
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Footer: 頁尾 -->
+    <footer class="bg-stone-900 text-stone-400 py-12 px-6 text-center mt-12">
+        <div class="max-w-5xl mx-auto">
+            <p class="mb-2">使用 &lt;footer&gt; 定義的頁底區域</p>
+            <p class="text-xs opacity-50">&copy; 2026 HTML5 教學範例. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 教學用：原始碼展示區塊 -->
+    <div class="max-w-5xl mx-auto w-full p-6 mt-10 mb-20">
+        <div class="border-t-2 border-stone-300 pt-10">
+            <h2 class="text-2xl font-bold text-stone-800 mb-6 text-center">💻 原始碼對照 (Source Code)</h2>
+            <div class="bg-stone-800 text-stone-200 p-6 rounded-xl overflow-x-auto shadow-2xl">
+                <pre class="text-sm leading-relaxed"><code>&lt;!-- 頁面結構概覽 --&gt;
+&lt;body class="bg-[#f9f7f2]"&gt;
+    &lt;header class="..."&gt;...&lt;/header&gt;
+    &lt;nav class="..."&gt;...&lt;/nav&gt;
+    &lt;main class="grid grid-cols-3"&gt;
+        &lt;div class="col-span-2"&gt;
+            &lt;section&gt;...&lt;/section&gt;
+            &lt;article&gt;...&lt;/article&gt;
+        &lt;/div&gt;
+        &lt;aside&gt;...&lt;/aside&gt;
+    &lt;/main&gt;
+    &lt;footer&gt;...&lt;/footer&gt;
+&lt;/body&gt;</code></pre>
+            </div>
+            <p class="text-stone-400 text-center mt-4 text-sm italic">提示：以上程式碼展示了如何利用 Tailwind CSS 的 Grid 與 Flexbox 實現語意化佈局。</p>
+        </div>
+    </div>
+
+</body>
+</html>

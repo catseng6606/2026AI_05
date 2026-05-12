@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 行內區塊元素教學</title>
+</head>
+<body>
+
+    <h1>常用的行內區塊（或具備其特性）元素</h1>
+    <p>這類元素預設會排在同一行，但與一般純行內元素（如 span）不同，它們擁有自己的預設尺寸與空間感。</p>
+
+    <hr>
+
+    <h3>1. 圖片元素 (img)</h3>
+    <img src="https://placehold.co/100x100" alt="範例圖片">
+    <p>原始碼：</p>
+    <pre>&lt;img src="https://placehold.co/100x100" alt="範例圖片"&gt;</pre>
+
+    <h3>2. 表單輸入框 (input)</h3>
+    <input type="text" placeholder="文字輸入框">
+    <input type="checkbox"> 勾選框
+    <input type="radio"> 選項鈕
+    <p>原始碼：</p>
+    <pre>
+&lt;input type="text" placeholder="文字輸入框"&gt;
+&lt;input type="checkbox"&gt; 勾選框
+&lt;input type="radio"&gt; 選項鈕
+    </pre>
+
+    <h3>3. 按鈕 (button)</h3>
+    <button>確認按鈕</button>
+    <button>取消按鈕</button>
+    <p>原始碼：</p>
+    <pre>
+&lt;button&gt;確認按鈕&lt;/button&gt;
+&lt;button&gt;取消按鈕&lt;/button&gt;
+    </pre>
+
+    <h3>4. 多行文字區域 (textarea)</h3>
+    <textarea rows="2">預設的多行文字區</textarea>
+    <p>原始碼：</p>
+    <pre>&lt;textarea rows="2"&gt;預設的多行文字區&lt;/textarea&gt;</pre>
+
+    <h3>5. 下拉選單 (select)</h3>
+    <p>下拉選單是由多個標籤組合而成的複合型行內區塊元素：</p>
+    <ul>
+        <li><strong>&lt;select&gt;</strong>：定義選單容器。</li>
+        <li><strong>&lt;option&gt;</strong>：定義具體的選單項目。</li>
+        <li><strong>&lt;optgroup&gt;</strong>：將相關選項進行分組。</li>
+    </ul>
+    
+    <select>
+        <option value="v1">基本選項</option>
+        <option value="v2" selected>預設被選中</option>
+        <option value="v3" disabled>被禁用的選項</option>
+    </select>
+
+    <select>
+        <optgroup label="北部地區">
+            <option>台北</option>
+            <option>桃園</option>
+        </optgroup>
+    </select>
+    
+    <p>原始碼範例：</p>
+    <pre>
+&lt;select&gt;
+    &lt;option value="v1"&gt;基本選項&lt;/option&gt;
+    &lt;option value="v2" selected&gt;預設被選中&lt;/option&gt;
+    &lt;option value="v3" disabled&gt;被禁用的選項&lt;/option&gt;
+&lt;/select&gt;
+
+&lt;select&gt;
+    &lt;optgroup label="北部地區"&gt;
+        &lt;option&gt;台北&lt;/option&gt;
+        &lt;option&gt;桃園&lt;/option&gt;
+    &lt;/optgroup&gt;
+&lt;/select&gt;
+    </pre>
+
+    <h3>6. 進度條與計量器 (progress / meter)</h3>
+    <progress value="50" max="100"></progress>
+    <meter value="0.6">60%</meter>
+    <p>原始碼：</p>
+    <pre>
+&lt;progress value="50" max="100"&gt;&lt;/progress&gt;
+&lt;meter value="0.6"&gt;60%&lt;/meter&gt;
+    </pre>
+
+    <h3>7. 框架 (iframe)</h3>
+    <iframe src="about:blank" width="100" height="50"></iframe>
+    <p>原始碼：</p>
+    <pre>&lt;iframe src="about:blank" width="100" height="50"&gt;&lt;/iframe&gt;</pre>
+
+    <hr>
+    <p><strong>教學重點：</strong></p>
+    <ul>
+        <li>這些元素預設不會強制換行。</li>
+        <li>它們可以像文字一樣被包裹在段落中。</li>
+        <li>即便沒有 CSS，它們也擁有預設的外觀寬度與高度。</li>
+    </ul>
+
+</body>
+</html>

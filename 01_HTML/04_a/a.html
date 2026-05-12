@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>HTML5 a 標籤教學</title>
+</head>
+<body>
+
+    <h1>HTML5 a 標籤 (超連結) 教學</h1>
+
+    <h2>1. 不同格式的 href 連結</h2>
+
+    <!-- 同協定 / 外部網站 -->
+    <p>外部網站 (完整網址)：
+        <a href="https://www.google.com">前往 Google</a>
+    </p>
+
+    <!-- 協定相對路徑 -->
+    <p>協定相對路徑 (自動跟隨當前協定)：
+        <a href="//www.wikipedia.org">前往 維基百科 (使用 // 寫法)</a>
+    </p>
+
+    <!-- 同 domain 不同路徑 (假設從根目錄開始) -->
+    <p>同 Domain 不同路徑 (根目錄相對路徑)：
+        <a href="/01_HTML/index.html">回 HTML 首頁</a>
+    </p>
+
+    <!-- 同 domain 同路徑 不同檔案 -->
+    <p>同 Domain 同路徑 不同檔案 (相對路徑)：
+        <a href="test.html">點我前往 test.html (同資料夾)</a>
+    </p>
+
+    <hr>
+
+    <h2>2. 常用 target 屬性</h2>
+
+    <p>目前分頁開啟 (target="_self", 預設值)：
+        <a href="https://www.wikipedia.org" target="_self">前往 維基百科</a>
+    </p>
+
+    <p>新分頁開啟 (target="_blank")：
+        <a href="https://www.wikipedia.org" target="_blank">前往 維基百科 (新分頁)</a>
+    </p>
+
+    <hr>
+
+    <h2>範例原始碼對照</h2>
+    <pre>
+&lt;!-- 外部網站 --&gt;
+&lt;a href="https://www.google.com"&gt;前往 Google&lt;/a&gt;
+
+&lt;!-- 協定相對路徑 (自動跟隨 http 或 https) --&gt;
+&lt;a href="//www.wikipedia.org"&gt;前往維基百科&lt;/a&gt;
+
+&lt;!-- 根目錄相對路徑 --&gt;
+&lt;a href="/01_HTML/index.html"&gt;回 HTML 首頁&lt;/a&gt;
+
+&lt;!-- 同資料夾相對路徑 --&gt;
+&lt;a href="test.html"&gt;前往同資料夾檔案&lt;/a&gt;
+
+&lt;!-- 新分頁開啟 --&gt;
+&lt;a href="url" target="_blank"&gt;連結文字&lt;/a&gt;
+    </pre>
+
+</body>
+</html>

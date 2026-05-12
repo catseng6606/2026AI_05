@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基本計算機排版 (Grid 練習)</title>
+    <style>
+        /* 整體頁面基本樣式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* 計算機外框容器 */
+        .calculator {
+            width: 320px;
+            margin: 20px auto;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+        }
+
+        /* 顯示螢幕 */
+        .display {
+            background-color: #fff;
+            color: #333;
+            font-size: 2.5rem;
+            text-align: right;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-sizing: border-box;
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+
+        /* 按鍵區域容器：使用 Grid 網格排版 */
+        .keys {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 劃分為 4 個等寬欄位 */
+        }
+
+        /* 基礎按鍵樣式：利用 Grid 網格項目排版 */
+        .btn {
+            /* 網格項目會自動填滿單元格，無須指定寬度 */
+            height: 65px;
+            line-height: 65px;
+            text-align: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            box-sizing: border-box;
+            border: 1px solid #444;
+            background-color: #eee;
+            color: #333;
+            transition: background-color 0.1s;
+            user-select: none;
+        }
+
+        /* 按鍵懸停效果 */
+        .btn:hover {
+            background-color: #ddd;
+        }
+
+        /* 寬按鍵 (例如數字 0)設定橫跨兩個網格欄位 */
+        .btn-wide {
+            grid-column: span 2;
+        }
+
+        /* 運算符號按鍵特別樣式 */
+        .btn-operator {
+            background-color: #ff9500;
+            color: #fff;
+        }
+
+        .btn-operator:hover {
+            background-color: #e08300;
+        }
+
+        /* 原始碼展示區塊樣式 (教學需求) */
+        .source-code-container {
+            max-width: 600px;
+            margin: 40px auto 0;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .source-code-container h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #555;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        pre {
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>基本計算機排版 (Grid 範例)</h1>
+
+    <!-- 實體計算機元件 -->
+    <div class="calculator">
+        <div class="display">0</div>
+        <div class="keys">
+            <!-- 第一列 -->
+            <div class="btn">C</div>
+            <div class="btn">+/-</div>
+            <div class="btn">%</div>
+            <div class="btn btn-operator">/</div>
+            
+            <!-- 第二列 -->
+            <div class="btn">7</div>
+            <div class="btn">8</div>
+            <div class="btn">9</div>
+            <div class="btn btn-operator">*</div>
+            
+            <!-- 第三列 -->
+            <div class="btn">4</div>
+            <div class="btn">5</div>
+            <div class="btn">6</div>
+            <div class="btn btn-operator">-</div>
+            
+            <!-- 第四列 -->
+            <div class="btn">1</div>
+            <div class="btn">2</div>
+            <div class="btn">3</div>
+            <div class="btn btn-operator">+</div>
+            
+            <!-- 第五列 -->
+            <div class="btn btn-wide">0</div>
+            <div class="btn">.</div>
+            <div class="btn btn-operator">=</div>
+        </div>
+    </div>
+
+    <!-- 教學範例原始碼與 CSS 重點設定展示區塊 -->
+    <div class="source-code-container">
+        <h2>CSS 排版重點設定</h2>
+        <pre><code>/* 1. 父容器設定為 Grid 網格容器 */
+.keys {
+    display: grid;
+    /* 
+       重點解析：grid-template-columns: repeat(4, 1fr);
+       - repeat(4, ...): 表示自動重複宣告 4 次。
+       - 1fr (fraction): 彈性網格單位，代表「1等份」的可用剩餘空間。
+       結合起來即代表：將容器的水平空間等比例劃分為 4 個相同寬度的欄位。
+    */
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* 2. 按鍵基本排版：自動依照網格單元格排列，無須設定寬度 */
+.btn {
+    box-sizing: border-box; /* 邊框與內距計入總寬度 */
+}
+
+/* 3. 寬按鍵設定：設定橫跨 2 個欄位 */
+.btn-wide {
+    grid-column: span 2;
+}</code></pre>
+
+        <h2 style="margin-top: 30px;">HTML 標籤結構對照</h2>
+        <pre><code>&lt;div class="calculator"&gt;
+    &lt;div class="display"&gt;0&lt;/div&gt;
+    &lt;div class="keys"&gt;
+        &lt;!-- 第一列 --&gt;
+        &lt;div class="btn"&gt;C&lt;/div&gt;
+        &lt;div class="btn"&gt;+/-&lt;/div&gt;
+        &lt;div class="btn"&gt;%&lt;/div&gt;
+        &lt;div class="btn btn-operator"&gt;/&lt;/div&gt;
+        
+        &lt;!-- 第二列 --&gt;
+        &lt;div class="btn"&gt;7&lt;/div&gt;
+        &lt;div class="btn"&gt;8&lt;/div&gt;
+        &lt;div class="btn"&gt;9&lt;/div&gt;
+        &lt;div class="btn btn-operator"&gt;*&lt;/div&gt;
+        
+        &lt;!-- 第三列 --&gt;
+        &lt;div class="btn"&gt;4&lt;/div&gt;
+        &lt;div class="btn"&gt;5&lt;/div&gt;
+        &lt;div class="btn"&gt;6&lt;/div&gt;
+        &lt;div class="btn btn-operator"&gt;-&lt;/div&gt;
+        
+        &lt;!-- 第四列 --&gt;
+        &lt;div class="btn"&gt;1&lt;/div&gt;
+        &lt;div class="btn"&gt;2&lt;/div&gt;
+        &lt;div class="btn"&gt;3&lt;/div&gt;
+        &lt;div class="btn btn-operator"&gt;+&lt;/div&gt;
+        
+        &lt;!-- 第五列 --&gt;
+        &lt;div class="btn btn-wide"&gt;0&lt;/div&gt;
+        &lt;div class="btn"&gt;.&lt;/div&gt;
+        &lt;div class="btn btn-operator"&gt;=&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+    </div>
+
+</body>
+</html>

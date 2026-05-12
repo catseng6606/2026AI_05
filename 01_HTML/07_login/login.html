@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 登入表單範例</title>
+</head>
+<body>
+
+    <h1>HTML5 登入表單</h1>
+
+    <!-- 實體表單元件 -->
+    <form action="#" method="post" enctype="multipart/form-data">
+        <div>
+            <label for="user">帳號：</label>
+            <input type="text" id="user" name="user" placeholder="請輸入帳號" required>
+        </div>
+        <br>
+        <div>
+            <label for="password">密碼：</label>
+            <input type="password" id="password" name="password" placeholder="請輸入密碼" required>
+        </div>
+        <br>
+        <div>
+            <input type="checkbox" id="remember" name="remember">
+            <label for="remember">記住我</label>
+        </div>
+        <br>
+        <div>
+            <label for="single_image">上傳圖片（單張）：</label>
+            <input type="file" id="single_image" name="single_image" accept="image/*">
+        </div>
+        <br>
+        <div>
+            <label for="multiple_images">上傳多個圖片：</label>
+            <input type="file" id="multiple_images" name="multiple_images" accept="image/*" multiple>
+        </div>
+        <br>
+        <div>
+            <button type="submit">送出按鈕 (Submit)</button>
+            <button type="button">一般按鈕 (Button)</button>
+            <button type="reset">重設按鈕 (Reset)</button>
+        </div>
+    </form>
+
+    <hr>
+
+    <h2>原始碼對照</h2>
+    <pre>
+&lt;form action="#" method="post" enctype="multipart/form-data"&gt;
+    &lt;div&gt;
+        &lt;label for="user"&gt;帳號：&lt;/label&gt;
+        &lt;input type="text" id="user" name="user" placeholder="請輸入帳號" required&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+        &lt;label for="password"&gt;密碼：&lt;/label&gt;
+        &lt;input type="password" id="password" name="password" placeholder="請輸入密碼" required&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+        &lt;input type="checkbox" id="remember" name="remember"&gt;
+        &lt;label for="remember"&gt;記住我&lt;/label&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+        &lt;label for="single_image"&gt;上傳圖片（單張）：&lt;/label&gt;
+        &lt;input type="file" id="single_image" name="single_image" accept="image/*"&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+        &lt;label for="multiple_images"&gt;上傳多個圖片：&lt;/label&gt;
+        &lt;input type="file" id="multiple_images" name="multiple_images" accept="image/*" multiple&gt;
+    &lt;/div&gt;
+    
+    &lt;div&gt;
+        &lt;button type="submit"&gt;送出按鈕 (Submit)&lt;/button&gt;
+        &lt;button type="button"&gt;一般按鈕 (Button)&lt;/button&gt;
+        &lt;button type="reset"&gt;重設按鈕 (Reset)&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/form&gt;
+    </pre>
+
+</body>
+</html>

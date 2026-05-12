@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 區塊元素教學</title>
+</head>
+<body>
+
+    <h1>常用的區塊元素 (Block-level Elements)</h1>
+    <p>這類元素預設會「獨佔一行」，即便是內容很短，也會佔滿整行的寬度，並強制下一個元素換行。</p>
+
+    <hr>
+
+    <h3>1. 標題元素 (h1 - h6)</h3>
+    <h1>這是 h1 標題</h1>
+    <h2>這是 h2 標題</h2>
+    <p>原始碼：</p>
+    <pre>
+&lt;h1&gt;這是 h1 標題&lt;/h1&gt;
+&lt;h2&gt;這是 h2 標題&lt;/h2&gt;
+    </pre>
+
+    <h3>2. 段落元素 (p)</h3>
+    <p>這是一個完整的段落。區塊元素之間會有預設的上下間距。</p>
+    <p>這是另一個段落。</p>
+    <p>原始碼：</p>
+    <pre>
+&lt;p&gt;這是一個完整的段落。&lt;/p&gt;
+&lt;p&gt;這是另一個段落。&lt;/p&gt;
+    </pre>
+
+    <h3>3. 通用容器 (div)</h3>
+    <div>這是一個 div 容器，常用於排版組合。</div>
+    <div>另一個 div。</div>
+    <p>原始碼：</p>
+    <pre>
+&lt;div&gt;這是一個 div 容器&lt;/div&gt;
+&lt;div&gt;另一個 div&lt;/div&gt;
+    </pre>
+
+    <h3>4. 清單元素 (ul / ol / li)</h3>
+    <ul>
+        <li>項目一</li>
+        <li>項目二</li>
+    </ul>
+    <p>原始碼：</p>
+    <pre>
+&lt;ul&gt;
+    &lt;li&gt;項目一&lt;/li&gt;
+    &lt;li&gt;項目二&lt;/li&gt;
+&lt;/ul&gt;
+    </pre>
+
+    <h3>5. 水平線 (hr)</h3>
+    <hr>
+    <p>原始碼：</p>
+    <pre>&lt;hr&gt;</pre>
+
+    <h3>6. 引用區塊 (blockquote)</h3>
+    <blockquote>
+        這是一個引用區塊，瀏覽器通常會給予縮排呈現。
+    </blockquote>
+    <p>原始碼：</p>
+    <pre>
+&lt;blockquote&gt;
+    這是一個引用區塊...
+&lt;/blockquote&gt;
+    </pre>
+
+    <h3>7. 表格元素 (table)</h3>
+    <table border="1">
+        <tr>
+            <th>標題 A</th>
+            <th>標題 B</th>
+        </tr>
+        <tr>
+            <td>內容 1</td>
+            <td>內容 2</td>
+        </tr>
+    </table>
+    <p>原始碼：</p>
+    <pre>
+&lt;table border="1"&gt;
+    &lt;tr&gt;
+        &lt;th&gt;標題 A&lt;/th&gt;
+        &lt;td&gt;內容 1&lt;/td&gt;
+    &lt;/tr&gt;
+&lt;/table&gt;
+    </pre>
+
+    <hr>
+    <p><strong>區塊元素特性總結：</strong></p>
+    <ul>
+        <li><strong>寬度</strong>：預設為父容器寬度的 100%。</li>
+        <li><strong>高度</strong>：由內容撐開，或是由 CSS 設定。</li>
+        <li><strong>排列</strong>：垂直排列，一個接一個。</li>
+    </ul>
+
+</body>
+</html>

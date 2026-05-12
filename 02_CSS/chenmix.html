@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>CSS 字體堆疊深度教學</title>
+    <style>
+        body { background-color: #f4f7f6; font-family: sans-serif; padding: 40px; }
+        .demo-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        
+        /* 1. 最佳實踐：整合了 Arial + 微軟正黑體 + 跨平台回退 */
+        .font-best {
+            font-family: Arial, Helvetica, "-apple-system", "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+            font-size: 20px;
+        }
+
+        /* 2. 純微軟正黑體 (對照組) */
+        .font-msjh {
+            font-family: "Microsoft JhengHei";
+            font-size: 20px;
+        }
+
+        /* 程式碼呈現樣式 */
+        pre {
+            background: #2d2d2d;
+            color: #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .code-label { color: #f8c555; font-weight: bold; }
+        .comment { color: #75715e; }
+        
+        h3 { margin-top: 30px; color: #333; border-left: 5px solid #007bff; padding-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="demo-box">
+    <h2>字體堆疊與 &lt;pre&gt; 標籤應用</h2>
+    <p>透過 <code>&lt;pre&gt;</code> (Preformatted Text) 標籤，我們可以保留程式碼的空白與格式，方便學生對照 CSS 設定。</p>
+
+    <!-- 範例 A -->
+    <h3>A. 最佳實踐 (包含 Arial + 微軟正黑體 + 多平台相容)</h3>
+    <div class="font-best">
+        “Hello 2026” 這是最專業的「中西文混排」效果。
+    </div>
+    <pre>
+<span class="code-label">.font-best</span> {
+    <span class="comment">/* 1. Arial 處理引號與英數間距 */</span>
+    <span class="comment">/* 2. 隨後加入 Mac/Win 系統字體提升易讀性 */</span>
+    <span class="comment">/* 3. 最後由微軟正黑體/萍方處理中文 */</span>
+    font-family: Arial, Helvetica, "-apple-system", "Segoe UI", 
+                 "Microsoft JhengHei", "PingFang TC", sans-serif;
+}</pre>
+
+    <!-- 範例 B -->
+    <h3>B. 純微軟正黑體 (客戶不滿意的對照組)</h3>
+    <div class="font-msjh">
+        “Hello 2026” 這是「純微軟正黑體」的效果。
+    </div>
+    <pre>
+<span class="code-label">.font-msjh</span> {
+    <span class="comment">/* 缺點：引號會套用中文字體的方塊寬度，導致明顯空白 */</span>
+    font-family: "Microsoft JhengHei";
+}</pre>
+
+    <div style="margin-top: 30px; padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px;">
+        <strong>💡 教學筆記：為什麼不只寫「Arial + 微軟正黑體」？</strong><br>
+        雖然這個組合解決了引號問題，但在 Mac 上渲染「微軟正黑體」有時會出現鋸齒或視覺偏移。因此，我們在中間插入了 <code>"-apple-system"</code>。
+        <br><br>
+        <strong>這並不是移除，而是「進化」</strong>：我們確保了 Windows 使用者看到微軟正黑體，Mac 使用者看到萍方，而引號通通交給 Arial。
+    </div>
+</div>
+
+</body>
+</html>
