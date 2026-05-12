@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <title>CSS 色彩 (Color) 教學範例</title>
+    <style>
+        /* 基礎排版，讓展示區塊清楚可見 */
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .color-box {
+            width: 250px;
+            height: 80px;
+            color: #ffffff;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            border: 1px solid #ddd;
+        }
+        
+        /* 1. HEX 十六進位色碼 */
+        .hex-color {
+            background-color: #3498db; /* 藍色 */
+        }
+        
+        /* 2. RGB 色碼 */
+        .rgb-color {
+            background-color: rgb(46, 204, 113); /* 綠色 */
+        }
+        
+        /* 3. 透明度展示 (RGBA) */
+        .rgba-color {
+            background-color: rgba(231, 76, 60, 0.5); /* 帶有 50% 透明度的紅色 */
+        }
+
+        /* 4. 透明度展示 (HEX + Alpha) */
+        .hex-alpha-color {
+            background-color: #9b59b680; /* 帶有 50% 透明度的紫色 (80 代表 50% alpha) */
+        }
+
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-left: 4px solid #666;
+            overflow-x: auto;
+        }
+        hr {
+            margin: 20px 0;
+            border: 0;
+            border-top: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CSS 色彩表示法與透明度教學</h1>
+    <p>在 CSS 中，我們可以使用多種方式來定義顏色，常見的包含 <strong>HEX (十六進位)</strong>、<strong>RGB</strong> 以及設定<strong>透明度 (Alpha 通道)</strong>。</p>
+    
+    <hr>
+
+    <h2>1. HEX 十六進位色碼</h2>
+    <p>使用 <code>#</code> 開頭，後面接著 6 個字元（分別代表 R、G、B 的數值，範圍從 00 到 ff）。</p>
+    <!-- 實體元件 -->
+    <div class="color-box hex-color">#3498db</div>
+    <!-- 原始碼展示 -->
+    <pre>&lt;style&gt;
+.hex-color {
+    background-color: #3498db;
+}
+&lt;/style&gt;
+
+&lt;div class="color-box hex-color"&gt;#3498db&lt;/div&gt;</pre>
+
+    <hr>
+
+    <h2>2. RGB 表示法</h2>
+    <p>使用 <code>rgb(紅, 綠, 藍)</code>，每個顏色的數值範圍為 0 ~ 255。</p>
+    <!-- 實體元件 -->
+    <div class="color-box rgb-color">rgb(46, 204, 113)</div>
+    <!-- 原始碼展示 -->
+    <pre>&lt;style&gt;
+.rgb-color {
+    background-color: rgb(46, 204, 113);
+}
+&lt;/style&gt;
+
+&lt;div class="color-box rgb-color"&gt;rgb(46, 204, 113)&lt;/div&gt;</pre>
+
+    <hr>
+
+    <h2>3. 包含透明度的表示法 (RGBA)</h2>
+    <p>使用 <code>rgba(紅, 綠, 藍, 透明度)</code>，透明度 (Alpha) 的範圍從 0.0 (完全透明) 到 1.0 (完全不透明)。</p>
+    <!-- 實體元件 -->
+    <div class="color-box rgba-color">rgba(231, 76, 60, 0.5)</div>
+    <!-- 原始碼展示 -->
+    <pre>&lt;style&gt;
+.rgba-color {
+    background-color: rgba(231, 76, 60, 0.5); /* 50% 透明度 */
+}
+&lt;/style&gt;
+
+&lt;div class="color-box rgba-color"&gt;rgba(231, 76, 60, 0.5)&lt;/div&gt;</pre>
+
+    <hr>
+
+    <h2>4. 包含透明度的 HEX 色碼 (HEXA)</h2>
+    <p>在原本的 6 碼 HEX 後面加上 2 碼代表透明度（例如 <code>80</code> 約為 50% 透明度，<code>00</code> 為完全透明，<code>ff</code> 為完全不透明）。</p>
+    <!-- 實體元件 -->
+    <div class="color-box hex-alpha-color">#9b59b680</div>
+    <!-- 原始碼展示 -->
+    <pre>&lt;style&gt;
+.hex-alpha-color {
+    background-color: #9b59b680; /* 50% 透明度 */
+}
+&lt;/style&gt;
+
+&lt;div class="color-box hex-alpha-color"&gt;#9b59b680&lt;/div&gt;</pre>
+
+</body>
+</html>

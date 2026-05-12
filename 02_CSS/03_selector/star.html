@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <title>子選擇器與後代選擇器差異</title>
+    <style>
+        /* 1. 先設定所有 div 內的 p 皆為黃色 */
+        div p {
+            color: yellow;
+        }
+        
+        /* 2. 再針對 div 的「直接第一層子元素 p」覆蓋為綠色 */
+        div > p {
+            color: green;
+        }
+    </style>
+</head>
+<body style="background-color: #333; color: #fff;">
+
+    <h2>CSS 選擇器展示</h2>
+    
+    <div>
+        <!-- 直接子元素：符合 div > p 與 div p，最終顯示綠色 (green) -->
+        <p>我是 div 的直接子元素 (顯示綠色)</p>
+        
+        <section>
+            <!-- 深層後代元素：僅符合 div p，顯示黃色 (yellow) -->
+            <p>我是 div 內部 section 裡的後代元素 (顯示黃色)</p>
+        </section>
+
+        <ul>
+            <li>
+                <!-- 深層後代元素：僅符合 div p，顯示黃色 (yellow) -->
+                <p>我是 div 內部 ul > li 裡的後代元素 (顯示黃色)</p>
+            </li>
+        </ul>
+    </div>
+
+    <hr>
+    <h3>結構原始碼對照：</h3>
+    <!-- 依教學規範提供轉義後的原始碼展示 -->
+    <pre style="background: #222; padding: 15px; color: #aaa;">
+&lt;div&gt;
+    &lt;p&gt;我是 div 的直接子元素 (顯示綠色)&lt;/p&gt;
+    
+    &lt;section&gt;
+        &lt;p&gt;我是 div 內部 section 裡的後代元素 (顯示黃色)&lt;/p&gt;
+    &lt;/section&gt;
+&lt;/div&gt;
+    </pre>
+
+</body>
+</html>
