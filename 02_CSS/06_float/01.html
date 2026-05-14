@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Float 文繞圖</title>
+    <style>
+      img {
+        float: right;
+        margin-right: 10px;
+      }
+      .box {
+        width: 500px;
+        border: 4px solid #641414;
+        background-color: #fff7ed;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+      .img-float-left {
+        float: left;
+        margin-right: 15px;
+        margin-bottom: 5px;
+        border-radius: 8px;
+      }
+      .clear {
+        clear: both;
+      }
+      /* 新增：使用 overflow 解決塌陷的類別 */
+      .box-overflow {
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>CSS Float 文繞圖</h1>
+    <p>
+      CSS Float
+      屬性可以讓元素向左或向右浮動，並且讓後續的內容繞著它排列。這在設計網頁佈局時非常有用，特別是當你想要在文字周圍放置圖片或其他元素時。
+    </p>
+    <h2>1. 基本文繞圖效果 (Float Basic)</h2>
+    <p>這是 float 最原本的用途：讓文字像流水一樣繞著圖片排列。</p>
+    <div class="box">
+      <img
+        src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' rx='18' fill='%230ea5e9'/%3E%3Ccircle cx='75' cy='58' r='28' fill='%23ffffff' fill-opacity='0.9'/%3E%3Cpath d='M30 120c10-24 28-36 45-36s35 12 45 36' fill='%23ffffff' fill-opacity='0.9'/%3E%3C/svg%3E"
+        class="img-float-left"
+      />
+      <p style="margin: 0">
+        這是一段較長的文字。當圖片設定了 float: left
+        之後，它會靠左對齊，而接下來的文字會自動填補右側剩餘的空間。如果文字夠長，它還會流到圖片的下方，形成一個非常自然的環繞效果。這在新聞排版或部落格文章中非常常見。
+        這是一段較長的文字。當圖片設定了 float: left
+        之後，它會靠左對齊，而接下來的文字會自動填補右側剩餘的空間。如果文字夠長，它還會流到圖片的下方，形成一個非常自然的環繞效果。
+      </p>
+    </div>
+
+    <!-- 顯示對應的原始碼供參考 -->
+    <pre style="background: #f4f4f4; padding: 10px; width: 500px; overflow-x: auto">
+&lt;div class="box"&gt;
+  &lt;img src="..." style="<span style="color: #0284c7;">float: left;</span>"&gt;
+  &lt;p&gt;一段夠長的文字內容，會自動繞著圖片排列...&lt;/p&gt;
+&lt;/div&gt;
+    </pre>
+
+    <hr style="margin: 40px 0" />
+
+    <h2>2. 當文字不足時 (高度塌陷問題)</h2>
+    <p>如果文字內容太少，無法撐開父容器，浮動的圖片就會「溢出」邊框外：</p>
+    <div class="box">
+      <img
+        src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' rx='18' fill='%23ef4444'/%3E%3Ccircle cx='75' cy='58' r='28' fill='%23ffffff' fill-opacity='0.9'/%3E%3Cpath d='M30 120c10-24 28-36 45-36s35 12 45 36' fill='%23ffffff' fill-opacity='0.9'/%3E%3C/svg%3E"
+        class="img-float-left"
+      />
+      <p style="margin: 0">
+        這段文字太短了。<br />
+        容器 (.box) 無法包住圖片。
+      </p>
+    </div>
+
+    <hr style="margin: 40px 0" />
+
+    <h2>3. 加入 clear: both (解決高度塌陷)</h2>
+    <p>在容器底部加入帶有 clear 的元素，強迫容器擴展以包含所有浮動內容：</p>
+    <div class="box">
+      <img
+        src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' rx='18' fill='%2310b981'/%3E%3Ccircle cx='75' cy='58' r='28' fill='%23ffffff' fill-opacity='0.9'/%3E%3Cpath d='M30 120c10-24 28-36 45-36s35 12 45 36' fill='%23ffffff' fill-opacity='0.9'/%3E%3C/svg%3E"
+        class="img-float-left"
+      />
+      <p style="margin: 0">
+        同樣是很短的文字，<br />
+        但因為有了 clear，容器被撐開了！
+      </p>
+      <div class="clear"></div>
+    </div>
+
+    <!-- 顯示對應的原始碼供參考 -->
+    <pre style="background: #f4f4f4; padding: 10px; width: 500px; overflow-x: auto">
+&lt;div class="box"&gt;
+  &lt;img src="..." style="float: left;"&gt;
+  &lt;p&gt;短文字...&lt;/p&gt;
+  <strong style="color: #d97706;">&lt;div class="clear"&gt;&lt;/div&gt;</strong>
+&lt;/div&gt;
+
+&lt;style&gt;
+  .clear { <span style="color: #d97706;">clear: both;</span> }
+&lt;/style&gt;
+    </pre>
+    <hr style="margin: 40px 0" />
+
+    <h2>4. 使用 overflow: hidden (另一種簡潔做法)</h2>
+    <p>不需要額外的標籤，只要在父容器設定 overflow: hidden 也能自動包覆浮動內容：</p>
+    <div class="box box-overflow">
+      <img
+        src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' rx='18' fill='%238b5cf6'/%3E%3Ccircle cx='75' cy='58' r='28' fill='%23ffffff' fill-opacity='0.9'/%3E%3Cpath d='M30 120c10-24 28-36 45-36s35 12 45 36' fill='%23ffffff' fill-opacity='0.9'/%3E%3C/svg%3E"
+        class="img-float-left"
+      />
+      <p style="margin: 0">
+        完全不加 &lt;div class="clear"&gt;，<br />
+        只需在父層加上 overflow: hidden 即可解決！
+      </p>
+    </div>
+
+    <!-- 顯示對應的原始碼供參考 -->
+    <pre style="background: #f4f4f4; padding: 10px; width: 500px; overflow-x: auto">
+&lt;!-- 在父容器直接加上 overflow: hidden 的樣式 --&gt;
+&lt;div class="box" style="<span style="color: #7c3aed;">overflow: hidden;</span>"&gt;
+  &lt;img src="..." style="float: left;"&gt;
+  &lt;p&gt;短文字...&lt;/p&gt;
+&lt;/div&gt;
+    </pre>
+  </body>
+</html>
