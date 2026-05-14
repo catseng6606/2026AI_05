@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS 教學：CSS 變數 (Custom Properties)</title>
+    <style>
+      /* ============================================================
+         1. 定義全局變數 (在 :root 中)
+         ============================================================ */
+      :root {
+        /* 顏色定義 */
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --bg-color: #ffffff;
+        --card-bg: #f8f9fa;
+        --text-color: #2c3e50;
+        
+        /* 尺寸與間距 */
+        --base-padding: 20px;
+        --border-radius: 12px;
+        --transition-speed: 0.3s;
+      }
+
+      /* ============================================================
+         2. 深色模式切換 (覆寫變數)
+         ============================================================ */
+      body.dark-mode {
+        --primary-color: #5dade2;
+        --bg-color: #1a1a1a;
+        --card-bg: #2d2d2d;
+        --text-color: #f1f1f1;
+      }
+
+      /* ============================================================
+         使用變數
+         ============================================================ */
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+        transition: background-color var(--transition-speed), color var(--transition-speed);
+        padding: var(--base-padding);
+        line-height: 1.6;
+      }
+
+      .card {
+        background-color: var(--card-bg);
+        border: 2px solid var(--primary-color);
+        padding: var(--base-padding);
+        border-radius: var(--border-radius);
+        margin: 20px 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+
+      .btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: opacity 0.2s;
+      }
+      .btn:hover { opacity: 0.8; }
+
+      pre {
+        background-color: #2d2d2d;
+        color: #f8f8f2;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CSS 變數 (:root) 教學範例</h1>
+    <p>CSS 變數允許我們將常用的數值（如顏色、間距）定義在一個地方，並在整個網站中重複使用。</p>
+
+    <button class="btn" onclick="document.body.classList.toggle('dark-mode')">
+      🌙 切換深色/淺色模式
+    </button>
+
+    <div class="card">
+      <h2>主題展示卡片</h2>
+      <p>點擊上方的按鈕，觀察此卡片的背景顏色與邊框顏色如何變化。</p>
+      <p>這就是 CSS 變數的強大之處：<strong>一處修改，全站生效。</strong></p>
+    </div>
+
+    <div style="background: white; padding: 20px; color: #333; border-radius: 8px;">
+      <h2>💡 教學重點：<code>:root</code> 與 <code>var()</code></h2>
+      
+      <h3>1. 如何定義變數？</h3>
+      <p>習慣上我們會定義在 <code>:root</code> 中，這樣全網頁都能讀取到。變數名稱必須以兩個減號 <code>--</code> 開頭。</p>
+      <pre>
+:root {
+  --primary-color: #3498db;
+  --spacing: 15px;
+}
+      </pre>
+
+      <h3>2. 如何呼叫變數？</h3>
+      <p>使用 <code>var()</code> 函數來讀取定義好的值。</p>
+      <pre>
+.btn {
+  background-color: var(--primary-color);
+  margin: var(--spacing);
+}
+      </pre>
+    </div>
+
+    <div style="margin-top: 30px">
+      <h3 style="color: #3498db">🔍 互動思考 (點擊查看答案)</h3>
+      
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff; color: #333;">
+        <summary style="cursor: pointer; font-weight: bold;">Q1: 為什麼變數要定義在 :root 裡面？</summary>
+        <div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> <code>:root</code> 代表的是 HTML 文件的根元素（等同於 <code>html</code> 標籤），但它的優先權更高。定義在這裡可以確保變數被「全局繼承」，讓所有子元素都能使用。</p>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff; color: #333;">
+        <summary style="cursor: pointer; font-weight: bold;">Q2: 如果變數寫錯了或找不到，網頁會壞掉嗎？</summary>
+        <div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 不會壞掉，但該屬性會失效。你可以提供「備用值」來防止這種情況：</p>
+          <pre style="background: #eee; color: #333;">/* 如果 --main-color 找不到，就使用 red */
+color: var(--main-color, red);</pre>
+        </div>
+      </details>
+    </div>
+  </body>
+</html>

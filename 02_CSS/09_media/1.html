@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Grid 教學：@media 媒體查詢響應式排版</title>
+    <style>
+      /* 基礎設定 */
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; background-color: #f5f6fa; padding: 20px; }
+
+      .grid-container {
+        display: grid;
+        gap: 15px;
+        min-height: 400px;
+        /* 預設：手機版佈局 (單欄) */
+        grid-template-areas: 
+          "header"
+          "main"
+          "sidebar"
+          "footer";
+      }
+
+      /* 指派區域 */
+      .header  { grid-area: header; background-color: #3498db; }
+      .sidebar { grid-area: sidebar; background-color: #9b59b6; }
+      .main    { grid-area: main; background-color: #2ecc71; min-height: 200px; }
+      .footer  { grid-area: footer; background-color: #34495e; }
+
+      .item {
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      /* 當前斷點提示 */
+      .breakpoint-indicator {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #e74c3c;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        z-index: 100;
+      }
+      .breakpoint-indicator::after { content: " 手機模式 (< 768px)"; }
+
+      /* ============================================================
+         媒體查詢：桌機版佈局 (當寬度大於等於 768px 時生效)
+         ============================================================ */
+      @media screen and (min-width: 768px) {
+        .grid-container {
+          /* 改為雙欄佈局 */
+          grid-template-columns: 200px 1fr;
+          grid-template-areas: 
+            "header  header"
+            "sidebar main"
+            "footer  footer";
+        }
+
+        .breakpoint-indicator { background: #27ae60; }
+        .breakpoint-indicator::after { content: " 桌機模式 (>= 768px)"; }
+        
+        .main { min-height: 400px; }
+      }
+
+      /* 教學區塊樣式 */
+      .lesson-info { margin-top: 40px; background: white; padding: 20px; border-radius: 10px; }
+      pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; margin: 10px 0; overflow-x: auto; }
+    </style>
+  </head>
+  <body>
+    <!-- 視覺提示：顯示當前是在哪個媒體查詢範圍 -->
+    <div class="breakpoint-indicator">當前：</div>
+
+    <h1 style="margin-bottom: 20px;">@media 響應式 Grid 佈局</h1>
+    <p style="margin-bottom: 20px;">請嘗試「縮放瀏覽器視窗寬度」，觀察版型如何從單欄變為雙欄。</p>
+
+    <!-- 實體展示區 -->
+    <div class="grid-container">
+      <div class="item header">Header</div>
+      <div class="item sidebar">Sidebar</div>
+      <div class="item main">Main Content</div>
+      <div class="item footer">Footer</div>
+    </div>
+
+    <div class="lesson-info">
+      <h2>💡 教學重點：斷點 (Breakpoint)</h2>
+      <p>使用 <code>@media</code> 可以讓我們根據不同的螢幕尺寸切換 Grid 屬性。在 Grid 中，最簡單的方式就是重新定義 <code>grid-template-areas</code>。</p>
+
+      <h3>手機版 (Mobile First)</h3>
+      <pre>
+/* 預設樣式：單欄排列 */
+.container {
+  grid-template-areas: 
+    "header"
+    "main"
+    "sidebar"
+    "footer";
+}
+      </pre>
+
+      <h3>桌機版 (Media Query)</h3>
+      <pre>
+@media screen and (min-width: 768px) {
+  .container {
+    /* 轉為雙欄，並重新定義區域分布 */
+    grid-template-columns: 200px 1fr;
+    grid-template-areas: 
+      "header  header"
+      "sidebar main"
+      "footer  footer";
+  }
+}
+      </pre>
+
+      <div style="margin-top: 30px">
+        <h3 style="color: #2980b9">🔍 互動思考 (點擊查看答案)</h3>
+        
+        <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px;">
+          <summary style="cursor: pointer; font-weight: bold;">Q1: 為什麼建議先寫手機版（Mobile First）？</summary>
+          <div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+            <p><strong>Ans:</strong> 這樣可以讓程式碼更簡潔。大多數現代網頁在手機上都是單欄排列（Simple Layout），桌機版才需要處理複雜的欄位。先寫簡單的，再用 <code>@media</code> 增加複雜度，邏輯會更清晰。</p>
+          </div>
+        </details>
+
+        <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px;">
+          <summary style="cursor: pointer; font-weight: bold;">Q2: 可以在 @media 裡面修改 grid-gap 嗎？</summary>
+          <div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+            <p><strong>Ans:</strong> <strong>當然可以！</strong> 所有的 CSS 屬性都可以在媒體查詢中修改。通常桌機螢幕較大，我們會把 <code>gap</code> 調大一點讓視覺更開闊。</p>
+            <pre style="background: #eee; color: #333;">@media (min-width: 768px) {
+  .container { gap: 30px; }
+}</pre>
+          </div>
+        </details>
+      </div>
+    </div>
+  </body>
+</html>
