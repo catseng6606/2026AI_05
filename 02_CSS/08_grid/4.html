@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Grid 教學：auto-fill vs auto-fit</title>
+    <style>
+      body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        padding: 20px;
+        line-height: 1.6;
+        background-color: #f0f4f8;
+      }
+
+      h1 { color: #2c3e50; border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+      h2 { color: #27ae60; margin-top: 30px; }
+
+      .demo-section {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+      }
+
+      .container {
+        display: grid;
+        gap: 10px;
+        background-color: #dfe6e9;
+        padding: 10px;
+        border: 2px dashed #b2bec3;
+        margin-top: 10px;
+      }
+
+      /* 重點樣式設定 */
+      .grid-fill {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      .grid-fit {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .item {
+        background-color: #2ecc71;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 4px;
+      }
+
+      .empty-slot-hint {
+        color: #7f8c8d;
+        font-style: italic;
+        font-size: 0.9rem;
+        margin-top: 5px;
+      }
+
+      pre {
+        background-color: #2d3436;
+        color: #55efc4;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CSS Grid：自適應填充 (Fill vs Fit)</h1>
+    <p>這兩個屬性通常與 <code>minmax()</code> 搭配使用，用來建立不需要 Media Query 就能自動響應的排版。</p>
+
+    <!-- Auto-Fill 範例 -->
+    <div class="demo-section">
+      <h2>1. auto-fill (儘量填充)</h2>
+      <p>容器會盡可能塞入最多的格子。即使格子裡「沒有內容」，它也會把空間預留在那裡。</p>
+      <div class="container grid-fill">
+        <div class="item">項目 1</div>
+        <div class="item">項目 2</div>
+      </div>
+      <p class="empty-slot-hint">觀察：右側會留下看不見的「空格子」空間。</p>
+      <pre>grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));</pre>
+    </div>
+
+    <!-- Auto-Fit 範例 -->
+    <div class="demo-section">
+      <h2>2. auto-fit (縮放填滿)</h2>
+      <p>容器會把空的格子「折疊」掉，並讓現有的內容去均分填滿剩餘的空間。</p>
+      <div class="container grid-fit">
+        <div class="item">項目 1</div>
+        <div class="item">項目 2</div>
+      </div>
+      <p class="empty-slot-hint">觀察：現有的兩個項目會自動拉寬，填滿整列。</p>
+      <pre>grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));</pre>
+    </div>
+
+    <hr>
+
+    <div style="margin-top: 30px">
+      <h3 style="color: #27ae60">💡 引導思考 (點擊題目查看答案與示範)</h3>
+      
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q1: 什麼時候該用 auto-fill？什麼時候該用 auto-fit？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> </p>
+          <ul>
+            <li><strong>auto-fit (最常用)</strong>：適合希望內容永遠「撐滿」一列的情況（如產品清單）。</li>
+            <li><strong>auto-fill</strong>：適合希望保持格子大小固定，且不介意右側留白的情況。</li>
+          </ul>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q2: 如果容器寬度縮小到只能放下一格，兩者還有差別嗎？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> <strong>沒有差別。</strong></p>
+          <p>當空間不足以產生「空網格」時，兩者的行為會完全一致。只有在「有多餘空間可產生新格子」時，區別才會顯現。</p>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 5px; background: #eee; padding: 5px; width: 160px; margin: 10px 0;">
+            <div style="background: #2ecc71; color: white; text-align: center;">160px 容器</div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </body>
+</html>

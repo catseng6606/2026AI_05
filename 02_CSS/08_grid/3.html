@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Grid 教學：grid-template-areas 視覺化佈局</title>
+    <style>
+      body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        padding: 20px;
+        line-height: 1.6;
+        background-color: #f9f9f9;
+      }
+
+      h1 { color: #2c3e50; border-left: 8px solid #3498db; padding-left: 15px; margin-bottom: 20px; }
+      h2 { color: #2980b9; margin-top: 30px; }
+
+      /* Grid 核心教學區 */
+      .grid-container {
+        display: grid;
+        width: 100%;
+        height: 400px;
+        gap: 10px;
+        
+        /* 1. 定義網格軌跡 */
+        grid-template-columns: 150px 1fr;
+        grid-template-rows: 60px 1fr 60px;
+
+        /* 2. 定義視覺化區域 (重點在此！) */
+        grid-template-areas: 
+          "header header"
+          "sidebar main"
+          "footer footer";
+      }
+
+      /* 3. 將 HTML 元素指定到區域 */
+      .header       { grid-area: header; background-color: #ff7675; }
+      .sidebar      { grid-area: sidebar; background-color: #74b9ff; }
+      .main-content { grid-area: main; background-color: #55efc4; }
+      .footer       { grid-area: footer; background-color: #ffeaa7; }
+
+      /* 裝飾樣式 */
+      .grid-item {
+        color: #2d3436;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        border: 2px solid rgba(0,0,0,0.1);
+        border-radius: 4px;
+      }
+
+      .concept-box {
+        background: #fff;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      pre {
+        background: #2d2d2d;
+        color: #f8f8f2;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+
+      .keyword { color: #f92672; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h1>CSS Grid：視覺化區域佈局</h1>
+    <p><code>grid-template-areas</code> 是 Grid 最強大的功能之一，它允許你像「畫地圖」一樣，直接在 CSS 中定義版型結構。</p>
+
+    <!-- 實體展示區 -->
+    <div class="grid-container">
+      <div class="grid-item header">Header</div>
+      <div class="grid-item sidebar">Sidebar</div>
+      <div class="grid-item main-content">Main Content</div>
+      <div class="grid-item footer">Footer</div>
+    </div>
+
+    <div class="concept-box">
+      <h2>核心語法拆解</h2>
+      <p>在 CSS 中，我們使用字串來代表網格的每一列：</p>
+      <pre>
+<span class="keyword">grid-template-areas:</span> 
+    "header header"   <span style="color: #75715e;">/* 第一列：兩個格子都叫 header (橫跨) */</span>
+    "sidebar main"    <span style="color: #75715e;">/* 第二列：左邊 sidebar，右邊 main */</span>
+    "footer footer";  <span style="color: #75715e;">/* 第三列：兩個格子都叫 footer (橫跨) */</span>
+      </pre>
+      
+      <p>接著，子元素只需要聲明自己屬於哪個區域：</p>
+      <pre>
+.header { <span class="keyword">grid-area:</span> header; }
+.sidebar { <span class="keyword">grid-area:</span> sidebar; }
+.main-content { <span class="keyword">grid-area:</span> main; }
+.footer { <span class="keyword">grid-area:</span> footer; }
+      </pre>
+    </div>
+
+    <div style="margin-top: 30px">
+      <h3 style="color: #2980b9">💡 引導思考 (點擊題目查看答案與示範)</h3>
+      
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q1: 如果我想要側邊欄 (Sidebar) 從最頂端一直延伸到底部，該怎麼改？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 只要把每一列的第一個單字都改成 <code>sidebar</code> 即可。</p>
+          <div style="display: grid; grid-template-areas: 'side head' 'side main' 'side foot'; grid-template-columns: 50px 1fr; gap: 5px; background: #eee; padding: 5px; height: 100px;">
+            <div style="grid-area: side; background: #74b9ff; font-size: 10px; text-align: center;">Side</div>
+            <div style="grid-area: head; background: #ff7675; font-size: 10px; text-align: center;">Head</div>
+            <div style="grid-area: main; background: #55efc4; font-size: 10px; text-align: center;">Main</div>
+            <div style="grid-area: foot; background: #ffeaa7; font-size: 10px; text-align: center;">Foot</div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">grid-template-areas: 
+  "sidebar header"
+  "sidebar main"
+  "sidebar footer";</pre>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q2: 如果某個格子想要「留白」不放任何區域，該怎麼寫？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 使用一個句號 <code>.</code> 來代表空網格。</p>
+          <div style="display: grid; grid-template-areas: 'a b' '. c'; grid-template-columns: 1fr 1fr; gap: 5px; background: #eee; padding: 5px; height: 80px;">
+            <div style="grid-area: a; background: #ff7675;"></div>
+            <div style="grid-area: b; background: #74b9ff;"></div>
+            <div style="background: transparent; border: 1px dashed #999;">(空)</div>
+            <div style="grid-area: c; background: #55efc4;"></div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">grid-template-areas: 
+  "area-A area-B"
+  ".      area-C"; /* 句號代表不指定的空格 */</pre>
+        </div>
+      </details>
+    </div>
+  </body>
+</html>
