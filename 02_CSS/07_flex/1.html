@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Flexbox 基礎教學</title>
+    <style>
+      /* 基礎樣式設定 */
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+        background-color: #f4f4f9;
+      }
+
+      h1,
+      h2 {
+        color: #333;
+      }
+
+      /* Flex 容器 */
+      .container {
+        display: flex; /* 1. 啟動 Flexbox */
+        justify-content: center; /* 2. 水平置中 (主軸) */
+        align-items: center; /* 3. 垂直置中 (交錯軸) */
+
+        background-color: #ffffff;
+        border: 2px dashed #ccc;
+        height: 200px; /* 給予高度以便觀察垂直置中 */
+        margin-bottom: 20px;
+      }
+
+      /* Flex 項目 (子元素) */
+      .item {
+        width: 100px;
+        height: 100px;
+        margin: 10px;
+        background-color: #3498db;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        border-radius: 8px;
+      }
+
+      /* 垂直排列容器 */
+      .container-column {
+        display: flex;
+        flex-direction: column;    /* 關鍵屬性：改為垂直排列 */
+        justify-content: center;
+        align-items: center;
+        
+        background-color: #ffffff;
+        border: 2px dashed #ccc;
+        min-height: 400px;
+        margin-bottom: 20px;
+      }
+
+      /* 原始碼顯示區塊 */
+      pre {
+        background-color: #2d2d2d;
+        color: #f8f8f2;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CSS Flexbox 基礎教學範例</h1>
+    <p>
+      這是一個適合初學者的 Flexbox
+      範例。在這個例子中，我們將三個藍色方塊在容器中水平與垂直置中。
+    </p>
+
+    <!-- 實體元件展示區 -->
+    <div class="container">
+      <div class="item">項目 1</div>
+      <div class="item">項目 2</div>
+      <div class="item">項目 3</div>
+    </div>
+
+    <h2>範例二：垂直排列 (flex-direction: column)</h2>
+    <p>當我們設定 <code>flex-direction: column</code> 時，主軸會從水平轉向為垂直。</p>
+
+    <!-- 實體元件展示區 (垂直) -->
+    <div class="container-column">
+      <div class="item">項目 A</div>
+      <div class="item">項目 B</div>
+      <div class="item">項目 C</div>
+    </div>
+
+    <hr />
+
+    <h2>範例二原始碼 (CSS)</h2>
+    <pre>
+.container-column {
+  display: flex;
+  flex-direction: column;   /* 設定排列方向為「垂直」 */
+  justify-content: center;  /* 此時垂直方向變成主軸置中 */
+  align-items: center;      /* 此時水平方向變成交錯軸置中 */
+  min-height: 400px;
+}
+    </pre>
+
+    <hr />
+
+    <h2>範例一原始碼 (HTML 結構)</h2>
+    <pre>
+&lt;div class="container"&gt;
+  &lt;div class="item"&gt;項目 1&lt;/div&gt;
+  &lt;div class="item"&gt;項目 2&lt;/div&gt;
+  &lt;div class="item"&gt;項目 3&lt;/div&gt;
+&lt;/div&gt;
+    </pre>
+
+    <h2>關鍵 CSS 設定</h2>
+    <pre>
+.container {
+  display: flex;           /* 開啟 Flex 佈局 */
+  justify-content: center;  /* 水平方向：置中 */
+  align-items: center;      /* 垂直方向：置中 */
+  height: 200px;           /* 設定容器高度 */
+}
+    </pre>
+
+    <div style="margin-top: 30px">
+      <h3 style="color: #3498db">💡 引導思考 (點擊題目查看答案與示範)</h3>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q1: 如果將 <code>justify-content</code> 改為 <code>space-between</code>，方塊會如何移動？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 方塊會散開並貼齊容器左右兩側。</p>
+          <div style="display: flex; justify-content: space-between; background: #eee; padding: 5px; margin-bottom: 10px;">
+            <div style="width: 30px; height: 30px; background: #3498db; color: white; text-align: center;">1</div>
+            <div style="width: 30px; height: 30px; background: #3498db; color: white; text-align: center;">2</div>
+            <div style="width: 30px; height: 30px; background: #3498db; color: white; text-align: center;">3</div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">.container { justify-content: space-between; }</pre>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q2: 在「範例二」中，如果拿掉 <code>flex-direction: column</code>，畫面會發生什麼變化？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 畫面會立即恢復成預設的「水平排列」。</p>
+          <div style="display: flex; background: #eee; padding: 5px; margin-bottom: 10px;">
+            <div style="width: 30px; height: 30px; background: #3498db; color: white; text-align: center; margin-right: 5px;">A</div>
+            <div style="width: 30px; height: 30px; background: #3498db; color: white; text-align: center;">B</div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">/* 預設即為 flex-direction: row; */</pre>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q3: 為什麼在垂直排列時，<code>justify-content</code> 變成控制上下對齊了？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 因為它控制的是「主軸方向」，而 <code>column</code> 將主軸轉向了。</p>
+          <div style="display: flex; flex-direction: column; justify-content: center; background: #eee; padding: 5px; height: 80px; margin-bottom: 10px; align-items: center;">
+            <div style="width: 20px; height: 20px; background: #3498db; margin-bottom: 2px;"></div>
+            <div style="width: 20px; height: 20px; background: #3498db;"></div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">flex-direction: column; 
+justify-content: center; /* 此時為主軸(垂直)置中 */</pre>
+        </div>
+      </details>
+    </div>
+  </body>
+</html>

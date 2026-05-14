@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Grid 初學者教學範例</title>
+    <style>
+        /* 教學說明：Grid 容器設定 */
+        .grid-container {
+            display: grid; /* 啟動網格佈局 */
+            
+            /* 定義列（直欄）：建立三個等寬的欄位 (1fr = 1份剩餘空間) */
+            grid-template-columns: repeat(3, 1fr);
+            
+            /* 定義行（橫列）：設定兩行，高度分別為 100px */
+            grid-template-rows: 100px 100px;
+            
+            /* 設定網格間距 */
+            gap: 10px;
+            
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* 教學說明：網格項目樣式 */
+        .grid-item {
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        /* 原始碼展示區塊樣式 */
+        .source-code {
+            background-color: #2d2d2d;
+            color: #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .source-title {
+            font-weight: bold;
+            margin-top: 30px;
+            color: #333;
+            border-left: 5px solid #4CAF50;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>CSS Grid 基礎教學</h1>
+    <p>以下是一個簡單的 3x2 網格佈局範例：</p>
+
+    <!-- 實體元件展示區 -->
+    <div class="grid-container">
+        <div class="grid-item">1</div>
+        <div class="grid-item">2</div>
+        <div class="grid-item">3</div>
+        <div class="grid-item">4</div>
+        <div class="grid-item">5</div>
+        <div class="grid-item">6</div>
+    </div>
+
+    <hr>
+
+    <!-- 原始碼展示區 -->
+    <div class="source-title">HTML 結構原始碼：</div>
+    <pre class="source-code">&lt;div class="grid-container"&gt;
+    &lt;div class="grid-item"&gt;1&lt;/div&gt;
+    &lt;div class="grid-item"&gt;2&lt;/div&gt;
+    &lt;div class="grid-item"&gt;3&lt;/div&gt;
+    &lt;div class="grid-item"&gt;4&lt;/div&gt;
+    &lt;div class="grid-item"&gt;5&lt;/div&gt;
+    &lt;div class="grid-item"&gt;6&lt;/div&gt;
+&lt;/div&gt;</pre>
+
+    <div class="source-title">CSS 樣式原始碼：</div>
+    <pre class="source-code">.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 三欄等寬 */
+    grid-template-rows: 100px 100px;       /* 兩列高度 100px */
+    gap: 10px;                            /* 間距 10px */
+}
+
+.grid-item {
+    background-color: #4CAF50;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}</pre>
+
+</body>
+</html>

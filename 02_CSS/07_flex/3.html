@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Flexbox 教學 - Flex 三劍客 (Grow, Shrink, Basis)</title>
+    <style>
+      body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+        background-color: #f8f9fa;
+      }
+
+      h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+      h2 { color: #8e44ad; margin-top: 40px; }
+      h3 { color: #2980b9; }
+
+      .demo-section {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+      }
+
+      .container {
+        display: flex;
+        background-color: #dfe6e9;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 15px 0;
+        /* 為了演示 flex-shrink，限制容器寬度 */
+        max-width: 600px;
+      }
+
+      .item {
+        padding: 15px;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        border: 2px solid rgba(255,255,255,0.3);
+      }
+
+      .bg-1 { background-color: #ff7675; }
+      .bg-2 { background-color: #74b9ff; }
+      .bg-3 { background-color: #55efc4; }
+
+      /* Flex-Grow 範例 */
+      .grow-0 { flex-grow: 0; } /* 不增長 (預設) */
+      .grow-1 { flex-grow: 1; } /* 增長比例 1 */
+      .grow-2 { flex-grow: 2; } /* 增長比例 2 */
+
+      /* Flex-Shrink 範例 */
+      .shrink-0 { flex-shrink: 0; width: 300px; } /* 不壓縮，即使容器不夠寬 */
+      .shrink-1 { flex-shrink: 1; width: 300px; } /* 壓縮比例 1 */
+
+      /* Flex-Basis 範例 */
+      .basis-100 { flex-basis: 100px; }
+      .basis-200 { flex-basis: 200px; }
+
+      pre {
+        background-color: #2d3436;
+        color: #fab1a0;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Flexbox 第三課：Flex 三劍客屬性</h1>
+    <p>這三個屬性決定了子元素在容器中如何「伸縮」。</p>
+
+    <div class="demo-section">
+      <h2>1. flex-grow (增長比例)</h2>
+      <p>當容器有「剩餘空間」時，定義子元素分配空間的比例。</p>
+      <div class="container">
+        <div class="item bg-1 grow-1">1 (grow: 1)</div>
+        <div class="item bg-2 grow-2">2 (grow: 2)</div>
+        <div class="item bg-3 grow-1">3 (grow: 1)</div>
+      </div>
+      <pre>
+/* 比例解釋：總共 1+2+1 = 4 等分 */
+/* 項目 2 會分到 2/4 的剩餘空間，所以長得最快 */
+.item-2 { flex-grow: 2; }
+      </pre>
+    </div>
+
+    <div class="demo-section">
+      <h2>2. flex-shrink (收縮比例)</h2>
+      <p>當容器空間「不足」時，定義子元素縮小的程度。設定為 0 則完全不縮小。</p>
+      <div class="container">
+        <div class="item bg-1 shrink-0">我不想變小 (shrink: 0)</div>
+        <div class="item bg-2 shrink-1">我可以變小 (shrink: 1)</div>
+      </div>
+      <pre>
+/* 設定為 0 可以強迫元素保持寬度不換行或不被擠壓 */
+.item-1 { flex-shrink: 0; width: 300px; }
+      </pre>
+    </div>
+
+    <div class="demo-section">
+      <h2>3. flex-basis (基準尺寸)</h2>
+      <p>在分配剩餘空間之前的「初始寬度」。它會覆蓋原本的 <code>width</code> 設定。</p>
+      <div class="container">
+        <div class="item bg-1 basis-200">基準 200px</div>
+        <div class="item bg-2 basis-100">基準 100px</div>
+      </div>
+      <pre>
+/* 它類似於 width，但在 Flexbox 運算中優先權更高 */
+.item-1 { flex-basis: 200px; }
+      </pre>
+    </div>
+
+    <div class="demo-section" style="border-top: 5px solid #8e44ad;">
+      <h2>總結：簡寫屬性 flex</h2>
+      <p>實務上我們常寫成 <code>flex: [grow] [shrink] [basis]</code></p>
+      <pre>
+/* 範例：可增長、可收縮、自動基準寬度 */
+.item { flex: 1 1 auto; }
+
+/* 範例：不可增長、不可收縮、固定寬度 200px */
+.item { flex: 0 0 200px; }
+      </pre>
+    </div>
+
+    <div style="margin-top: 30px">
+      <h3 style="color: #8e44ad">💡 引導思考 (點擊題目查看答案與示範)</h3>
+      
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q1: 如果所有的項目都設為 <code>flex: 1</code>，會發生什麼事？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 所有項目會等比例均分空間。</p>
+          <div style="display: flex; background: #eee; padding: 5px; margin-bottom: 10px;">
+            <div style="flex: 1; background: #ff7675; margin: 2px; text-align: center; color: white;">1</div>
+            <div style="flex: 1; background: #74b9ff; margin: 2px; text-align: center; color: white;">1</div>
+            <div style="flex: 1; background: #55efc4; margin: 2px; text-align: center; color: white;">1</div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">.item { flex: 1; } /* 均分空間 */</pre>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q2: 在 <code>flex-direction: column</code> 時，<code>flex-basis</code> 控制的是寬度還是高度？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 控制的是<strong>高度</strong>。</p>
+          <div style="display: flex; flex-direction: column; background: #eee; padding: 5px; height: 120px; margin-bottom: 10px;">
+            <div style="flex-basis: 40px; background: #ff7675; margin: 2px; text-align: center; color: white;">40px</div>
+            <div style="flex-basis: 60px; background: #74b9ff; margin: 2px; text-align: center; color: white;">60px</div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">.container { flex-direction: column; }
+.item { flex-basis: 40px; } /* 在垂直軸上設定基準高度 */</pre>
+        </div>
+      </details>
+    </div>
+  </body>
+</html>

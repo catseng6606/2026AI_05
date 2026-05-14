@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-tw">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Flexbox 教學 - 水平與垂直對齊</title>
+    <style>
+      body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+        background-color: #f0f2f5;
+      }
+
+      h1 { color: #2c3e50; }
+      h2 { color: #e67e22; margin-top: 40px; }
+
+      .demo-section {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+      }
+
+      /* 通用容器樣式 */
+      .container {
+        display: flex;
+        background-color: #ecf0f1;
+        border: 2px solid #bdc3c7;
+        height: 150px; /* 固定高度以便觀察垂直對齊 */
+        margin: 10px 0;
+      }
+
+      .item {
+        width: 80px;
+        background-color: #e74c3c;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 5px;
+        font-weight: bold;
+      }
+
+      /* 不同高度的項目，讓垂直對齊更明顯 */
+      .h-small { height: 50px; }
+      .h-medium { height: 80px; }
+      .h-large { height: 110px; }
+      .h-auto { height: auto; } /* 用於展示 stretch */
+
+      /* 垂直對齊樣式 */
+      .align-start { align-items: flex-start; }
+      .align-center { align-items: center; }
+      .align-end { align-items: flex-end; }
+      .align-stretch { align-items: stretch; }
+
+      /* 水平對齊樣式 */
+      .justify-start { justify-content: flex-start; }
+      .justify-center { justify-content: center; }
+      .justify-end { justify-content: flex-end; }
+      .justify-between { justify-content: space-between; }
+      .justify-around { justify-content: space-around; }
+      .justify-evenly { justify-content: space-evenly; }
+
+      pre {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Flexbox 第二課：水平與垂直對齊</h1>
+    <p>
+      在 Flexbox 中，對齊分為兩個軸向：<br />
+      1. <strong>主軸 (Main Axis)</strong>：使用 <code>justify-content</code> 控制水平方向。<br />
+      2. <strong>交錯軸 (Cross Axis)</strong>：使用 <code>align-items</code> 控制垂直方向。
+    </p>
+
+    <div class="demo-section">
+      <h2 style="color: #3498db">Part A: 水平對齊 (justify-content)</h2>
+      <p>這決定了項目在「水平方向」如何分配剩餘空間。</p>
+
+      <h3>1. 置左 (flex-start)</h3>
+      <div class="container justify-start">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+      </div>
+
+      <h3>2. 置中 (center)</h3>
+      <div class="container justify-center">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+      </div>
+
+      <h3>3. 置右 (flex-end)</h3>
+      <div class="container justify-end">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+      </div>
+
+      <h3>4. 左右平分 (space-between)</h3>
+      <div class="container justify-between">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+      </div>
+
+      <h3>5. 間距平均 (space-around / space-evenly)</h3>
+      <div class="container justify-evenly">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+      </div>
+      <pre>/* 常用的水平對齊屬性值 */
+justify-content: flex-start | center | flex-end | space-between | space-around | space-evenly;</pre>
+    </div>
+
+    <div class="demo-section">
+      <h2 style="color: #e67e22">Part B: 垂直對齊 (align-items)</h2>
+      <p>這決定了項目在「垂直方向」的對齊位置。</p>
+
+      <h3>1. 置頂對齊 (flex-start)</h3>
+      <div class="container align-start">
+        <div class="item h-small">1</div>
+        <div class="item h-medium">2</div>
+        <div class="item h-large">3</div>
+      </div>
+      <pre>align-items: flex-start;</pre>
+    </div>
+
+    <div class="demo-section">
+      <h2>2. 垂直置中 (center)</h2>
+      <div class="container align-center">
+        <div class="item h-small">1</div>
+        <div class="item h-medium">2</div>
+        <div class="item h-large">3</div>
+      </div>
+      <pre>align-items: center;</pre>
+    </div>
+
+    <div class="demo-section">
+      <h2>3. 置底對齊 (flex-end)</h2>
+      <div class="container align-end">
+        <div class="item h-small">1</div>
+        <div class="item h-medium">2</div>
+        <div class="item h-large">3</div>
+      </div>
+      <pre>align-items: flex-end;</pre>
+    </div>
+
+    <div class="demo-section">
+      <h2>4. 填滿容器 (stretch) - 這是預設值</h2>
+      <p>注意：若要看到填滿效果，子元素不能設定固定高度（或設為 auto）。</p>
+      <div class="container align-stretch">
+        <div class="item h-auto">1</div>
+        <div class="item h-auto">2</div>
+        <div class="item h-auto">3</div>
+      </div>
+      <pre>align-items: stretch;</pre>
+    </div>
+
+    <hr>
+    <h2>範例 HTML 結構</h2>
+    <pre>
+&lt;div class="container"&gt;
+  &lt;div class="item"&gt;項目 1&lt;/div&gt;
+  &lt;div class="item"&gt;項目 2&lt;/div&gt;
+  &lt;div class="item"&gt;項目 3&lt;/div&gt;
+&lt;/div&gt;
+    </pre>
+
+    <div style="margin-top: 30px">
+      <h3 style="color: #e67e22">💡 引導思考 (點擊題目查看答案與示範)</h3>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q1: 為什麼 <code>stretch</code> 效果在設定了高度的方塊上看不出來？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 因為明確的高度設定（height）優先權高於 stretch 拉伸。</p>
+          <div style="display: flex; align-items: stretch; background: #eee; padding: 5px; height: 60px; margin-bottom: 10px;">
+            <div style="width: 40px; height: 30px; background: #e67e22; color: white; font-size: 10px; text-align: center;">固定30px</div>
+            <div style="width: 40px; height: auto; background: #27ae60; color: white; font-size: 10px; text-align: center; margin-left: 5px;">Auto(拉伸)</div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">/* 綠色方塊設為 height: auto; 才能看見 stretch 效果 */</pre>
+        </div>
+      </details>
+
+      <details style="border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; padding: 10px; background: #fff;">
+        <summary style="cursor: pointer; font-weight: bold;">Q2: 如果容器沒有設定 <code>height</code>，<code>align-items: center</code> 還會有作用嗎？</summary>
+        <div style="margin-top: 10px; color: #2c3e50; border-top: 1px dashed #ccc; padding-top: 10px;">
+          <p><strong>Ans:</strong> 有作用，但因為容器會縮到跟內容一樣高，所以視覺上看不出「置中」的空間。</p>
+          <div style="display: flex; align-items: center; background: #eee; padding: 5px; margin-bottom: 10px;">
+            <div style="width: 30px; height: 50px; background: #e67e22;"></div>
+            <div style="width: 30px; height: 30px; background: #d35400; margin-left: 5px;"></div>
+          </div>
+          <pre style="background: #333; color: #fff; padding: 5px; font-size: 0.8rem;">/* 容器高度 = 最高項目的高度，因此沒有多餘空間可移動 */</pre>
+        </div>
+      </details>
+    </div>
+  </body>
+</html>
