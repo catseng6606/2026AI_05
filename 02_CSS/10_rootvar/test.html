@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS var 變數</title>
+    <style>
+      :root {
+        /* 定義全域變數 */
+        --main-color: #eeb63e;
+        --font-size-base: 16px;
+        --border-radius: 8px;
+      }
+
+      h1 {
+        /* 使用變數 */
+        color: var(--main-color);
+      }
+
+      h2,
+      h3,
+      h4 {
+        color: var(--main-color);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>我是 H1</h1>
+    <h2>我是 H2</h2>
+    <h3>我是 H3</h3>
+    <h4>我是 H4</h4>
+  </body>
+</html>

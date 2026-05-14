@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Media Queries 媒體查詢教學</title>
+    <style>
+      h1 {
+        font-size: 16px;
+        color: gray;
+      }
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 14px;
+          color: red;
+        }
+      }
+      @media (min-width: 601px) and (max-width: 1200px) {
+        h1 {
+          font-size: 18px;
+          color: blue;
+        }
+      }
+      @media (min-width: 1201px) {
+        h1 {
+          font-size: 20px;
+          color: green;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>我是 H1</h1>
+  </body>
+</html>

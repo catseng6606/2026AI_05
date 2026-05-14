@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Float 實體效果教學</title>
+    <style>
+        /* 基礎設定 */
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        /* 外層容器：白色卡片 */
+        .tutorial-card {
+            background-color: #ffffff;
+            border: 1px solid #d1e3f8;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        /* 標題部分：左上角標籤 */
+        .title-badge {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #3498db;
+            color: white;
+            padding: 8px 20px;
+            border-bottom-right-radius: 12px;
+            border-top-left-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            z-index: 10;
+        }
+
+        /* 核心內容區：實際 Float 示範區 */
+        .content-area {
+            margin-top: 50px;
+            margin-bottom: 40px;
+            border: 2px dashed #cbdcf0; /* 虛線邊框幫助觀察容器 */
+            padding: 20px;
+            background-color: #fcfdfe;
+            min-height: 200px;
+            /* 為了讓容器包裹住浮動元素，通常需要清除浮動 */
+            overflow: auto; 
+        }
+
+        /* 方塊基礎樣式 */
+        .box {
+            width: 150px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid;
+            text-align: center;
+            margin: 10px;
+        }
+
+        .box-top {
+            padding: 12px 5px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .box-bottom {
+            padding: 8px 5px;
+            font-size: 0.9rem;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 各別 Float 效果 */
+        .float-left {
+            float: left;
+            background-color: #ebf5fb;
+            border-color: #3498db;
+            color: #2980b9;
+        }
+
+        .float-right {
+            float: right;
+            background-color: #eafaf1;
+            border-color: #2ecc71;
+            color: #27ae60;
+        }
+
+        .float-none {
+            float: none;
+            background-color: #f5eef8;
+            border-color: #9b59b6;
+            color: #8e44ad;
+            /* 為了呈現效果，我們讓 none 區塊寬度大一點，觀察它如何與左右浮動共存 */
+            width: calc(100% - 40px);
+        }
+
+        .clear-both {
+            clear: both;
+            background-color: #fef9e7;
+            border-color: #f1c40f;
+            color: #f39c12;
+            width: calc(100% - 40px);
+        }
+
+        /* 連接符號 */
+        .connector {
+            font-size: 1.5rem;
+            color: #bdc3c7;
+            font-weight: bold;
+            padding: 20px 10px;
+            float: left; /* 符號也跟著浮動 */
+        }
+
+        /* 底部提示欄 */
+        .tip-bar {
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            color: #1565c0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            clear: both; /* 確保提示欄在所有浮動下方 */
+        }
+
+        .tip-icon {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+
+        /* 原始碼展示區 */
+        .source-code {
+            width: 100%;
+            max-width: 800px;
+            background-color: #2d3436;
+            color: #dfe6e9;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .source-title {
+            color: #fab1a0;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 實體教學元件 -->
+    <div class="tutorial-card">
+        <div class="title-badge">6. 總結 - 真實效果示範</div>
+        
+        <div class="content-area">
+            <!-- 方塊 1 -->
+            <div class="box float-left">
+                <div class="box-top">float: left</div>
+                <div class="box-bottom">向左漂浮</div>
+            </div>
+
+            <div class="connector">,</div>
+
+            <!-- 方塊 2 -->
+            <div class="box float-right">
+                <div class="box-top">float: right</div>
+                <div class="box-bottom">向右漂浮</div>
+            </div>
+
+            <div class="connector">+</div>
+
+            <!-- 方塊 3 -->
+            <div class="box float-none">
+                <div class="box-top">float: none</div>
+                <div class="box-bottom">不漂浮 (普通流，會填滿空間)</div>
+            </div>
+
+            <div class="connector">+</div>
+
+            <!-- 方塊 4 -->
+            <div class="box clear-both">
+                <div class="box-top">clear: both</div>
+                <div class="box-bottom">清除浮動 (強制換行)</div>
+            </div>
+        </div>
+
+        <div class="tip-bar">
+            <span class="tip-icon">⭐</span>
+            <div>觀察：float: none 的紫色方塊雖然寫在 green 之後，但因為它不漂浮，它會無視漂浮元素的位置（背景會延伸到漂浮元素下方），而 clear: both 則會乖乖排在所有漂浮物下面。</div>
+        </div>
+    </div>
+
+    <!-- 原始碼對照區 -->
+    <div class="source-code">
+        <span class="source-title">// 實際 CSS 設定參考</span>
+<pre>
+.box-1 { float: left; }   /* 靠左 */
+.box-2 { float: right; }  /* 靠右 */
+.box-3 { float: none; }   /* 正常排列，不避開浮動，內容會被擠壓 */
+.box-4 { clear: both; }   /* 不准左右有浮動，強制移至下方 */
+</pre>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Grid 全寬合併 (span 12) 教學</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+
+        .box {
+            border: 1px solid #444;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* 外部容器：12 欄網格 */
+        .container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 
+           1. Header & Footer: 各只有一個 div，合併全寬 (span 12)
+        */
+        .header { 
+            grid-column: span 12; 
+            background-color: #ffcdd2; 
+        }
+
+        .footer { 
+            grid-column: span 12; 
+            background-color: #c8e6c9; 
+        }
+
+        /* 
+           2. Main Area: 三欄式比例 (3:6:3)
+        */
+        .left-sider { 
+            grid-column: span 3; 
+            background-color: #bbdefb; 
+        }
+        .main-content { 
+            grid-column: span 6; 
+            background-color: #e3f2fd; 
+        }
+        .right-sider { 
+            grid-column: span 3; 
+            background-color: #bbdefb; 
+        }
+
+        /* 設定最小高度 */
+        .left-sider, .main-content, .right-sider {
+            min-height: 300px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>CSS Grid 「span 全寬合併」教學</h1>
+    
+    <section>
+        <h2>觀念說明</h2>
+        <ul>
+            <li><strong>span 12 (全寬合併)</strong>：當我們的網格系統是 12 欄時，設定 <code>grid-column: span 12</code> 就能讓該元件橫跨一整列。</li>
+            <li><strong>版面結構</strong>：
+                <ul>
+                    <li><strong>頁首 (Header)</strong>：單一區塊，合併 12 欄。</li>
+                    <li><strong>頁身 (Main)</strong>：分為三塊，分別合併 3、6、3 欄，達成三欄式佈局。</li>
+                    <li><strong>頁尾 (Footer)</strong>：單一區塊，合併 12 欄。</li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <!-- 實體版面 -->
+    <div class="container">
+        <!-- Header: 只有一個 div -->
+        <div class="box header">Header (span 12)</div>
+
+        <!-- Main Content with Sidebars -->
+        <div class="box left-sider">Left Sider (span 3)</div>
+        <div class="box main-content">Main Content Area (span 6)</div>
+        <div class="box right-sider">Right Sider (span 3)</div>
+
+        <!-- Footer: 只有一個 div -->
+        <div class="box footer">Footer (span 12)</div>
+    </div>
+
+    <hr>
+
+    <h2>原始碼參考 (Source Code)</h2>
+    <pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; border: 1px solid #ddd; overflow-x: auto;">
+&lt;!-- CSS 關鍵語法 --&gt;
+&lt;style&gt;
+    .container {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+    }
+
+    /* 頁首、頁尾：合併全寬 */
+    .header, .footer {
+        grid-column: span 12;
+    }
+
+    /* 頁身：三欄式比例 (3+6+3 = 12) */
+    .left-sider { grid-column: span 3; }
+    .main-content { grid-column: span 6; }
+    .right-sider { grid-column: span 3; }
+&lt;/style&gt;
+
+&lt;!-- HTML 結構 --&gt;
+&lt;div class="container"&gt;
+    &lt;div class="box header"&gt;Header&lt;/div&gt;
+
+    &lt;div class="box left-sider"&gt;Left&lt;/div&gt;
+    &lt;div class="box main-content"&gt;Center&lt;/div&gt;
+    &lt;div class="box right-sider"&gt;Right&lt;/div&gt;
+
+    &lt;div class="box footer"&gt;Footer&lt;/div&gt;
+&lt;/div&gt;
+    </pre>
+
+</body>
+</html>
+
+

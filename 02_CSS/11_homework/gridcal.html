@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 科技風格計算機 - CSS Grid 排版</title>
+    <style>
+      /* 1. 定義 :root 變數 */
+      :root {
+        --bg-color: #050a18;
+        --calc-bg: rgba(16, 24, 48, 0.9);
+        --accent-color: #00f3ff;
+        --text-color: #e0faff;
+        --btn-bg: rgba(255, 255, 255, 0.05);
+        --btn-hover: rgba(0, 243, 255, 0.2);
+        --op-color: #7000ff;
+        --shadow-glow: 0 0 15px rgba(0, 243, 255, 0.3);
+        --grid-gap: 12px;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        background: radial-gradient(circle at center, #101e40 0%, #050a18 100%);
+      }
+
+      /* 計算機外殼 */
+      .calculator {
+        background: var(--calc-bg);
+        padding: 25px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        box-shadow:
+          0 20px 50px rgba(0, 0, 0, 0.5),
+          var(--shadow-glow);
+        width: 320px;
+        backdrop-filter: blur(10px);
+      }
+
+      /* 顯示螢幕 */
+      .display {
+        background: rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+        padding: 20px;
+        text-align: right;
+        font-size: 2.5rem;
+        border-radius: 10px;
+        border: 1px inset rgba(0, 243, 255, 0.1);
+        color: var(--accent-color);
+        text-shadow: var(--shadow-glow);
+        min-height: 60px;
+      }
+
+      /* 2. Grid 按鈕佈局 */
+      .buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* 四欄 */
+        gap: var(--grid-gap);
+      }
+
+      .btn {
+        background: var(--btn-bg);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        font-size: 1.2rem;
+        color: var(--text-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+
+      .btn:hover {
+        background: var(--btn-hover);
+        border-color: var(--accent-color);
+        box-shadow: var(--shadow-glow);
+        transform: translateY(-2px);
+      }
+
+      /* 特殊按鈕樣式 */
+      .btn-op {
+        color: var(--accent-color);
+        font-weight: bold;
+      }
+
+      .btn-equal {
+        background: linear-gradient(135deg, #00f3ff, #7000ff);
+        grid-column: span 2; /* 跨兩欄 */
+        color: white;
+        border: none;
+      }
+
+      .btn-zero {
+        grid-column: span 2; /* 跨兩欄 */
+      }
+
+      /* 教學原始碼區塊 */
+      .code-preview {
+        margin-top: 50px;
+        width: 90%;
+        max-width: 800px;
+        background: #1e1e1e;
+        padding: 20px;
+        border-radius: 10px;
+        overflow-x: auto;
+        border: 1px solid #333;
+      }
+
+      pre {
+        margin: 0;
+        color: #d4d4d4;
+        font-size: 0.9rem;
+      }
+
+      h2 {
+        color: var(--accent-color);
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator">
+      <div class="display">0</div>
+      <div class="buttons">
+        <!-- 第一排 -->
+        <div class="btn btn-op">AC</div>
+        <div class="btn btn-op">+/-</div>
+        <div class="btn btn-op">%</div>
+        <div class="btn btn-op">÷</div>
+
+        <!-- 第二排 -->
+        <div class="btn">7</div>
+        <div class="btn">8</div>
+        <div class="btn">9</div>
+        <div class="btn btn-op">×</div>
+
+        <!-- 第三排 -->
+        <div class="btn">4</div>
+        <div class="btn">5</div>
+        <div class="btn">6</div>
+        <div class="btn btn-op">-</div>
+
+        <!-- 第四排 -->
+        <div class="btn">1</div>
+        <div class="btn">2</div>
+        <div class="btn">3</div>
+        <div class="btn btn-op">+</div>
+
+        <!-- 第五排 -->
+        <div class="btn btn-zero">0</div>
+        <div class="btn">.</div>
+        <div class="btn btn-equal">=</div>
+      </div>
+    </div>
+
+    <script>
+      // 獲取顯示螢幕與所有按鈕
+      const display = document.querySelector(".display");
+      const buttons = document.querySelectorAll(".btn");
+
+      let currentInput = "0"; // 當前顯示的數字
+      let previousInput = ""; // 上一個暫存的數字
+      let operator = null; // 當前的運算符
+      let shouldResetScreen = false; // 是否需要清空螢幕（按下運算符後）
+
+      // 更新螢幕顯示
+      function updateDisplay() {
+        display.textContent = currentInput;
+      }
+
+      // 為每個按鈕綁定點擊事件
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const value = button.textContent;
+
+          if ((value >= "0" && value <= "9") || value === ".") {
+            // 處理數字與小數點
+            handleNumber(value);
+          } else if (value === "AC") {
+            // 處理清除
+            clear();
+          } else if (value === "+/-") {
+            // 處理正負號
+            toggleSign();
+          } else if (value === "%") {
+            // 處理百分比
+            percentage();
+          } else if (value === "=") {
+            // 處理計算結果
+            calculate();
+          } else {
+            // 處理運算符 (+, -, ×, ÷)
+            handleOperator(value);
+          }
+          updateDisplay();
+        });
+      });
+
+      function handleNumber(num) {
+        if (currentInput === "0" || shouldResetScreen) {
+          currentInput = num;
+          shouldResetScreen = false;
+        } else {
+          // 防止重複輸入小數點
+          if (num === "." && currentInput.includes(".")) return;
+          currentInput += num;
+        }
+      }
+
+      function handleOperator(op) {
+        if (operator !== null) calculate(); // 如果已經有運算符，先計算前面的
+        previousInput = currentInput;
+        operator = op;
+        shouldResetScreen = true;
+      }
+
+      function calculate() {
+        if (operator === null || shouldResetScreen) return;
+        let result;
+        const prev = parseFloat(previousInput);
+        const current = parseFloat(currentInput);
+
+        // 根據運算符執行計算
+        switch (operator) {
+          case "+":
+            result = prev + current;
+            break;
+          case "-":
+            result = prev - current;
+            break;
+          case "×":
+            result = prev * current;
+            break;
+          case "÷":
+            result = prev / current;
+            break;
+          default:
+            return;
+        }
+
+        // 處理結果，避免 JavaScript 浮點數精度問題 (如 0.1+0.2)
+        currentInput = parseFloat(result.toFixed(8)).toString();
+        operator = null;
+      }
+
+      function clear() {
+        currentInput = "0";
+        previousInput = "";
+        operator = null;
+        shouldResetScreen = false;
+      }
+
+      function toggleSign() {
+        currentInput = (parseFloat(currentInput) * -1).toString();
+      }
+
+      function percentage() {
+        currentInput = (parseFloat(currentInput) / 100).toString();
+      }
+    </script>
+
+    <!-- 教學用原始碼展示 -->
+    <div class="code-preview">
+      <h2>HTML 結構原始碼</h2>
+      <pre>
+&lt;div class="calculator"&gt;
+    &lt;div class="display"&gt;0&lt;/div&gt;
+    &lt;div class="buttons"&gt;
+        &lt;!-- 使用 Grid 控制 --&gt;
+        &lt;div class="btn"&gt;7&lt;/div&gt;
+        &lt;div class="btn"&gt;8&lt;/div&gt;
+        &lt;div class="btn"&gt;9&lt;/div&gt;
+        &lt;div class="btn btn-op"&gt;×&lt;/div&gt;
+        ...
+        &lt;div class="btn btn-zero"&gt;0&lt;/div&gt; &lt;!-- grid-column: span 2 --&gt;
+        &lt;div class="btn btn-equal"&gt;=&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+        </pre
+      >
+      <br />
+      <h2>核心 CSS Grid 設定</h2>
+      <pre>
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 定義四欄 */
+    gap: 12px;
+}
+
+.btn-zero, .btn-equal {
+    grid-column: span 2; /* 跨欄設定 */
+}
+        </pre
+      >
+      <br />
+      <h2>JavaScript 邏輯控制</h2>
+      <pre>
+// 核心計算邏輯
+function calculate() {
+    const prev = parseFloat(previousInput);
+    const current = parseFloat(currentInput);
+    
+    switch (operator) {
+        case "+": result = prev + current; break;
+        case "-": result = prev - current; break;
+        case "×": result = prev * current; break;
+        case "÷": result = prev / current; break;
+    }
+    currentInput = result.toString();
+    operator = null;
+}
+      </pre>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Grid 12 欄網格系統教學</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #1a73e8;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        
+        /* 觀念說明區塊 */
+        .instruction {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+            border-left: 8px solid #34a853;
+        }
+        .instruction code {
+            background-color: #fce4ec;
+            color: #d81b60;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .highlight {
+            color: #d93025;
+            font-weight: bold;
+        }
+
+        /* --- CSS Grid 核心樣式 --- */
+        .grid-container {
+            display: grid;
+            /* 定義 12 欄系統，每欄 1 等分 (1fr) */
+            grid-template-columns: repeat(12, 1fr);
+            /* 設定網格之間的間距 */
+            gap: 15px;
+            margin-bottom: 50px;
+        }
+
+        .grid-item {
+            padding: 30px 10px;
+            color: white;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 8px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 使用 span 定義合併幾欄 */
+        .header {
+            grid-column: span 12; /* 合併 12 欄 (全寬) */
+            background-color: #4285f4;
+        }
+
+        .left-sider {
+            grid-column: span 3; /* 合併 3 欄 (25%) */
+            background-color: #34a853;
+        }
+
+        .main-content {
+            grid-column: span 6; /* 合併 6 欄 (50%) */
+            background-color: #fbbc05;
+            color: #333;
+            min-height: 300px; /* 增加主要內容區高度 */
+        }
+
+        .right-sider {
+            grid-column: span 3; /* 合併 3 欄 (25%) */
+            background-color: #9334e6;
+        }
+
+        .footer {
+            grid-column: span 12; /* 合併 12 欄 (全寬) */
+            background-color: #5f6368;
+        }
+
+        /* 原始碼對照區樣式 */
+        .code-section {
+            background-color: #202124;
+            color: #e8eaed;
+            padding: 25px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin-top: 40px;
+        }
+        .code-section h3 {
+            color: #8ab4f8;
+            margin-top: 0;
+            border-bottom: 1px solid #3c4043;
+            padding-bottom: 10px;
+        }
+        pre {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.5;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>CSS Grid：12 欄網格系統教學範例</h1>
+
+    <!-- 觀念說明區 -->
+    <section class="instruction">
+        <h2>💡 觀念重點：什麼是 <code>span</code>？</h2>
+        <p>在 12 欄網格系統中，我們將頁面寬度切割成 12 個相等的垂直欄位。<code>grid-column: span N</code> 的作用是告訴瀏覽器：<span class="highlight">「這個元件要橫跨多少個單元格」</span>。</p>
+        <ul>
+            <li><code>span 12</code>：橫跨 12 個格子，也就是佔據 <span class="highlight">100%</span> 的總寬度。</li>
+            <li><code>span 6</code>：橫跨 6 個格子，也就是佔據 <span class="highlight">50%</span> 的總寬度。</li>
+            <li><code>span 3</code>：橫跨 3 個格子，也就是佔據 <span class="highlight">25%</span> 的總寬度。</li>
+        </ul>
+        <p>優點：比起傳統的百分比計算，Grid 的 <code>span</code> 語法更直覺且易於維護。</p>
+    </section>
+
+    <!-- 實際版面展示區 -->
+    <h2>實作成果展示</h2>
+    <div class="grid-container">
+        <!-- Header -->
+        <div class="grid-item header">Header (span 12)</div>
+
+        <!-- Main Area -->
+        <div class="grid-item left-sider">Left Sider (span 3)</div>
+        <div class="grid-item main-content">Main Content (span 6)</div>
+        <div class="grid-item right-sider">Right Sider (span 3)</div>
+
+        <!-- Footer -->
+        <div class="grid-item footer">Footer (span 12)</div>
+    </div>
+
+    <!-- 原始碼對照區 (轉義後) -->
+    <div class="code-section">
+        <h3>📄 原始碼對照 (HTML & CSS)</h3>
+<pre>
+&lt;!-- HTML 結構 --&gt;
+&lt;div class="grid-container"&gt;
+    &lt;div class="grid-item header"&gt;Header&lt;/div&gt;
+    &lt;div class="grid-item left-sider"&gt;Left Sider&lt;/div&gt;
+    &lt;div class="grid-item main-content"&gt;Main Content&lt;/div&gt;
+    &lt;div class="grid-item right-sider"&gt;Right Sider&lt;/div&gt;
+    &lt;div class="grid-item footer"&gt;Footer&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+    /* 1. 設定容器為 12 欄網格 */
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr); /* 核心設定 */
+        gap: 15px; /* 設定網格間距 */
+    }
+
+    /* 2. 使用 grid-column: span 來合併欄位 */
+    .header {
+        grid-column: span 12; /* 滿寬 */
+    }
+
+    .left-sider {
+        grid-column: span 3;  /* 3/12 = 25% */
+    }
+
+    .main-content {
+        grid-column: span 6;  /* 6/12 = 50% */
+    }
+
+    .right-sider {
+        grid-column: span 3;  /* 3/12 = 25% */
+    }
+
+    .footer {
+        grid-column: span 12; /* 滿寬 */
+    }
+&lt;/style&gt;
+</pre>
+    </div>
+</div>
+
+</body>
+</html>
