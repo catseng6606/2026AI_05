@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Error Demo</title>
+</head>
+<body>
+
+    <h1>JavaScript 錯誤示範 (Console Error)</h1>
+    <p>這個頁面包含一段錯誤的程式碼。請按下 <b>F12</b> 切換到 <b>Console (主控台)</b> 標籤，您會看到紅色的錯誤訊息。</p>
+
+    <hr>
+
+    <h3>故意製造錯誤的原始碼：</h3>
+    <pre>
+&lt;script&gt;
+    // 因為 abc 沒有被定義，這行會產生 ReferenceError
+    console.log(abc);
+&lt;/script&gt;
+    </pre>
+
+    <script>
+        // 故意呼叫一個不存在的變數
+        console.log(abc);
+    </script>
+
+</body>
+</html>
