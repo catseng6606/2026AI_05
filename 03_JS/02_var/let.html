@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS let 與 const 宣告</title>
+  </head>
+  <body>
+    <h1>JavaScript let 與 const 變數宣告教學</h1>
+    <p>請開啟瀏覽器開發者工具 (F12) 查看 Console 輸出結果。</p>
+
+    <hr />
+    <h3>原始碼參考：</h3>
+    <pre>
+&lt;script&gt;
+  // let 宣告的變數可以重新賦值
+  let i = 10;
+  console.log(i); // 10
+  i = 20;
+  console.log(i); // 20
+&lt;/script&gt;
+&lt;script&gt;
+  // const 宣告的是常數，不可重新賦值
+  const j = 30;
+  console.log(j); // 30
+  // j = 40; // 若將此行註解取消，會導致報錯：Uncaught TypeError: Assignment to constant variable.
+&lt;/script>
+    </pre>
+
+    <script>
+      let i = 10;
+      console.log(i); // 10
+      i = 20;
+      console.log(i); // 20
+    </script>
+    <script>
+      const j = 30;
+      console.log(j); // 30
+      // j = 40; // 註解此行以修正錯誤：Assignment to constant variable.
+    </script>
+  </body>
+</html>

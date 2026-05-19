@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS Learning Functions</title>
+  </head>
+  <body>
+    <h1>認識 JavaScript 函式 (Function)</h1>
+    <p>
+      函式（Function）是將一段具有特定功能、可重複使用的程式碼打包起來的區塊。當我們需要執行這段程式碼時，只需要「呼叫（Call）」該函式即可。
+    </p>
+
+    <h2>基本語法</h2>
+    <ul>
+      <li>
+        <strong>宣告無參數函式（函式宣告）：</strong> 使用
+        <code>function</code> 關鍵字，後面接函式名稱、小括號
+        <code>()</code>，以及用大括號 <code>{}</code> 包起來的程式碼區塊。
+      </li>
+      <li>
+        <strong>宣告帶有參數的函式（函式宣告）：</strong> 在小括號中定義參數名稱，函式內部便能使用此變數來處理不同的資料。
+      </li>
+      <li>
+        <strong>使用 let 宣告函式（函式表達式）：</strong> 使用 <code>let</code> 關鍵字宣告一個變數，將一個匿名函式賦值給該變數。之後便能透過該變數名稱加上 <code>()</code> 來呼叫此函式。
+      </li>
+      <li>
+        <strong>函式的回傳值（Return Value）：</strong> 在函式內部使用 <code>return</code> 關鍵字，可以將計算後的結果傳回給呼叫函式的地方，並且會立即結束該函式的執行。
+      </li>
+    </ul>
+
+    <h2>本頁面範例原始碼</h2>
+    <pre>
+&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+    &lt;title&gt;JS Learning Functions&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;script&gt;
+      // 1. 宣告無參數的函式 (函式宣告)
+      function sayHello() {
+        console.log("Hello!");
+      }
+
+      // 呼叫無參數的函式
+      sayHello();
+
+      // 2. 宣告帶有參數的函式 (函式宣告)
+      function sayHelloToSomeone(name) {
+        console.log("Hello, " + name + "!");
+      }
+
+      // 呼叫帶有參數的函式
+      sayHelloToSomeone("Alice");
+
+      // 3. 使用 let 定義函式變數 (函式表達式)
+      let sayHelloToGuest = function (guestName) {
+        console.log("Welcome, " + guestName + "!");
+      };
+
+      // 呼叫透過 let 宣告的函式
+      sayHelloToGuest("Bob");
+
+      // 4. 宣告帶有回傳值的函式
+      function cal(x, y) {
+        return x + y;
+      }
+
+      // 呼叫帶有回傳值的函式，並接收回傳值來使用
+      let result = cal(10, 20);
+      console.log("cal(10, 20) 的結果是: " + result);
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+    </pre>
+
+    <script>
+      // 1. 宣告無參數的函式 (函式宣告)
+      function sayHello() {
+        console.log("Hello!");
+      }
+
+      // 呼叫無參數的函式
+      sayHello();
+
+      // 2. 宣告帶有參數的函式 (函式宣告)
+      function sayHelloToSomeone(name) {
+        console.log("Hello, " + name + "!");
+      }
+
+      // 呼叫帶有參數的函式
+      sayHelloToSomeone("Alice");
+
+      // 3. 使用 let 定義函式變數 (函式表達式)
+      let sayHelloToGuest = function (guestName) {
+        console.log("Welcome, " + guestName + "!");
+      };
+
+      // 呼叫透過 let 宣告的函式
+      sayHelloToGuest("Bob");
+
+      // 4. 宣告帶有回傳值的函式
+      function cal(x, y) {
+        return x + y;
+      }
+
+      // 呼叫帶有回傳值的函式，並接收回傳值來使用
+      let result = cal(10, 20);
+      console.log("cal(10, 20) 的結果是: " + result);
+    </script>
+  </body>
+</html>

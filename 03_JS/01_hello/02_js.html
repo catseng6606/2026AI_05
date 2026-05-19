@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <h1 
+    onclick="javascript:console.log('h1')"
+    >
+    Hello, World! - 02
+</h1>
+    <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+    <script src="01_js.js"></script>
+    <script>
+        // 這裡是內嵌的 JavaScript 程式碼
+        let str = "Hello from the inline script!";
+        let str2 = " string2"; 
+        str = 'Hello from the inline script! (modified)';
+        str = str.toLowerCase();
+        str = str.toUpperCase();
+        str = str.replace("HELLO", "HI");
+        str = str + str2;
+        console.log(str);
+    </script>
+</body>
+
+</html>

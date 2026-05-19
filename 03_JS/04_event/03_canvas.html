@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS addEventListener - 畫布繪圖對比示範</title>
+    <!-- 引入 Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      canvas {
+        border: 2px dashed #6c757d;
+        background-color: #ffffff;
+        cursor: crosshair;
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+      }
+      pre {
+        background-color: #212529;
+        color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        max-height: 250px;
+        overflow-y: auto;
+      }
+      .coord-info {
+        font-family: monospace;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container my-5">
+      <h1 class="text-center mb-4">JS addEventListener 效果對比 (Canvas 繪圖)</h1>
+      <p class="lead text-center mb-5">
+        本範例展示了兩個 Canvas 畫布的對比。<b>畫布 A</b> 使用了 <code>addEventListener</code> 監聽滑鼠事件，實現了<b>塗鴉功能</b>與<b>即時滑鼠座標顯示</b>；而 <b>畫布 B</b> 則沒有監聽任何事件，滑鼠移入時無法取得座標，也無法進行任何繪圖互動。
+      </p>
+
+      <div class="row g-4">
+        <!-- 畫布 A：有綁定 addEventListener -->
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-success text-white">
+              <h5 class="card-title mb-0">畫布 A (已綁定 addEventListener)</h5>
+            </div>
+            <div class="card-body text-center">
+              <canvas id="canvasA" width="400" height="300"></canvas>
+              
+              <!-- 顯示當前座標 -->
+              <div class="alert alert-info mt-3 coord-info">
+                滑鼠座標：<span id="coordsA">X: -, Y: -</span>
+              </div>
+
+              <div class="mb-4">
+                <button class="btn btn-outline-danger btn-sm" id="clearA">清除畫布 A</button>
+              </div>
+              <hr />
+              <div class="text-start">
+                <h6>實體元件 HTML 結構：</h6>
+                <pre><code>&lt;canvas id="canvasA" width="400" height="300"&gt;&lt;/canvas&gt;
+&lt;div id="coordsA"&gt;滑鼠座標：X: -, Y: -&lt;/div&gt;</code></pre>
+                <h6>JavaScript 事件監聽代碼：</h6>
+                <pre><code>const canvasA = document.getElementById('canvasA');
+const ctxA = canvasA.getContext('2d');
+const coordsA = document.getElementById('coordsA');
+let isDrawingA = false;
+
+// 1. 監聽 mousedown (按下) -> 開始繪圖並畫點
+canvasA.addEventListener('mousedown', (e) => {
+  isDrawingA = true;
+  ctxA.beginPath();
+  ctxA.moveTo(e.offsetX, e.offsetY);
+  ctxA.lineTo(e.offsetX, e.offsetY); // 點擊時即時畫出一個點 (修正單點無反應 bug)
+  ctxA.stroke();
+});
+
+// 2. 監聽 mousemove (移動) -> 繪製線條並即時顯示滑鼠 X, Y 座標
+canvasA.addEventListener('mousemove', (e) => {
+  // 更新網頁上的滑鼠 X, Y 座標值
+  coordsA.textContent = `X: ${e.offsetX}, Y: ${e.offsetY}`;
+  
+  if (isDrawingA) {
+    ctxA.lineTo(e.offsetX, e.offsetY);
+    ctxA.stroke();
+  }
+});
+
+// 3. 監聽 mouseup (放開) 與 mouseleave (移出) -> 停止繪圖
+canvasA.addEventListener('mouseup', () => isDrawingA = false);
+canvasA.addEventListener('mouseleave', () => {
+  isDrawingA = false;
+  coordsA.textContent = 'X: -, Y: -'; // 重置座標顯示
+});</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 畫布 B：沒有綁定 addEventListener -->
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="card-title mb-0">畫布 B (未綁定 addEventListener)</h5>
+            </div>
+            <div class="card-body text-center">
+              <canvas id="canvasB" width="400" height="300"></canvas>
+              
+              <!-- 顯示當前座標 (畫布 B 沒有綁定事件，因此無法取得座標) -->
+              <div class="alert alert-secondary mt-3 coord-info text-muted">
+                滑鼠座標：<span id="coordsB">偵測不到 (無監聽器)</span>
+              </div>
+
+              <div class="mb-4">
+                <button class="btn btn-outline-secondary btn-sm" disabled>無法清除 (無效果)</button>
+              </div>
+              <hr />
+              <div class="text-start">
+                <h6>實體元件 HTML 結構：</h6>
+                <pre><code>&lt;canvas id="canvasB" width="400" height="300"&gt;&lt;/canvas&gt;
+&lt;div id="coordsB"&gt;滑鼠座標：偵測不到 (無監聽器)&lt;/div&gt;</code></pre>
+                <h6>JavaScript 事件監聽代碼：</h6>
+                <pre><code>// 畫布 B 沒有綁定任何 addEventListener
+// 因此無法更新滑鼠座標，也無法進行繪圖</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 引入 Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+      // === 畫布 A 邏輯 (有綁定 addEventListener) ===
+      const canvasA = document.getElementById('canvasA');
+      const ctxA = canvasA.getContext('2d');
+      const coordsA = document.getElementById('coordsA');
+      let isDrawingA = false;
+
+      // 設定畫筆樣式
+      ctxA.strokeStyle = '#198754'; // 綠色
+      ctxA.lineWidth = 3;
+      ctxA.lineCap = 'round';
+      ctxA.lineJoin = 'round';
+
+      // 監聽滑鼠按下
+      canvasA.addEventListener('mousedown', (e) => {
+        // 只允許滑鼠左鍵點擊繪圖 (e.button === 0)
+        if (e.button !== 0) return;
+        isDrawingA = true;
+        ctxA.beginPath();
+        ctxA.moveTo(e.offsetX, e.offsetY);
+        ctxA.lineTo(e.offsetX, e.offsetY); // 點擊時畫出一個點，避免點擊卻沒留筆跡的 bug
+        ctxA.stroke();
+      });
+
+      // 監聽滑鼠移動，同時更新 X, Y 座標顯示
+      canvasA.addEventListener('mousemove', (e) => {
+        coordsA.textContent = `X: ${e.offsetX}, Y: ${e.offsetY}`;
+        if (isDrawingA) {
+          ctxA.lineTo(e.offsetX, e.offsetY);
+          ctxA.stroke();
+        }
+      });
+
+      // 監聽滑鼠放開與離開畫布
+      canvasA.addEventListener('mouseup', () => (isDrawingA = false));
+      canvasA.addEventListener('mouseleave', () => {
+        isDrawingA = false;
+        coordsA.textContent = 'X: -, Y: -'; // 重置座標
+      });
+
+      // 清除畫布 A 按鈕
+      document.getElementById('clearA').addEventListener('click', () => {
+        ctxA.clearRect(0, 0, canvasA.width, canvasA.height);
+      });
+
+      // === 畫布 B 邏輯 (未綁定 addEventListener) ===
+      const canvasB = document.getElementById('canvasB');
+      const ctxB = canvasB.getContext('2d');
+
+      // 繪製初始提示文字
+      ctxB.font = '16px sans-serif';
+      ctxB.fillStyle = '#6c757d';
+      ctxB.textAlign = 'center';
+      ctxB.fillText('此畫布未綁定事件，無法繪圖', canvasB.width / 2, canvasB.height / 2);
+    </script>
+  </body>
+</html>

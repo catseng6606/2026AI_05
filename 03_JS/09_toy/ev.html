@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Event Listener 禪意與日常隱喻互動模擬器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* 自訂動畫效果 */
+        @keyframes ring-bell {
+            0%, 100% { transform: rotate(0); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-12deg); }
+            45% { transform: rotate(10deg); }
+            60% { transform: rotate(-8deg); }
+            75% { transform: rotate(4deg); }
+            90% { transform: rotate(-2deg); }
+        }
+        .animate-ring {
+            animation: ring-bell 0.8s ease-in-out;
+        }
+        @keyframes jump {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .animate-jump {
+            animation: jump 0.4s ease-out;
+        }
+        @keyframes laser-shoot {
+            0% { width: 0; opacity: 1; }
+            50% { width: 100%; opacity: 1; }
+            100% { width: 100%; opacity: 0; }
+        }
+        .animate-laser {
+            animation: laser-shoot 0.5s ease-out forwards;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-2px, 2px) rotate(-1deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            60% { transform: translate(-2px, -1px) rotate(-1deg); }
+            80% { transform: translate(2px, 2px) rotate(1deg); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+        /* 滾動條樣式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+                    <svg class="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        addEventListener <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full font-normal">教學沙盒</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">用直覺的日常隱喻，徹底聽懂 JS 事件驅動機制</p>
+                </div>
+            </div>
+            
+            <!-- 隱喻切換 Tab -->
+            <nav class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button onclick="switchTab('school')" id="tab-school" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow">
+                    🔔 學校鐘聲
+                </button>
+                <button onclick="switchTab('powers')" id="tab-powers" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                    ⚡ 賦予能力
+                </button>
+                <button onclick="switchTab('gear')" id="tab-gear" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                    ⚔️ 遊戲裝備
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側：視覺化互動模擬沙盒 (佔 7 格) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- 模擬器視窗 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[480px]">
+                <!-- 視窗標題列 -->
+                <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="text-xs text-slate-400 ml-2 font-medium">實境模擬畫布</span>
+                    </div>
+                    <span id="metaphor-badge" class="text-xs bg-indigo-500/10 text-indigo-400 px-2.5 py-0.5 rounded-md font-semibold border border-indigo-500/20">學校鐘聲</span>
+                </div>
+
+                <!-- 模擬內容展示區 -->
+                <div class="flex-grow p-6 flex flex-col justify-between relative overflow-hidden bg-slate-900/50">
+                    
+                    <!-- 1. 學校鐘聲模擬畫面 -->
+                    <div id="sandbox-school" class="sandbox-view flex flex-col justify-around h-full">
+                        <!-- 鐘聲核心發送點 -->
+                        <div class="flex flex-col items-center gap-2">
+                            <div id="school-bell" class="bg-slate-800 border-2 border-slate-700 p-6 rounded-full shadow-lg text-4xl transition-all duration-200 relative">
+                                🔔
+                                <div id="sound-waves" class="absolute inset-0 border border-amber-500/40 rounded-full scale-100 opacity-0 transition-all duration-500"></div>
+                            </div>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">下課鐘聲 (Event Target)</span>
+                        </div>
+
+                        <!-- 學生群 -->
+                        <div class="grid grid-cols-3 gap-4 max-w-md mx-auto w-full">
+                            <div id="student-1" class="student bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-300">
+                                <span class="text-3xl" id="student-emoji-1">😴</span>
+                                <span class="text-xs font-bold text-slate-300">小明</span>
+                                <span class="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded" id="student-status-1">昏睡中</span>
+                            </div>
+                            <div id="student-2" class="student bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-300">
+                                <span class="text-3xl" id="student-emoji-2">😴</span>
+                                <span class="text-xs font-bold text-slate-300">小華</span>
+                                <span class="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded" id="student-status-2">放空中</span>
+                            </div>
+                            <div id="student-3" class="student bg-slate-800/80 border border-slate-700 p-4 rounded-xl flex flex-col items-center gap-2 transition-all duration-300">
+                                <span class="text-3xl" id="student-emoji-3">😴</span>
+                                <span class="text-xs font-bold text-slate-300">小美</span>
+                                <span class="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded" id="student-status-3">滑手機</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 賦予能力模擬畫面 -->
+                    <div id="sandbox-powers" class="sandbox-view hidden flex flex-col justify-around h-full">
+                        <!-- 核心目標：神奇按鈕 -->
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="relative">
+                                <!-- 雷射特效 -->
+                                <div id="laser-effect" class="absolute top-1/2 left-1/2 -translate-y-1/2 bg-red-500 h-2 w-0 rounded-full blur-[1px] hidden"></div>
+                                <!-- 火焰特效 -->
+                                <div id="fire-effect" class="absolute -top-12 left-1/2 -translate-x-1/2 text-4xl hidden transition-all">🔥</div>
+                                
+                                <button id="power-hero" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 border-2 border-indigo-400 p-8 rounded-2xl shadow-xl shadow-indigo-600/20 text-4xl transition-all duration-100 relative group">
+                                    🤖
+                                </button>
+                            </div>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">神奇機器人 (Target)</span>
+                        </div>
+
+                        <!-- 顯現能力特效區 -->
+                        <div class="text-center">
+                            <p id="hero-action-text" class="text-sm font-medium text-slate-400">機器人目前靜止無神，試著賦予它能力並點擊它！</p>
+                        </div>
+                    </div>
+
+                    <!-- 3. 遊戲裝備模擬畫面 -->
+                    <div id="sandbox-gear" class="sandbox-view hidden flex flex-col justify-around h-full">
+                        <div class="flex items-center justify-between gap-4 px-4">
+                            <!-- RPG 角色 -->
+                            <div id="game-hero" class="flex flex-col items-center gap-2 border border-slate-700/60 bg-slate-800/40 p-4 rounded-2xl w-36 relative transition-all duration-200">
+                                <span class="text-5xl" id="hero-avatar">🧙‍♂️</span>
+                                <span class="text-xs font-bold text-slate-200">大魔導士</span>
+                                <div class="flex gap-1" id="hero-buffs">
+                                    <!-- 裝備 Buff 圖示 -->
+                                </div>
+                            </div>
+
+                            <div class="text-slate-500 text-xl font-bold">VS</div>
+
+                            <!-- 怪物卡 -->
+                            <button id="monster-btn" class="flex flex-col items-center gap-2 border-2 border-red-500/40 hover:border-red-500 bg-red-950/20 hover:bg-red-950/40 p-4 rounded-2xl w-36 transition-all duration-200 cursor-pointer active:scale-95">
+                                <span class="text-5xl animate-bounce">👹</span>
+                                <span class="text-xs font-bold text-red-400">點擊怪物 (Click)</span>
+                                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-red-500 h-full w-full" id="monster-hp"></div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- 戰鬥紀錄日誌 -->
+                        <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 h-20 overflow-y-auto text-xs code-font text-emerald-400" id="battle-log">
+                            * 冒險開始。點擊怪物會發生什麼事呢？
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 互動控制面板 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> 操控台 (Controller Panel)
+                </h3>
+                
+                <!-- 1. 學校鐘聲控制組 -->
+                <div id="controls-school" class="control-group flex flex-wrap gap-3">
+                    <button onclick="addSchoolRule()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition shadow-lg shadow-emerald-600/20">
+                        建立下課規定 (addEventListener)
+                    </button>
+                    <button onclick="removeSchoolRule()" class="flex-1 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition shadow-lg shadow-rose-600/20">
+                        解除下課規定 (removeEventListener)
+                    </button>
+                    <button onclick="triggerSchoolBell()" class="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 px-4 py-3 rounded-xl text-sm font-bold transition shadow-lg shadow-amber-500/20">
+                        🔔 敲響下課鐘 (Trigger Click Event)
+                    </button>
+                </div>
+
+                <!-- 2. 賦予能力控制組 -->
+                <div id="controls-powers" class="control-group hidden flex flex-col gap-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="border border-slate-800 p-3 rounded-xl flex items-center justify-between bg-slate-950/50">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">🔥 噴火能力</h4>
+                                <p class="text-[10px] text-slate-500">對應事件: click</p>
+                            </div>
+                            <input type="checkbox" id="power-toggle-fire" onchange="togglePower('fire')" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer">
+                        </div>
+                        <div class="border border-slate-800 p-3 rounded-xl flex items-center justify-between bg-slate-950/50">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">⚡ 雷射眼</h4>
+                                <p class="text-[10px] text-slate-500">對應事件: click</p>
+                            </div>
+                            <input type="checkbox" id="power-toggle-laser" onchange="togglePower('laser')" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer">
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 text-center">打勾 = <span class="text-emerald-400 code-font">addEventListener</span> / 拿掉勾 = <span class="text-rose-400 code-font">removeEventListener</span></p>
+                </div>
+
+                <!-- 3. 遊戲裝備控制組 -->
+                <div id="controls-gear" class="control-group hidden flex flex-col gap-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- 裝備：烈焰斗篷 -->
+                        <div class="border border-slate-800 p-3 rounded-xl bg-slate-950/50 flex flex-col justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-lg">🧥</span>
+                                    <h4 class="text-xs font-bold text-slate-200">烈焰斗篷</h4>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">效果：當受到物理攻擊 (Click) 時，自動噴火球</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="equipGear('cloak')" id="btn-equip-cloak" class="flex-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold py-1 px-2 rounded">穿戴 (Add)</button>
+                                <button onclick="unequipGear('cloak')" id="btn-unequip-cloak" class="flex-1 bg-slate-800/40 text-slate-500 text-[10px] font-bold py-1 px-2 rounded cursor-not-allowed" disabled>卸下 (Remove)</button>
+                            </div>
+                        </div>
+
+                        <!-- 裝備：荊棘戒指 -->
+                        <div class="border border-slate-800 p-3 rounded-xl bg-slate-950/50 flex flex-col justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-lg">💍</span>
+                                    <h4 class="text-xs font-bold text-slate-200">荊棘戒指</h4>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1">效果：當受到物理攻擊 (Click) 時，反彈尖刺傷害</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="equipGear('ring')" id="btn-equip-ring" class="flex-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold py-1 px-2 rounded">穿戴 (Add)</button>
+                                <button onclick="unequipGear('ring')" id="btn-unequip-ring" class="flex-1 bg-slate-800/40 text-slate-500 text-[10px] font-bold py-1 px-2 rounded cursor-not-allowed" disabled>卸下 (Remove)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="unequipAllGear()" class="w-full bg-slate-800 hover:bg-slate-700 text-xs font-bold py-2 px-3 rounded-xl border border-slate-700 transition flex items-center justify-center gap-2">
+                            ❌ 一鍵全部卸下？ (嘗試呼叫大絕招)
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- 隱喻說明與程式碼對照 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex-grow flex flex-col gap-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-400">
+                    💡 隱喻核心原理 & 代碼同步
+                </h3>
+                
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex-grow overflow-y-auto">
+                    <!-- 1. 學校鐘聲說明 -->
+                    <div id="info-school" class="info-view flex flex-col gap-4">
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-amber-400">學校鐘聲隱喻：</strong><br>
+                            剛開學時，學生大腦裡還沒有建立任何制約反應。只有當學校<strong>建立了規定 (addEventListener)</strong>，把「聽見鐘聲」與「衝去福利社」兩件事連起來。鐘聲一響，這個動作才會成立。
+                        </p>
+                        <div class="border-t border-slate-800 pt-3">
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase">JavaScript 同步代碼：</span>
+                            <pre class="code-font text-xs text-emerald-400 mt-1 bg-slate-900 p-3 rounded-lg overflow-x-auto" id="code-school">
+// 尚未建立規定</pre>
+                        </div>
+                    </div>
+
+                    <!-- 2. 賦予能力說明 -->
+                    <div id="info-powers" class="info-view hidden flex flex-col gap-4">
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-amber-400">賦予與解除能力：</strong><br>
+                            網頁上的 HTML 物件預設是沒有靈魂的。我們透過 <code class="code-font text-indigo-400 text-xs">addEventListener</code> 賦予它一種「超能力（也就是函式）」，當外界刺激發生時它才能施展超能力。隨時可以用 <code class="code-font text-indigo-400 text-xs">removeEventListener</code> 剝奪它。
+                        </p>
+                        <div class="border-t border-slate-800 pt-3">
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase">JavaScript 同步代碼：</span>
+                            <pre class="code-font text-xs text-emerald-400 mt-1 bg-slate-900 p-3 rounded-lg overflow-x-auto" id="code-powers">
+// 尚未勾選能力</pre>
+                        </div>
+                    </div>
+
+                    <!-- 3. 遊戲裝備說明 -->
+                    <div id="info-gear" class="info-view hidden flex flex-col gap-4">
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-amber-400">遊戲裝備與被動技能：</strong><br>
+                            裝備（監聽器）具有被動技能（Function），在怪物攻擊（Click）時自動觸發。如果想要解除，必須精確點名卸下哪一件裝備。這也解釋了為什麼不能「隨便一鍵脫光」。
+                        </p>
+                        <div class="border-t border-slate-800 pt-3">
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase">JavaScript 同步代碼：</span>
+                            <pre class="code-font text-xs text-emerald-400 mt-1 bg-slate-900 p-3 rounded-lg overflow-x-auto" id="code-gear">
+// 尚未穿戴任何裝備</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模擬的 Console 輸出面板 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg h-[180px] flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 模擬瀏覽器主機板 (Live Console)
+                    </span>
+                    <button onclick="clearConsole()" class="text-[10px] text-slate-500 hover:text-slate-300 transition uppercase font-semibold">
+                        [ 清除紀錄 ]
+                    </button>
+                </div>
+                <div id="console-output" class="flex-grow bg-slate-950 rounded-xl p-3 overflow-y-auto text-xs code-font text-emerald-400 border border-slate-800 flex flex-col gap-1">
+                    <span class="text-slate-500">&gt; 沙盒控制台初始化完成。</span>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="border-t border-slate-900 py-4 text-center text-xs text-slate-600">
+        JS Event Listener Metaphor Sandbox • 探索程式的禪意與邏輯
+    </footer>
+
+    <script>
+        // --- 全域變數狀態管理 ---
+        let currentTab = 'school';
+        
+        // 1. 學校鐘聲狀態
+        let hasSchoolRule = false;
+
+        // 2. 機器人能力狀態
+        let powersState = {
+            fire: false,
+            laser: false
+        };
+
+        // 3. 遊戲裝備狀態
+        let equippedGears = {
+            cloak: false, // 烈焰斗篷
+            ring: false   // 荊棘戒指
+        };
+        let monsterHp = 100;
+
+        // --- Console 模擬功能 ---
+        function writeLog(message, type = 'info') {
+            const consoleBox = document.getElementById('console-output');
+            const logItem = document.createElement('span');
+            
+            if (type === 'success') {
+                logItem.className = 'text-emerald-400';
+                logItem.innerHTML = `&gt; <span class="bg-emerald-500/10 px-1 py-0.5 rounded text-[10px] text-emerald-300 font-bold mr-1">SUCCESS</span> ${message}`;
+            } else if (type === 'error') {
+                logItem.className = 'text-rose-400';
+                logItem.innerHTML = `&gt; <span class="bg-rose-500/10 px-1 py-0.5 rounded text-[10px] text-rose-300 font-bold mr-1">ERROR</span> ${message}`;
+            } else if (type === 'warn') {
+                logItem.className = 'text-amber-400';
+                logItem.innerHTML = `&gt; <span class="bg-amber-500/10 px-1 py-0.5 rounded text-[10px] text-amber-300 font-bold mr-1">WARN</span> ${message}`;
+            } else {
+                logItem.className = 'text-slate-300';
+                logItem.innerHTML = `&gt; ${message}`;
+            }
+            
+            consoleBox.appendChild(logItem);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '<span class="text-slate-500">&gt; 主機板已清空。</span>';
+        }
+
+        // --- Tab 切換功能 ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            
+            // 1. 更新導航按鈕樣式
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
+            });
+            const activeTabBtn = document.getElementById(`tab-${tabId}`);
+            activeTabBtn.className = "tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-indigo-600 text-white shadow";
+
+            // 2. 切換左側模擬畫布
+            document.querySelectorAll('.sandbox-view').forEach(view => view.classList.add('hidden'));
+            document.getElementById(`sandbox-${tabId}`).classList.remove('hidden');
+
+            // 3. 切換下控制面板
+            document.querySelectorAll('.control-group').forEach(ctrl => ctrl.classList.add('hidden'));
+            document.getElementById(`controls-${tabId}`).classList.remove('hidden');
+
+            // 4. 切換右側說明
+            document.querySelectorAll('.info-view').forEach(info => info.classList.add('hidden'));
+            document.getElementById(`info-${tabId}`).classList.remove('hidden');
+
+            // 5. 更新標記
+            const badges = {
+                school: '🔔 學校鐘聲',
+                powers: '⚡ 賦予能力',
+                gear: '⚔️ 遊戲裝備'
+            };
+            document.getElementById('metaphor-badge').innerText = badges[tabId];
+
+            writeLog(`切換到隱喻情境：[ ${badges[tabId]} ]`);
+            syncCode();
+        }
+
+        // --- 1. 學校鐘聲機制實作 ---
+        function syncCodeSchool() {
+            const codeBox = document.getElementById('code-school');
+            if (hasSchoolRule) {
+                codeBox.innerHTML = `
+<span class="text-slate-500">// 1. 定義學生的反應 (下課要做的事)</span>
+<span class="text-blue-400">function</span> <span class="text-yellow-400">goOffClass</span>() {
+    student.status = <span class="text-amber-300">'衝去福利社'</span>;
+    student.emoji = <span class="text-amber-300">'🏃‍♂️🎉'</span>;
+}
+
+<span class="text-slate-500">// 2. 用 addEventListener 賦予制約能力</span>
+schoolBell.<span class="text-cyan-400">addEventListener</span>(<span class="text-amber-300">'ring'</span>, goOffClass);
+
+<span class="text-slate-500">// 現狀：學生大腦中已綁定制約規定 ✅</span>
+                `.trim();
+            } else {
+                codeBox.innerHTML = `
+<span class="text-slate-500">// 1. 定義反應函式</span>
+<span class="text-blue-400">function</span> <span class="text-yellow-400">goOffClass</span>() { ... }
+
+<span class="text-slate-500">// 2. 尚未建立連結... 
+// 學校大腦一片空白，沒寫 addEventListener</span>
+
+<span class="text-slate-500">// 現狀：學生沒聽到任何指令，鐘響也不會有反應 ❌</span>
+                `.trim();
+            }
+        }
+
+        function addSchoolRule() {
+            if (hasSchoolRule) {
+                writeLog("重複綁定！學生早就有了這個能力了，再次 addEventListener 會重複穿戴同個裝備哦。", "warn");
+                return;
+            }
+            hasSchoolRule = true;
+            writeLog("成功呼叫 addEventListener('ring', goOffClass)！已成功賦予學生聽到鐘聲就衝福利社的能力！", "success");
+            syncCodeSchool();
+        }
+
+        function removeSchoolRule() {
+            if (!hasSchoolRule) {
+                writeLog("無法解除！根本還沒有建立規定喔。", "error");
+                return;
+            }
+            hasSchoolRule = false;
+            
+            // 將學生狀態復原
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`student-emoji-${i}`).innerText = "😴";
+                document.getElementById(`student-status-${i}`).innerText = "回到昏睡";
+            }
+            
+            writeLog("成功呼叫 removeEventListener('ring', goOffClass)！解除學生的下課制約，現在隨便鐘響他們都沒反應了。", "success");
+            syncCodeSchool();
+        }
+
+        function triggerSchoolBell() {
+            const bell = document.getElementById('school-bell');
+            const waves = document.getElementById('sound-waves');
+            
+            // 鐘聲搖晃動畫
+            bell.classList.remove('animate-ring');
+            void bell.offsetWidth; // 強制重繪
+            bell.classList.add('animate-ring');
+
+            // 聲波動畫
+            waves.classList.remove('scale-100', 'opacity-0');
+            waves.classList.add('scale-150', 'opacity-100');
+            setTimeout(() => {
+                waves.classList.remove('scale-150', 'opacity-100');
+                waves.classList.add('scale-100', 'opacity-0');
+            }, 500);
+
+            writeLog("📢 咚！咚！咚！鐘聲敲響了 (事件 Trigger 成功)！");
+
+            if (hasSchoolRule) {
+                writeLog("學生的耳朵(能聞)聽見了鐘聲(所聞)！下課制約被激活了！", "success");
+                
+                // 學生開心的跳動與變換表情
+                for (let i = 1; i <= 3; i++) {
+                    const card = document.getElementById(`student-${i}`);
+                    const emoji = document.getElementById(`student-emoji-${i}`);
+                    const status = document.getElementById(`student-status-${i}`);
+                    
+                    card.classList.remove('animate-jump');
+                    void card.offsetWidth;
+                    card.classList.add('animate-jump');
+                    
+                    // 隨機開心的表情
+                    const studentEmojis = ['🏃‍♂️', '🏃‍♀️', '🥳'];
+                    emoji.innerText = studentEmojis[i-1];
+                    status.innerText = "衝去福利社！";
+                    status.className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold";
+                }
+            } else {
+                writeLog("雖然鐘聲在虛空響起(所聞升起)，但學生大腦沒綁定反應(能聞不生)。什麼事都沒發生...", "warn");
+                for (let i = 1; i <= 3; i++) {
+                    const emoji = document.getElementById(`student-emoji-${i}`);
+                    const status = document.getElementById(`student-status-${i}`);
+                    emoji.innerText = "😴";
+                    status.innerText = "繼續睡/無視";
+                    status.className = "text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded";
+                }
+            }
+        }
+
+        // --- 2. 賦予與解除能力機制實作 ---
+        function syncCodePowers() {
+            const codeBox = document.getElementById('code-powers');
+            let codes = ``;
+            
+            if (!powersState.fire && !powersState.laser) {
+                codes = `<span class="text-slate-500">// 機器人目前沒有綁定任何監聽器</span>\n<span class="text-slate-500">// 它只是一個普通的 HTML 物件</span>`;
+            } else {
+                if (powersState.fire) {
+                    codes += `
+<span class="text-slate-500">// 賦予點擊會噴火的能力</span>
+robot.<span class="text-cyan-400">addEventListener</span>(<span class="text-amber-300">'click'</span>, spitFire);
+                    `.trim() + "\n";
+                }
+                if (powersState.laser) {
+                    codes += `
+<span class="text-slate-500">// 賦予點擊會發射雷射的能力</span>
+robot.<span class="text-cyan-400">addEventListener</span>(<span class="text-amber-300">'click'</span>, shootLaser);
+                    `.trim();
+                }
+            }
+            codeBox.innerHTML = codes;
+        }
+
+        function togglePower(powerType) {
+            const isChecked = document.getElementById(`power-toggle-${powerType}`).checked;
+            powersState[powerType] = isChecked;
+            
+            if (isChecked) {
+                writeLog(`呼叫 addEventListener('click', ${powerType === 'fire' ? 'spitFire' : 'shootLaser'})！賦予機器人新的能力！`, "success");
+            } else {
+                writeLog(`呼叫 removeEventListener('click', ${powerType === 'fire' ? 'spitFire' : 'shootLaser'})！成功收回能力。`, "success");
+            }
+
+            // 更新機器人身上的視覺引導
+            const textEl = document.getElementById('hero-action-text');
+            if (powersState.fire && powersState.laser) {
+                textEl.innerText = "🤖 哇！機器人現在同時具有「噴火」和「雷射」的能力了！快點他！";
+            } else if (powersState.fire) {
+                textEl.innerText = "🤖 機器人具備了「噴火」的能力！快點他試試看。";
+            } else if (powersState.laser) {
+                textEl.innerText = "🤖 機器人擁有了「射擊雷射」的能力！快點他！";
+            } else {
+                textEl.innerText = "機器人目前靜止無神，試著賦予它能力並點擊它！";
+            }
+
+            syncCodePowers();
+        }
+
+        // 當點擊機器人（事件發生）
+        document.getElementById('power-hero').addEventListener('click', function() {
+            const hero = document.getElementById('power-hero');
+            
+            // 搖晃動畫
+            hero.classList.remove('animate-shake');
+            void hero.offsetWidth;
+            hero.classList.add('animate-shake');
+
+            writeLog("💥 使用者點擊了機器人！ (Click 事件發生)");
+
+            let hasDoneAnything = false;
+
+            if (powersState.fire) {
+                hasDoneAnything = true;
+                writeLog("👉 [噴火能力被觸發] 呼，熱呼呼的火焰噴了出來！🔥", "success");
+                const fire = document.getElementById('fire-effect');
+                fire.classList.remove('hidden');
+                setTimeout(() => fire.classList.add('hidden'), 1000);
+            }
+
+            if (powersState.laser) {
+                hasDoneAnything = true;
+                writeLog("👉 [雷射眼能力被觸發] 嗶嗶嗶，雙眼發射高能量雷射！⚡", "success");
+                const laser = document.getElementById('laser-effect');
+                laser.classList.remove('hidden');
+                laser.classList.remove('animate-laser');
+                void laser.offsetWidth;
+                laser.classList.add('animate-laser');
+                setTimeout(() => laser.classList.add('hidden'), 500);
+            }
+
+            if (!hasDoneAnything) {
+                writeLog("機器人：... (因為你沒有給它任何能力，所以被點了也只能像個無魂稻草人)", "warn");
+            }
+        });
+
+        // --- 3. 遊戲裝備被動技能機制實作 ---
+        function syncCodeGear() {
+            const codeBox = document.getElementById('code-gear');
+            let codes = ``;
+            
+            if (!equippedGears.cloak && !equippedGears.ring) {
+                codes = `<span class="text-slate-500">// 目前一絲不掛 (沒裝備監聽器)</span>\n<span class="text-slate-500">// 被攻擊了也不會有被動反應</span>`;
+            } else {
+                if (equippedGears.cloak) {
+                    codes += `
+<span class="text-slate-500">// 穿上烈焰斗篷 (點擊自動噴火球)</span>
+mage.<span class="text-cyan-400">addEventListener</span>(<span class="text-amber-300">'click'</span>, <span class="text-yellow-400">castFireball</span>);
+                    `.trim() + "\n";
+                }
+                if (equippedGears.ring) {
+                    codes += `
+<span class="text-slate-500">// 戴上荊棘戒指 (點擊自動反彈傷害)</span>
+mage.<span class="text-cyan-400">addEventListener</span>(<span class="text-amber-300">'click'</span>, <span class="text-yellow-400">reflectDamage</span>);
+                    `.trim();
+                }
+            }
+            codeBox.innerHTML = codes;
+        }
+
+        function equipGear(gearId) {
+            equippedGears[gearId] = true;
+            
+            // UI 按鈕狀態切換
+            document.getElementById(`btn-equip-${gearId}`).disabled = true;
+            document.getElementById(`btn-equip-${gearId}`).className = "flex-1 bg-slate-950 text-slate-600 text-[10px] font-bold py-1 px-2 rounded cursor-not-allowed";
+            document.getElementById(`btn-unequip-${gearId}`).disabled = false;
+            document.getElementById(`btn-unequip-${gearId}`).className = "flex-1 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold py-1 px-2 rounded";
+
+            // 角色卡上顯示 buff
+            const buffContainer = document.getElementById('hero-buffs');
+            const emoji = gearId === 'cloak' ? '🧥' : '💍';
+            const buffSpan = document.createElement('span');
+            buffSpan.id = `buff-${gearId}`;
+            buffSpan.className = "text-xs bg-slate-800 p-1 rounded border border-slate-700 animate-pulse";
+            buffSpan.innerText = emoji;
+            buffContainer.appendChild(buffSpan);
+
+            const gearName = gearId === 'cloak' ? '【烈焰斗篷】' : '【荊棘戒指】';
+            const actionName = gearId === 'cloak' ? 'castFireball (火球術)' : 'reflectDamage (刺傷反彈)';
+            writeLog(`穿上裝備：${gearName}！綁定點擊觸發被動技能 ${actionName}`, "success");
+            
+            const battleLog = document.getElementById('battle-log');
+            battleLog.innerHTML += `<br>* 獲得裝備 ${gearName}，解鎖新被動技能！`;
+            battleLog.scrollTop = battleLog.scrollHeight;
+
+            syncCodeGear();
+        }
+
+        function unequipGear(gearId) {
+            equippedGears[gearId] = false;
+
+            // UI 按鈕狀態切換
+            document.getElementById(`btn-equip-${gearId}`).disabled = false;
+            document.getElementById(`btn-equip-${gearId}`).className = "flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold py-1 px-2 rounded";
+            document.getElementById(`btn-unequip-${gearId}`).disabled = true;
+            document.getElementById(`btn-unequip-${gearId}`).className = "flex-1 bg-slate-800/40 text-slate-500 text-[10px] font-bold py-1 px-2 rounded cursor-not-allowed";
+
+            // 移除 buff
+            const buff = document.getElementById(`buff-${gearId}`);
+            if (buff) buff.remove();
+
+            const gearName = gearId === 'cloak' ? '【烈焰斗篷】' : '【荊棘戒指】';
+            const actionName = gearId === 'cloak' ? 'castFireball (火球術)' : 'reflectDamage (刺傷反彈)';
+            writeLog(`脫下裝備：${gearName}！解除被動監聽：removeEventListener('click', ${actionName})`, "success");
+            
+            const battleLog = document.getElementById('battle-log');
+            battleLog.innerHTML += `<br>* 脫下裝備 ${gearName}，失去該被動能力。`;
+            battleLog.scrollTop = battleLog.scrollHeight;
+
+            syncCodeGear();
+        }
+
+        // 嘗試一鍵脫光（解除全部監聽）的失敗示範
+        function unequipAllGear() {
+            writeLog("你對程式大喊：『我要脫掉全身的防具(一鍵解除 click)！』", "warn");
+            writeLog("程式：『❌ 失敗！removeEventListener 必須一件一件精確指出【裝備名稱】才能卸載。』", "error");
+            
+            const battleLog = document.getElementById('battle-log');
+            battleLog.innerHTML += `<br><span class="text-rose-400">* 錯誤：不可一鍵卸下。必須指名道姓你要解除哪一個 (例如 castFireball)！</span>`;
+            battleLog.scrollTop = battleLog.scrollHeight;
+        }
+
+        // 點擊怪物 (觸發事件點)
+        document.getElementById('monster-btn').addEventListener('click', function() {
+            writeLog("⚔️ 你發起了攻擊！怪物大吼著揮棒反擊！(引發 click 物理碰撞)");
+            
+            const battleLog = document.getElementById('battle-log');
+            battleLog.innerHTML += `<br><br><span class="text-red-400">☠️ 怪物進行了反擊！(Click 碰撞觸發)</span>`;
+            
+            // 角色稍微晃動表示被打
+            const heroAvatar = document.getElementById('game-hero');
+            heroAvatar.classList.remove('animate-shake');
+            void heroAvatar.offsetWidth;
+            heroAvatar.classList.add('animate-shake');
+
+            // 檢查被動裝備反擊
+            if (equippedGears.cloak) {
+                writeLog("🔥 烈焰斗篷被動觸發：對怪物施放了【火球術】！造成 35 點傷害。");
+                battleLog.innerHTML += `<br><span class="text-amber-400">🔥 烈焰斗篷自動反噴火球！怪物受到 35 點傷害！</span>`;
+                dealMonsterDamage(35);
+            }
+            if (equippedGears.ring) {
+                writeLog("💍 荊棘戒指被動觸發：反彈了【銳利刺傷】！造成 15 點刺痛傷害。");
+                battleLog.innerHTML += `<br><span class="text-cyan-400">💍 荊棘戒指尖刺伸出！怪物受到 15 點反彈傷害！</span>`;
+                dealMonsterDamage(15);
+            }
+
+            if (!equippedGears.cloak && !equippedGears.ring) {
+                writeLog("你沒穿任何被動防具，白白捱了一棍，沒有任何反擊發生！", "warn");
+                battleLog.innerHTML += `<br><span class="text-slate-400">* 因為你身上沒有穿戴任何對應 click 的被動裝備，你只能默默承受。</span>`;
+            }
+
+            battleLog.scrollTop = battleLog.scrollHeight;
+        });
+
+        function dealMonsterDamage(val) {
+            monsterHp = Math.max(0, monsterHp - val);
+            document.getElementById('monster-hp').style.width = `${monsterHp}%`;
+            
+            if (monsterHp <= 0) {
+                const battleLog = document.getElementById('battle-log');
+                battleLog.innerHTML += `<br><span class="text-yellow-400 font-bold">🏆 恭喜！怪物被你的被動技能成功彈死了！</span>`;
+                writeLog("🏆 怪物血量歸零！被動反擊大成功！");
+                
+                // 重置怪物
+                setTimeout(() => {
+                    monsterHp = 100;
+                    document.getElementById('monster-hp').style.width = `100%`;
+                    battleLog.innerHTML += `<br>* 一隻全新的怪物野蠻地出生了...`;
+                }, 2000);
+            }
+        }
+
+        // --- 全域同步調度 ---
+        function syncCode() {
+            if (currentTab === 'school') syncCodeSchool();
+            else if (currentTab === 'powers') syncCodePowers();
+            else if (currentTab === 'gear') syncCodeGear();
+        }
+
+        // 初始化
+        window.onload = function() {
+            syncCode();
+            writeLog("教案模擬器就緒。點擊上方 Tabs 來切換隱喻吧！");
+        }
+    </script>
+</body>
+</html>
