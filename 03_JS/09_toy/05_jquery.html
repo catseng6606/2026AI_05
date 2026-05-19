@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一眼看懂 jQuery！互動式視覺化學習樂園</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        pre, code {
+            font-family: 'Fira Code', monospace;
+        }
+        /* 微光動畫 */
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.4)); }
+            50% { filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.8)); }
+        }
+        .glow-active {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wider text-white flex items-center gap-2">
+                        jQuery <span class="text-blue-400">視覺化</span>原理鏡子
+                    </h1>
+                    <p class="text-xs text-slate-400">用圖形與射線，一眼看懂 jQuery 選擇器、鏈式寫法與事件！</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full">
+                    學生專屬・直覺教學版
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要工作區 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側控制面板 (占 5 格) -->
+        <section class="lg:col-span-5 flex flex-col gap-5">
+            
+            <!-- 教學概念切換 -->
+            <div class="bg-slate-900 p-1.5 rounded-xl border border-slate-800 flex gap-1 shadow-inner">
+                <button data-tab="selector" class="concept-tab flex-1 py-3 px-2 rounded-lg text-xs font-bold transition-all flex flex-col items-center gap-1 bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                    <i class="fa-solid fa-bullseye text-sm"></i>
+                    <span>1. 選擇器匹配</span>
+                </button>
+                <button data-tab="chaining" class="concept-tab flex-1 py-3 px-2 rounded-lg text-xs font-bold transition-all flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+                    <i class="fa-solid fa-link text-sm"></i>
+                    <span>2. 鏈式寫法</span>
+                </button>
+                <button data-tab="events" class="concept-tab flex-1 py-3 px-2 rounded-lg text-xs font-bold transition-all flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+                    <i class="fa-solid fa-bolt text-sm"></i>
+                    <span>3. 事件與泡沫</span>
+                </button>
+            </div>
+
+            <!-- 概念操作面板 -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between shadow-xl min-h-[380px]">
+                
+                <!-- 1. 選擇器匹配面板 -->
+                <div id="panel-selector" class="concept-panel flex flex-col gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">概念一</span>
+                            <h2 class="text-lg font-bold text-white">jQuery 到底在「選」什麼？</h2>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            jQuery 最強大的地方在於 <code class="text-yellow-400">$()</code> 函數。它會掃描整個 HTML DOM 樹，並把符合條件的元素「打包成一個陣列群組」，讓你可以一次控制全部！
+                        </p>
+                    </div>
+
+                    <div class="border-t border-slate-800 pt-4 flex flex-col gap-2.5">
+                        <label class="text-xs font-bold text-slate-300">💡 點選下方代碼，發射「jQuery 尋找射線」：</label>
+                        <div class="flex flex-col gap-2">
+                            <button class="selector-trigger-btn bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left p-3 rounded-xl transition duration-150 flex justify-between items-center group" data-selector="div">
+                                <span class="font-mono text-xs text-blue-400 font-bold">$('div')</span>
+                                <span class="text-[10px] text-slate-400 group-hover:text-blue-300">選取所有 div 元素 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            </button>
+                            <button class="selector-trigger-btn bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left p-3 rounded-xl transition duration-150 flex justify-between items-center group" data-selector=".box">
+                                <span class="font-mono text-xs text-emerald-400 font-bold">$('.box')</span>
+                                <span class="text-[10px] text-slate-400 group-hover:text-emerald-300">選取有 .box 類別的元素 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            </button>
+                            <button class="selector-trigger-btn bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left p-3 rounded-xl transition duration-150 flex justify-between items-center group" data-selector="#target">
+                                <span class="font-mono text-xs text-amber-400 font-bold">$('#target')</span>
+                                <span class="text-[10px] text-slate-400 group-hover:text-amber-300">選取 ID 為 target 的元素 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            </button>
+                            <button class="selector-trigger-btn bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left p-3 rounded-xl transition duration-150 flex justify-between items-center group" data-selector="span">
+                                <span class="font-mono text-xs text-purple-400 font-bold">$('span')</span>
+                                <span class="text-[10px] text-slate-400 group-hover:text-purple-300">選取所有的 span 標籤 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 鏈式寫法 Chaining 面板 -->
+                <div id="panel-chaining" class="concept-panel hidden flex flex-col gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">概念二</span>
+                            <h2 class="text-lg font-bold text-white">神奇的鏈式寫法 (Chaining)</h2>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            在 jQuery 中，大部分的方法都會<strong>回傳 jQuery 物件本身</strong>。這意味著你可以像火車一樣，把好幾個指令連在一起寫，不需要重複選取元素！
+                        </p>
+                    </div>
+
+                    <div class="border-t border-slate-800 pt-3 flex flex-col gap-3">
+                        <label class="text-xs font-bold text-slate-300">📦 自由拼裝你的 jQuery 火車指令：</label>
+                        
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-wrap items-center gap-1.5 font-mono text-xs">
+                            <span class="text-blue-400 font-bold">$('.box')</span>
+                            <span class="text-slate-500 animate-pulse">➔</span>
+                            <select id="chain-step-1" class="bg-slate-800 text-emerald-400 font-bold border border-slate-700 rounded px-1.5 py-1">
+                                <option value="css">.css('color','黃')</option>
+                                <option value="none">無動作</option>
+                            </select>
+                            <span class="text-slate-500">➔</span>
+                            <select id="chain-step-2" class="bg-slate-800 text-amber-400 font-bold border border-slate-700 rounded px-1.5 py-1">
+                                <option value="animate">.animate(位移)</option>
+                                <option value="none">無動作</option>
+                            </select>
+                            <span class="text-slate-500">➔</span>
+                            <select id="chain-step-3" class="bg-slate-800 text-purple-400 font-bold border border-slate-700 rounded px-1.5 py-1">
+                                <option value="text">.text('改變了!')</option>
+                                <option value="none">無動作</option>
+                            </select>
+                        </div>
+
+                        <button id="btn-run-chain" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play animate-bounce-horizontal"></i> 發送「Chaining 能量流」！
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. 事件與泡沫面板 -->
+                <div id="panel-events" class="concept-panel hidden flex flex-col gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">概念三</span>
+                            <h2 class="text-lg font-bold text-white">監聽與事件泡沫化 (Bubbling)</h2>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            當你點擊畫面上的小標籤時，這個「點擊事件」會像水底的氣泡一樣，<strong>一層層往上傳播（泡沫化）</strong>到父層容器。jQuery 可以在任何一層攔截它！
+                        </p>
+                    </div>
+
+                    <div class="border-t border-slate-800 pt-4 flex flex-col gap-3">
+                        <label class="text-xs font-bold text-slate-300">📢 測試事件機制：</label>
+                        <p class="text-[11px] text-slate-400">
+                            試著用滑鼠<strong>點擊右邊 Canvas 畫布中</strong>、包在裡面的 <span class="text-purple-400 font-mono font-bold">&lt;span&gt; 標籤</span> 或外面的 <span class="text-emerald-400 font-mono font-bold">&lt;div&gt; 容器</span>！
+                        </p>
+                        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex flex-col gap-1.5 text-xs">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">當前點擊目標：</span>
+                                <span id="event-target-display" class="font-mono text-purple-400 font-bold">等待點擊...</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400">冒泡路徑：</span>
+                                <span id="event-bubble-path" class="font-mono text-slate-300">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部動態註解 -->
+                <div class="border-t border-slate-800 pt-3 mt-4 flex items-center gap-2 text-[11px] text-slate-500">
+                    <i class="fa-solid fa-graduation-cap text-blue-500"></i>
+                    <span id="explanation-text">點選上方項目開始學習！</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 右側畫布與視覺化呈現 (占 7 格) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- Canvas 展示盒 -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl flex flex-col">
+                <div class="bg-slate-850 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="text-xs font-semibold text-slate-300 ml-2">互動式 HTML DOM 模擬畫布</span>
+                    </div>
+                    <div id="canvas-status" class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full font-bold">
+                        等待操作
+                    </div>
+                </div>
+                
+                <!-- 實際 Canvas 渲染區 -->
+                <div class="p-6 bg-slate-950 flex flex-col justify-center items-center gap-4">
+                    <div class="relative bg-slate-900 rounded-xl border border-slate-800 p-1 shadow-inner overflow-hidden w-full max-w-[550px]">
+                        <canvas id="domCanvas" width="550" height="340" class="block cursor-pointer bg-slate-900 rounded-lg w-full h-auto"></canvas>
+                    </div>
+                    <!-- 事件氣泡流程控制 -->
+                    <div class="text-xs text-slate-400 flex justify-between w-full max-w-[550px] px-2">
+                        <span class="flex items-center gap-1"><i class="fa-solid fa-circle-info text-blue-400"></i> 畫布中的方塊代表實際的 DOM 元素</span>
+                        <button id="btn-reset-canvas" class="text-slate-400 hover:text-rose-400 transition-colors text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> 重設畫布狀態
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 即時代碼執行管線 (Chaining Pipeline) -->
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl flex-1 flex flex-col">
+                <div class="bg-slate-850 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                    <span class="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-code"></i> 剛才執行的 jQuery 核心原理
+                    </span>
+                    <span class="text-[10px] text-slate-500 font-mono">LIVE PARSER</span>
+                </div>
+                
+                <!-- 程式碼與逐步解析 -->
+                <div class="p-4 bg-slate-950 overflow-auto flex-1 text-xs text-slate-300 flex flex-col gap-4 font-mono leading-relaxed">
+                    <!-- 第一步：代碼顯示 -->
+                    <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+                        <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-bold">執行代碼：</div>
+                        <code id="code-syntax" class="text-blue-300 font-bold text-sm">$('.box')</code>
+                    </div>
+                    
+                    <!-- 第二步：原理拆解 -->
+                    <div class="flex flex-col gap-2">
+                        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">jQuery 底層如何解析這行代碼：</div>
+                        <div id="explain-steps" class="flex flex-col gap-2">
+                            <!-- 動態注入的步驟 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-slate-950 text-slate-600 text-center py-4 border-t border-slate-900 text-xs mt-auto">
+        <p>© 2026 jQuery 視覺化學習平台. 以 Canvas 核心技術重構.</p>
+    </footer>
+
+    <!-- 💡 核心 JavaScript & Canvas 繪圖引擎 -->
+    <script>
+        $(document).ready(function() {
+            // --- 取得 Canvas 與 Context ---
+            const canvas = document.getElementById('domCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 建立虛擬 DOM 節點
+            // 我們在 Canvas 畫布中模擬 4 個 DOM 節點，呈現層級關係與樣式
+            let domNodes = [
+                {
+                    id: 'node1',
+                    tagName: 'div',
+                    className: 'box',
+                    idName: 'target',
+                    x: 60,
+                    y: 110,
+                    width: 120,
+                    height: 120,
+                    baseColor: '#ef4444', // 紅
+                    currentColor: '#ef4444',
+                    text: 'box #target',
+                    scale: 1,
+                    isGlow: false,
+                    offsetY: 0,
+                    children: ['node1-child']
+                },
+                {
+                    id: 'node1-child',
+                    tagName: 'span',
+                    className: 'badge',
+                    idName: '',
+                    x: 80,
+                    y: 180,
+                    width: 80,
+                    height: 35,
+                    baseColor: '#a855f7', // 紫
+                    currentColor: '#a855f7',
+                    text: 'span',
+                    scale: 1,
+                    isGlow: false,
+                    offsetY: 0,
+                    parent: 'node1'
+                },
+                {
+                    id: 'node2',
+                    tagName: 'div',
+                    className: 'box',
+                    idName: '',
+                    x: 215,
+                    y: 110,
+                    width: 120,
+                    height: 120,
+                    baseColor: '#10b981', // 綠
+                    currentColor: '#10b981',
+                    text: 'div .box',
+                    scale: 1,
+                    isGlow: false,
+                    offsetY: 0
+                },
+                {
+                    id: 'node3',
+                    tagName: 'p',
+                    className: 'text',
+                    idName: '',
+                    x: 370,
+                    y: 110,
+                    width: 120,
+                    height: 120,
+                    baseColor: '#0ea5e9', // 藍
+                    currentColor: '#0ea5e9',
+                    text: 'p.text',
+                    scale: 1,
+                    isGlow: false,
+                    offsetY: 0
+                }
+            ];
+
+            // 系統動畫、雷射光線等狀態變數
+            let activeTab = 'selector';
+            let lasers = []; // 雷射特效陣列
+            let particles = []; // 能量粒子
+            let ripples = []; // 事件點擊波紋
+            let explainSteps = []; // 逐步解析文字陣列
+
+            // --- 1. 核心 Canvas 渲染引擎 ---
+            function drawCanvas() {
+                // 清空畫布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 繪製背景網格，營造科技與結構感
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                const gridSize = 20;
+                for (let x = 0; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+
+                // 畫出 DOM 層級連線（Node1 -> Node1-child）
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(120, 150);
+                ctx.lineTo(120, 180);
+                ctx.stroke();
+                ctx.setLineDash([]); // 恢復實線
+
+                // 繪製所有的虛擬 DOM 節點
+                domNodes.forEach(node => {
+                    ctx.save();
+                    
+                    // 根據目前節點的縮放比例和上下位移 (animate) 計算實際繪製座標
+                    const centerX = node.x + node.width / 2;
+                    const centerY = node.y + node.height / 2 + node.offsetY;
+                    ctx.translate(centerX, centerY);
+                    ctx.scale(node.scale, node.scale);
+                    
+                    const drawX = -node.width / 2;
+                    const drawY = -node.height / 2;
+
+                    // 若被選中，則畫出脈衝霓虹外框
+                    if (node.isGlow) {
+                        ctx.shadowColor = node.currentColor;
+                        ctx.shadowBlur = 15 + Math.sin(Date.now() / 150) * 5;
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(drawX - 4, drawY - 4, node.width + 8, node.height + 8);
+                    }
+
+                    // 繪製卡片本體
+                    ctx.shadowBlur = 0; // 清除影子以防重疊
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; // 深色半透明內核
+                    ctx.strokeStyle = node.isGlow ? node.currentColor : '#334155';
+                    ctx.lineWidth = node.isGlow ? 2 : 1.5;
+                    
+                    // 圓角矩形函數
+                    drawRoundedRect(ctx, drawX, drawY, node.width, node.height, 8, true, true);
+
+                    // 繪製上邊緣彩色標記列
+                    ctx.fillStyle = node.currentColor;
+                    drawRoundedRect(ctx, drawX, drawY, node.width, 6, {tl: 8, tr: 8, bl: 0, br: 0}, true, false);
+
+                    // 填入 HTML 語法標籤
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = 'bold 10px "Fira Code", monospace';
+                    ctx.textAlign = 'left';
+                    const tagString = `<${node.tagName}${node.className ? ' class="' + node.className + '"' : ''}${node.idName ? ' id="' + node.idName + '"' : ''}>`;
+                    ctx.fillText(tagString, drawX + 8, drawY + 22);
+
+                    // 填入主要內容文字
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '12px "Noto Sans TC", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(node.text, 0, 10);
+
+                    // 填入關閉標籤
+                    ctx.fillStyle = '#475569';
+                    ctx.font = 'bold 9px "Fira Code", monospace';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(`</${node.tagName}>`, drawX + node.width - 8, drawY + node.height - 10);
+
+                    ctx.restore();
+                });
+
+                // 2. 繪製並更新雷射線 (選擇器鎖定動畫)
+                lasers.forEach((laser, index) => {
+                    laser.life -= 0.05;
+                    if (laser.life <= 0) {
+                        lasers.splice(index, 1);
+                        return;
+                    }
+                    ctx.save();
+                    ctx.strokeStyle = laser.color;
+                    ctx.lineWidth = 3 * laser.life;
+                    ctx.shadowColor = laser.color;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(laser.startX, laser.startY);
+                    ctx.lineTo(laser.targetX, laser.targetY);
+                    ctx.stroke();
+                    ctx.restore();
+                });
+
+                // 3. 繪製並更新能量粒子 (Chaining 動畫)
+                particles.forEach((p, index) => {
+                    p.x += (p.tx - p.x) * 0.1;
+                    p.y += (p.ty - p.y) * 0.1;
+                    p.size *= 0.95;
+
+                    ctx.fillStyle = p.color;
+                    ctx.shadowColor = p.color;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (Math.abs(p.x - p.tx) < 1 && Math.abs(p.y - p.ty) < 1) {
+                        particles.splice(index, 1);
+                    }
+                });
+
+                // 4. 繪製點擊冒泡波紋
+                ripples.forEach((r, index) => {
+                    r.radius += r.speed;
+                    r.alpha -= 0.02;
+                    if (r.alpha <= 0) {
+                        ripples.splice(index, 1);
+                        return;
+                    }
+                    ctx.save();
+                    ctx.strokeStyle = `rgba(${r.color}, ${r.alpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                });
+
+                requestAnimationFrame(drawCanvas);
+            }
+
+            // 圓角矩形繪圖工具函數
+            function drawRoundedRect(ctx, x, y, width, height, radius, fill, stroke) {
+                let r = {tl: 0, tr: 0, bl: 0, br: 0};
+                if (typeof radius === 'number') {
+                    r = {tl: radius, tr: radius, bl: radius, br: radius};
+                } else {
+                    r = {...r, ...radius};
+                }
+                ctx.beginPath();
+                ctx.moveTo(x + r.tl, y);
+                ctx.lineTo(x + width - r.tr, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + r.tr);
+                ctx.lineTo(x + width, y + height - r.br);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - r.br, y + height);
+                ctx.lineTo(x + r.bl, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - r.bl);
+                ctx.lineTo(x, y + r.tl);
+                ctx.quadraticCurveTo(x, y, x + r.tl, y);
+                ctx.closePath();
+                if (fill) ctx.fill();
+                if (stroke) ctx.stroke();
+            }
+
+            // --- 2. 互動頁籤切換與狀態重置 ---
+            $('.concept-tab').on('click', function() {
+                const targetTab = $(this).data('tab');
+                activeTab = targetTab;
+
+                // 頁籤樣式
+                $('.concept-tab').removeClass('bg-blue-600 text-white shadow-lg shadow-blue-600/20')
+                                 .addClass('text-slate-400 hover:text-slate-200 hover:bg-slate-800');
+                $(this).addClass('bg-blue-600 text-white shadow-lg shadow-blue-600/20')
+                       .removeClass('text-slate-400 hover:text-slate-200 hover:bg-slate-800');
+
+                // 面板內容
+                $('.concept-panel').addClass('hidden');
+                $('#panel-' + targetTab).removeClass('hidden');
+
+                // 重設狀態
+                resetAllNodes();
+                $('#explanation-text').text('已切換至: ' + $(this).find('span').text());
+
+                // 初始化該單元的代碼與文字
+                if (targetTab === 'selector') {
+                    updateSyntaxDisplay("$('.box')", "selector-init");
+                } else if (targetTab === 'chaining') {
+                    updateSyntaxDisplay("$('.box').css().animate()", "chain-init");
+                } else if (targetTab === 'events') {
+                    updateSyntaxDisplay("$('.box, span').on('click')", "event-init");
+                }
+            });
+
+            // 節點重設函數
+            function resetAllNodes() {
+                domNodes.forEach(node => {
+                    node.currentColor = node.baseColor;
+                    node.scale = 1;
+                    node.isGlow = false;
+                    node.offsetY = 0;
+                    node.text = node.id === 'node1' ? 'box #target' : (node.id === 'node1-child' ? 'span' : (node.id === 'node2' ? 'div .box' : 'p.text'));
+                });
+                lasers = [];
+                particles = [];
+                ripples = [];
+            }
+
+            $('#btn-reset-canvas').on('click', function() {
+                resetAllNodes();
+                $('#canvas-status').text('狀態已重置').removeClass().addClass('text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-full font-bold');
+            });
+
+            // --- 3. 單元 1 邏輯：選擇器與雷射發射器 ---
+            $('.selector-trigger-btn').on('click', function() {
+                const selector = $(this).data('selector');
+                resetAllNodes();
+
+                // 改變 Canvas 狀態提示
+                $('#canvas-status').text(`選取器：${selector}`).removeClass().addClass('text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-bold');
+
+                // 從虛擬的 "jQuery引擎" 點發射雷射。設定一個起點（比如畫布底部中央）
+                const startX = canvas.width / 2;
+                const startY = canvas.height;
+
+                let matchCount = 0;
+
+                domNodes.forEach(node => {
+                    let isMatched = false;
+
+                    // 模擬 jQuery 的 selector 匹配規則
+                    if (selector === 'div' && node.tagName === 'div') isMatched = true;
+                    if (selector === '.box' && node.className === 'box') isMatched = true;
+                    if (selector === '#target' && node.idName === 'target') isMatched = true;
+                    if (selector === 'span' && node.tagName === 'span') isMatched = true;
+
+                    if (isMatched) {
+                        matchCount++;
+                        // 1. 發射雷射至節點中心
+                        lasers.push({
+                            startX: startX,
+                            startY: startY,
+                            targetX: node.x + node.width / 2,
+                            targetY: node.y + node.height / 2,
+                            color: node.baseColor,
+                            life: 1.0
+                        });
+
+                        // 2. 延遲亮起節點外框 (模擬雷射擊中)
+                        setTimeout(() => {
+                            node.isGlow = true;
+                        }, 150);
+                    }
+                });
+
+                // 更新代碼與說明
+                updateSyntaxDisplay(`$('${selector}')`, selector, matchCount);
+            });
+
+
+            // --- 4. 單元 2 邏輯：鏈式寫法 Chaining 模擬器 ---
+            $('#btn-run-chain').on('click', function() {
+                resetAllNodes();
+                $('#canvas-status').text('正在進行 Chaining 鏈式執行...').removeClass().addClass('text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-bold');
+
+                // 讀取鏈步驟
+                const step1 = $('#chain-step-1').val();
+                const step2 = $('#chain-step-2').val();
+                const step3 = $('#chain-step-3').val();
+
+                // 組合代碼顯示
+                let codeStr = "$('.box')";
+                if (step1 !== 'none') codeStr += `.css('background', 'yellow')`;
+                if (step2 !== 'none') codeStr += `.animate({ top: "-20px" })`;
+                if (step3 !== 'none') codeStr += `.text('改變了!')`;
+
+                // 1. 先選定目標 (.box 類別有 node1 和 node2)
+                const targets = domNodes.filter(n => n.className === 'box');
+                
+                targets.forEach(node => {
+                    node.isGlow = true;
+                });
+
+                // 2. 建立步驟管道
+                let currentDelay = 0;
+
+                // 逐步執行管道
+                if (step1 === 'css') {
+                    currentDelay += 800;
+                    setTimeout(() => {
+                        triggerEnergyFlow(targets, '#f59e0b');
+                        targets.forEach(node => {
+                            node.currentColor = '#f59e0b'; // 改為橘黃色
+                        });
+                        highlightStep(1, "套用 .css() 改變色彩。jQuery 底層遍歷了這兩個節點並修改了其 inline style。");
+                    }, currentDelay);
+                }
+
+                if (step2 === 'animate') {
+                    currentDelay += 1000;
+                    setTimeout(() => {
+                        triggerEnergyFlow(targets, '#3b82f6');
+                        // 讓節點在 Canvas 上跳動
+                        let startTime = Date.now();
+                        function bounce() {
+                            let elapsed = Date.now() - startTime;
+                            if (elapsed < 600) {
+                                targets.forEach(node => {
+                                    node.offsetY = -25 * Math.sin((elapsed / 600) * Math.PI);
+                                });
+                                requestAnimationFrame(bounce);
+                            } else {
+                                targets.forEach(node => { node.offsetY = 0; });
+                            }
+                        }
+                        bounce();
+                        highlightStep(2, "套用 .animate()。jQuery 建立了一個計時器，在 600 毫秒內連續修改 CSS 屬性以達成流暢動畫！");
+                    }, currentDelay);
+                }
+
+                if (step3 === 'text') {
+                    currentDelay += 1000;
+                    setTimeout(() => {
+                        triggerEnergyFlow(targets, '#a855f7');
+                        targets.forEach(node => {
+                            node.text = '★ jQuery!! ★';
+                        });
+                        highlightStep(3, "套用 .text()。修改了元素內部文字。注意：這一切動作都在同一行指令中串連完成！");
+                    }, currentDelay);
+                }
+
+                updateSyntaxDisplay(codeStr, 'chaining-run', targets.length, {step1, step2, step3});
+            });
+
+            // 能量流視覺特效
+            function triggerEnergyFlow(nodes, color) {
+                nodes.forEach(node => {
+                    for (let i = 0; i < 8; i++) {
+                        particles.push({
+                            x: node.x + node.width / 2 + (Math.random() - 0.5) * 60,
+                            y: node.y + node.height / 2 + (Math.random() - 0.5) * 60,
+                            tx: node.x + node.width / 2,
+                            ty: node.y + node.height / 2,
+                            color: color,
+                            size: 15 + Math.random() * 10
+                        });
+                    }
+                });
+            }
+
+
+            // --- 5. 單元 3 邏輯：事件冒泡與捕獲監聽器 ---
+            $(canvas).on('mousedown', function(e) {
+                if (activeTab !== 'events') return;
+
+                // 計算滑鼠在 Canvas 的相對座標
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const mouseX = (e.clientX - rect.left) * scaleX;
+                const mouseY = (e.clientY - rect.top) * scaleY;
+
+                // 偵測點擊到了哪個虛擬 DOM
+                let clickedNode = null;
+                
+                // 由上層子節點先檢查 (因其在最前)
+                // 我們有 node1-child（它是 span 且在最上層，若擊中它先回傳）
+                const childNode = domNodes.find(n => n.id === 'node1-child');
+                const p1 = childNode;
+                if (mouseX >= p1.x && mouseX <= p1.x + p1.width &&
+                    mouseY >= p1.y && mouseY <= p1.y + p1.height) {
+                    clickedNode = childNode;
+                }
+
+                // 若非子節點，再檢查其他節點
+                if (!clickedNode) {
+                    for (let i = 0; i < domNodes.length; i++) {
+                        const n = domNodes[i];
+                        if (n.id === 'node1-child') continue;
+                        if (mouseX >= n.x && mouseX <= n.x + n.width &&
+                            mouseY >= n.y && mouseY <= n.y + n.height) {
+                            clickedNode = n;
+                            break;
+                        }
+                    }
+                }
+
+                if (clickedNode) {
+                    // 發射脈衝波紋特效
+                    ripples.push({
+                        x: mouseX,
+                        y: mouseY,
+                        radius: 5,
+                        speed: 3,
+                        alpha: 1.0,
+                        color: clickedNode.id === 'node1-child' ? '168, 85, 247' : '239, 68, 68'
+                    });
+
+                    // 處理冒泡路徑顯示
+                    let path = [];
+                    if (clickedNode.id === 'node1-child') {
+                        path = ['<span> (Target)', '<div> (Parent)', '<body>', '<html>', 'document'];
+                        $('#event-target-display').text('<span> 標籤').css('color', '#a855f7');
+                    } else if (clickedNode.id === 'node1') {
+                        path = ['<div#target> (Target)', '<body>', '<html>', 'document'];
+                        $('#event-target-display').text('div#target').css('color', '#ef4444');
+                    } else if (clickedNode.id === 'node2') {
+                        path = ['<div.box> (Target)', '<body>', '<html>', 'document'];
+                        $('#event-target-display').text('div.box').css('color', '#10b981');
+                    } else {
+                        path = ['<p.text> (Target)', '<body>', '<html>', 'document'];
+                        $('#event-target-display').text('p.text').css('color', '#0ea5e9');
+                    }
+
+                    // 閃爍一下被點擊的節點
+                    clickedNode.scale = 1.1;
+                    setTimeout(() => { clickedNode.scale = 1.0; }, 200);
+
+                    // 即時渲染冒泡文字與流程
+                    $('#event-bubble-path').html(path.join(' <span class="text-slate-600">➔</span> '));
+                    
+                    // 動態產生冒泡脈衝動畫 (向上傳遞到父層)
+                    if (clickedNode.id === 'node1-child') {
+                        setTimeout(() => {
+                            // 延遲在父層 node1 產生冒泡特效
+                            const pNode = domNodes.find(n => n.id === 'node1');
+                            ripples.push({
+                                x: pNode.x + pNode.width / 2,
+                                y: pNode.y + pNode.height / 2,
+                                radius: 10,
+                                speed: 2,
+                                alpha: 0.8,
+                                color: '239, 68, 68'
+                            });
+                            pNode.scale = 1.05;
+                            setTimeout(() => { pNode.scale = 1.0; }, 200);
+                        }, 400);
+                    }
+
+                    // 更新說明區
+                    updateSyntaxDisplay(`$('${clickedNode.id === 'node1-child' ? 'span' : (clickedNode.idName ? '#' + clickedNode.idName : '.' + clickedNode.className)}').on('click')`, 'click-trigger', 1, clickedNode);
+                }
+            });
+
+
+            // --- 6. 語法/原理 即時更新引擎 ---
+            function updateSyntaxDisplay(code, type, matchCount = 0, extra = null) {
+                $('#code-syntax').text(code);
+                
+                let stepsHtml = '';
+                let explanation = '';
+
+                switch (type) {
+                    case 'selector-init':
+                        stepsHtml = `
+                            <div class="flex gap-2 text-slate-400">
+                                <span class="text-blue-500 font-bold">1.</span>
+                                <div>點選上方選擇器代碼，查看 jQuery 內部遍歷 DOM 的魔術。</div>
+                            </div>`;
+                        explanation = "請點選選擇器看效果！";
+                        break;
+
+                    case 'div':
+                        stepsHtml = `
+                            <div class="flex gap-2">
+                                <span class="text-blue-500 font-bold">1.</span>
+                                <div><strong>Sizzle 引擎：</strong>jQuery 啟動選擇器引擎，在 DOM 中搜尋所有標籤名為 <code>&lt;div&gt;</code> 的元素。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-blue-500 font-bold">2.</span>
+                                <div><strong>打包群組：</strong>成功尋找到 <span class="text-blue-400 font-bold">${matchCount} 個元素</span>。jQuery 把這幾個原生 DOM 物件全部封裝進一個「jQuery 物件」陣列中。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-blue-500 font-bold">3.</span>
+                                <div><strong>隱式迭代 (Implicit Iteration)：</strong>當你之後使用 <code>.css()</code>，jQuery 會自動在底層用迴圈修改這 ${matchCount} 個元素，你完全不需自己寫迴圈！</div>
+                            </div>`;
+                        explanation = `成功匹配 ${matchCount} 個 div 節點！`;
+                        break;
+
+                    case '.box':
+                        stepsHtml = `
+                            <div class="flex gap-2">
+                                <span class="text-emerald-500 font-bold">1.</span>
+                                <div><strong>類別過濾：</strong>jQuery 搜尋所有 Class Name 含有 <code>box</code> 的元素。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-emerald-500 font-bold">2.</span>
+                                <div><strong>對象鎖定：</strong>尋找到 <span class="text-emerald-400 font-bold">${matchCount} 個元素</span>（分別是紅色的 #target 與綠色的 div.box）。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-emerald-500 font-bold">3.</span>
+                                <div><strong>一呼百應：</strong>這就是類別選取的威力，可以用同樣的 Class 統一批次控制完全不同位置的物件！</div>
+                            </div>`;
+                        explanation = `找到 class 為 .box 的節點共 ${matchCount} 個！`;
+                        break;
+
+                    case '#target':
+                        stepsHtml = `
+                            <div class="flex gap-2">
+                                <span class="text-amber-500 font-bold">1.</span>
+                                <div><strong>ID 快速匹配：</strong>jQuery 底層調用原生 <code>document.getElementById('target')</code>，這是最快速的搜尋方式。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-amber-500 font-bold">2.</span>
+                                <div><strong>單一包裝：</strong>在 HTML 規範中，ID 是唯一的。因此 jQuery 包裝了這個獨一無二的 <span class="text-amber-400 font-bold">紅色方塊</span>。</div>
+                            </div>`;
+                        explanation = "精準選中 ID 為 #target 的唯一節點！";
+                        break;
+
+                    case 'span':
+                        stepsHtml = `
+                            <div class="flex gap-2">
+                                <span class="text-purple-500 font-bold">1.</span>
+                                <div><strong>深度層級檢索：</strong>即使 <code>&lt;span&gt;</code> 包在紅色 <code>&lt;div&gt;</code> 內部，jQuery 依然可以穿透進去並成功匹配。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-purple-500 font-bold">2.</span>
+                                <div><strong>打包紫色節點：</strong>成功回傳一組包含該原生 span 物件的 jQuery 群組。</div>
+                            </div>`;
+                        explanation = "成功選中巢狀結構內部的 span 標籤！";
+                        break;
+
+                    case 'chain-init':
+                        stepsHtml = `
+                            <div class="flex gap-2 text-slate-400">
+                                <span class="text-emerald-500 font-bold">1.</span>
+                                <div>設定上方的鏈式動作下拉選單，並點擊按鈕執行 Chaining。</div>
+                            </div>`;
+                        explanation = "組裝火車鏈式代碼，直覺觀察 jQuery 連續執行。";
+                        break;
+
+                    case 'chaining-run':
+                        stepsHtml = `
+                            <div class="flex gap-2">
+                                <span class="text-slate-500 font-bold">Step 0.</span>
+                                <div><code>$('.box')</code> ➔ 選中紅方塊與綠方塊，回傳 <strong>[jQuery 物件]</strong>。</div>
+                            </div>`;
+                        let sCount = 1;
+                        if (extra.step1 !== 'none') {
+                            stepsHtml += `
+                            <div id="step-pipe-1" class="flex gap-2 transition duration-300">
+                                <span class="text-amber-500 font-bold">Step ${sCount++}.</span>
+                                <div><code>.css()</code> ➔ 修改背景並<strong>再度回傳 [jQuery 物件本身]</strong>。</div>
+                            </div>`;
+                        }
+                        if (extra.step2 !== 'none') {
+                            stepsHtml += `
+                            <div id="step-pipe-2" class="flex gap-2 transition duration-300">
+                                <span class="text-blue-500 font-bold">Step ${sCount++}.</span>
+                                <div><code>.animate()</code> ➔ 執行高度補間運動，並<strong>再度回傳 [jQuery 物件本身]</strong>。</div>
+                            </div>`;
+                        }
+                        if (extra.step3 !== 'none') {
+                            stepsHtml += `
+                            <div id="step-pipe-3" class="flex gap-2 transition duration-300">
+                                <span class="text-purple-500 font-bold">Step ${sCount++}.</span>
+                                <div><code>.text()</code> ➔ 改寫內部文字。</div>
+                            </div>`;
+                        }
+                        explanation = "鏈式運作：每個方法執行完都會把主控權回傳，讓下一個動作接下去！";
+                        break;
+
+                    case 'event-init':
+                        stepsHtml = `
+                            <div class="flex gap-2 text-slate-400">
+                                <span class="text-purple-500 font-bold">1.</span>
+                                <div>點擊畫布上的虛擬 DOM 節點。</div>
+                            </div>
+                            <div class="flex gap-2 text-slate-400">
+                                <span class="text-purple-500 font-bold">2.</span>
+                                <div>您將會看到「點擊事件脈衝波」從點擊處一層層往外擴散（冒泡），直到被瀏覽器或 jQuery 收走。</div>
+                            </div>`;
+                        explanation = "點選 Canvas 內的任一方塊來觸發冒泡。";
+                        break;
+
+                    case 'click-trigger':
+                        stepsHtml = `
+                            <div class="flex gap-2">
+                                <span class="text-purple-400 font-bold">1.</span>
+                                <div><strong>觸發事件 (Target Phase)：</strong>滑鼠點擊了畫布中的 <code>${extra.tagName}</code> 元素。</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-purple-400 font-bold">2.</span>
+                                <div><strong>事件冒泡 (Bubbling Phase)：</strong>此點擊行為不能只留在本層，它會沿著 DOM 樹往上傳遞給父層 <code>${extra.parent ? domNodes.find(n => n.id === extra.parent).tagName : 'body'}</code>...</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="text-purple-400 font-bold">3.</span>
+                                <div><strong>jQuery 監聽：</strong>jQuery 在您監聽的節點上成功拦截了該事件，進而執行您定義的回呼函數 (Callback)！</div>
+                            </div>`;
+                        explanation = `成功偵測到 ${extra.tagName} 點擊，看見冒泡波紋了嗎？`;
+                        break;
+                }
+
+                $('#explain-steps').html(stepsHtml);
+                $('#explanation-text').text(explanation);
+            }
+
+            // 用於 Chaining 步驟高亮的輔助工具
+            window.highlightStep = function(stepNum, description) {
+                const $step = $(`#step-pipe-${stepNum}`);
+                $step.addClass('bg-slate-800 p-2 rounded border border-slate-700 scale-105 text-white');
+                $('#explanation-text').text(`執行中：${description}`);
+                setTimeout(() => {
+                    $step.removeClass('bg-slate-800 p-2 rounded border border-slate-700 scale-105 text-white');
+                }, 1000);
+            };
+
+            // --- 7. 初始化啟動 ---
+            // 預設執行
+            updateSyntaxDisplay("$('.box')", "selector-init");
+            
+            // 啟動 Canvas 渲染循環
+            drawCanvas();
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS 記憶體視覺化模擬器 (Canvas)</title>
+    <!-- 引入 Tailwind CSS 與 FontAwesome 圖標 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* 美化捲軸 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- 導覽列 -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-microchip text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                        JS 陣列與物件記憶體 Canvas
+                    </h1>
+                    <p class="text-xs text-slate-400">直觀探索記憶體定址與底層資料變動邏輯</p>
+                </div>
+            </div>
+            
+            <!-- 模式切換按鈕 -->
+            <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button id="btn-array-mode" onclick="switchMode('array')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                    <i class="fa-solid fa-list-ol"></i> Array 陣列
+                </button>
+                <button id="btn-object-mode" onclick="switchMode('object')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-circle-nodes"></i> Object 物件
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主區塊 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側控制側欄 (佔 4 格) -->
+        <section class="lg:col-span-4 flex flex-col gap-5">
+            
+            <!-- 1. 操作中心 -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md shadow-xl flex flex-col gap-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h2 id="panel-title" class="font-bold text-sm text-indigo-400 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders"></i> Array 陣列方法控制
+                    </h2>
+                    <span id="elements-count" class="text-[10px] bg-slate-950 text-slate-400 px-2 py-1 rounded-md code-font border border-slate-800">
+                        Length: 4
+                    </span>
+                </div>
+
+                <!-- A. 陣列控制器 -->
+                <div id="array-controls" class="space-y-4">
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1.5">輸入元素的值</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="array-input" placeholder="例如: 99, 'Apple', true" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                            <button onclick="getRandomVal()" class="bg-slate-850 hover:bg-slate-750 text-slate-300 px-3 py-2 rounded-lg text-sm transition-all" title="隨機產生一個值">
+                                <i class="fa-solid fa-dice text-indigo-400"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 陣列 API 動作區 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="arrPush()" class="bg-slate-850 hover:bg-indigo-600 hover:text-white border border-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-plus text-emerald-400 text-[10px]"></i> push()
+                        </button>
+                        <button onclick="arrUnshift()" class="bg-slate-850 hover:bg-indigo-600 hover:text-white border border-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-plus text-emerald-400 text-[10px]"></i> unshift()
+                        </button>
+                        <button onclick="arrPop()" class="bg-slate-850 hover:bg-rose-600 hover:text-white border border-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-minus text-rose-400 text-[10px]"></i> pop()
+                        </button>
+                        <button onclick="arrShift()" class="bg-slate-850 hover:bg-rose-600 hover:text-white border border-slate-800 px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-minus text-rose-400 text-[10px]"></i> shift()
+                        </button>
+                    </div>
+
+                    <!-- Splice 高階操作 -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-850 space-y-2">
+                        <span class="text-[11px] text-slate-400 block font-semibold">
+                            <i class="fa-solid fa-scissors text-indigo-400 mr-1"></i> splice(index, deleteCount, ...items)
+                        </span>
+                        <div class="grid grid-cols-3 gap-1">
+                            <input type="number" id="splice-idx" min="0" placeholder="索引" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-center text-slate-200">
+                            <input type="number" id="splice-del" min="0" placeholder="刪除" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-center text-slate-200">
+                            <input type="text" id="splice-add" placeholder="新值" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-center text-slate-200">
+                        </div>
+                        <button onclick="arrSplice()" class="w-full bg-indigo-500/10 hover:bg-indigo-500 hover:text-white border border-indigo-500/20 py-1.5 rounded text-[11px] font-bold transition-all text-indigo-300">
+                            執行 Splice
+                        </button>
+                    </div>
+                </div>
+
+                <!-- B. 物件控制器 -->
+                <div id="object-controls" class="space-y-4 hidden">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">Key (鍵)</label>
+                            <input type="text" id="obj-key-input" placeholder="例如: name" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">Value (值)</label>
+                            <input type="text" id="obj-val-input" placeholder="例如: 'Alex'" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500">
+                        </div>
+                    </div>
+
+                    <button onclick="objSet()" class="w-full bg-slate-850 hover:bg-purple-600 hover:text-white border border-slate-800 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-circle-plus text-emerald-400"></i> 設定屬性 (Set Key-Value)
+                    </button>
+
+                    <!-- 刪除屬性 -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-850 space-y-2">
+                        <label class="text-[11px] text-slate-400 block font-semibold">
+                            <i class="fa-solid fa-trash text-purple-400 mr-1"></i> delete 屬性移除
+                        </label>
+                        <div class="flex gap-2">
+                            <select id="obj-del-key-select" class="flex-1 bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+                                <!-- 動態載入 -->
+                            </select>
+                            <button onclick="objDelete()" class="bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/20 px-4 py-1.5 rounded text-xs font-bold transition-all">
+                                刪除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C. 共用數據刷新區 -->
+                <div class="border-t border-slate-800 pt-3 flex gap-2">
+                    <button onclick="resetMock()" class="flex-1 bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-slate-200 border border-slate-850 px-2 py-1.5 rounded-lg text-xs transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-arrows-rotate"></i> 重設預設
+                    </button>
+                    <button onclick="clearAllData()" class="flex-1 bg-slate-950 hover:bg-rose-950/20 text-slate-400 hover:text-rose-400 border border-slate-850 hover:border-rose-900/40 px-2 py-1.5 rounded-lg text-xs transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-broom"></i> 完全清空
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 即時動作日誌 -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 backdrop-blur-md shadow-xl flex-1 flex flex-col min-h-[180px]">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-2">
+                    <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-emerald-400"></i> 控制台操作日誌 (Console)
+                    </span>
+                    <button onclick="clearConsoleLogs()" class="text-[10px] text-slate-500 hover:text-slate-300">清除</button>
+                </div>
+                <div id="console-output" class="flex-1 overflow-y-auto space-y-1.5 code-font text-[11px] text-slate-400 pr-1">
+                    <div class="text-slate-500">// 系統已就緒，請在上方控制台操作...</div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 右側 Canvas 主面板 (佔 8 格) -->
+        <section class="lg:col-span-8 flex flex-col gap-5">
+            
+            <!-- Canvas 容器 -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 backdrop-blur-md shadow-xl flex-1 flex flex-col min-h-[420px] relative overflow-hidden group">
+                <!-- 指示標記 -->
+                <div class="absolute top-4 right-4 pointer-events-none flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-[9px] text-slate-500 tracking-wider code-font">JS RUNTIME MEMORY VIEW</span>
+                </div>
+
+                <!-- 畫布區區塊 -->
+                <div class="flex-1 relative w-full h-full min-h-[380px]">
+                    <canvas id="memory-canvas" class="absolute inset-0 w-full h-full rounded-xl cursor-grab active:cursor-grabbing"></canvas>
+                </div>
+                
+                <!-- 互動提示 -->
+                <div class="text-center text-[10px] text-slate-500 border-t border-slate-800/60 pt-2.5 flex justify-center gap-4">
+                    <span><i class="fa-solid fa-arrows-up-down-left-right text-indigo-500 mr-1"></i> 拖曳節點或畫布</span>
+                    <span><i class="fa-solid fa-mouse text-indigo-500 mr-1"></i> 滾輪進行縮放</span>
+                    <span><i class="fa-solid fa-rotate-left text-indigo-500 mr-1"></i> 雙擊背景還原視野</span>
+                </div>
+            </div>
+
+            <!-- JSON 即時物件視圖 -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 backdrop-blur-md shadow-xl">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-2">
+                    <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-database text-pink-500"></i> 即時記憶體數據結構 (State)
+                    </span>
+                    <button onclick="copyMemoryJSON()" class="text-[10px] bg-slate-950 hover:bg-indigo-600 text-slate-400 hover:text-white border border-slate-850 hover:border-indigo-500 px-2.5 py-1 rounded transition-all flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i> 複製
+                    </button>
+                </div>
+                <pre id="json-preview-box" class="code-font text-[11px] text-indigo-300 overflow-x-auto whitespace-pre p-2.5 rounded-lg bg-slate-950 border border-slate-850 max-h-[140px]"></pre>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="border-t border-slate-900 bg-slate-950 text-center py-3 text-[10px] text-slate-600">
+        使用 HTML5 Canvas、物理阻尼與 Tailwind CSS 打造之 JavaScript 記憶體視覺化專案
+    </footer>
+
+    <script>
+        // --- 1. 全域系統宣告 ---
+        let currentMode = 'array'; // 'array' | 'object'
+        const canvas = document.getElementById('memory-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 畫布操作狀態
+        let viewState = {
+            x: 0,
+            y: 0,
+            scale: 1,
+            isDragging: false,
+            startX: 0,
+            startY: 0
+        };
+
+        // 滑鼠游標與交互狀態
+        let mouseTracker = {
+            x: 0,
+            y: 0,
+            hoveredNodeId: null,
+            draggedNodeId: null,
+            offsetX: 0,
+            offsetY: 0
+        };
+
+        // 模擬陣列記憶體
+        let rawArray = [
+            { id: 'arr_0', val: 'Vue', type: 'string', address: '0x3ef1' },
+            { id: 'arr_1', val: 101, type: 'number', address: '0x4fa2' },
+            { id: 'arr_2', val: 'true', type: 'boolean', address: '0x5bb8' },
+            { id: 'arr_3', val: 'Tailwind', type: 'string', address: '0x9dc6' }
+        ];
+
+        // 模擬物件記憶體
+        let rawObject = {
+            id: 'obj_root',
+            address: '0x2fa5',
+            props: [
+                { id: 'prop_0', key: 'username', val: 'Gemini', type: 'string', address: '0x2fa6' },
+                { id: 'prop_1', key: 'version', val: 2026, type: 'number', address: '0x2fa7' },
+                { id: 'prop_2', key: 'isAI', val: 'true', type: 'boolean', address: '0x2fa8' },
+                { id: 'prop_3', key: 'online', val: 'true', type: 'boolean', address: '0x2fa9' }
+            ]
+        };
+
+        // Canvas 中用於物理動畫的渲染節點
+        let nodeElements = [];
+
+        // 常用隨機值庫
+        const randomStrings = ['React', 'NodeJS', 'CSS', 'Canvas', 'Array', 'Apple', 'Orange', 'JavaScript', 'HTML5', 'AI'];
+        const randomNumbers = [9, 42, 88, 123, 256, 1024, 777];
+
+        // --- 2. 系統啟動設定 ---
+        window.onload = function() {
+            setCanvasSize();
+            rebuildNodes();
+            refreshStatePreview();
+            
+            // 開啟繪圖渲染迴圈
+            requestAnimationFrame(renderLoop);
+
+            // 視窗尺寸重設
+            window.addEventListener('resize', () => {
+                setCanvasSize();
+                resetViewPort();
+            });
+
+            // 註冊滑鼠事件
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('mouseleave', onMouseUp);
+            canvas.addEventListener('wheel', onMouseWheel);
+            canvas.addEventListener('dblclick', resetViewPort);
+
+            // 註冊行動觸控事件
+            canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+            canvas.addEventListener('touchend', onTouchEnd);
+
+            logConsole('系統初始化：成功載入 Array 模式資料結構。', 'system');
+        };
+
+        // 配合 Retina 螢幕修正畫素比，避免模糊
+        function setCanvasSize() {
+            const wrapper = canvas.parentElement;
+            const rect = wrapper.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        // 產生 16 進位隨機記憶體位址
+        function generateMemoryAddress() {
+            return '0x' + Math.floor(Math.random() * 65535).toString(16).padStart(4, '0');
+        }
+
+        // 隨機選定輸入框之值
+        function getRandomVal() {
+            const selectType = Math.floor(Math.random() * 3);
+            let val;
+            if (selectType === 0) {
+                val = randomStrings[Math.floor(Math.random() * randomStrings.length)];
+            } else if (selectType === 1) {
+                val = randomNumbers[Math.floor(Math.random() * randomNumbers.length)];
+            } else {
+                val = Math.random() > 0.5 ? 'true' : 'false';
+            }
+            document.getElementById('array-input').value = val;
+        }
+
+        // 切換模式：Array / Object
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnArr = document.getElementById('btn-array-mode');
+            const btnObj = document.getElementById('btn-object-mode');
+            const arrPanel = document.getElementById('array-controls');
+            const objPanel = document.getElementById('object-controls');
+            const pTitle = document.getElementById('panel-title');
+
+            if (mode === 'array') {
+                btnArr.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/20";
+                btnObj.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-2 text-slate-400 hover:text-slate-200";
+                arrPanel.classList.remove('hidden');
+                objPanel.classList.add('hidden');
+                pTitle.innerHTML = `<i class="fa-solid fa-sliders"></i> Array 陣列方法控制`;
+                logConsole('更換視圖：切換到 Array (線性陣列結構)。', 'system');
+            } else {
+                btnArr.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-2 text-slate-400 hover:text-slate-200";
+                btnObj.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-2 bg-purple-600 text-white shadow-md shadow-purple-600/20";
+                arrPanel.classList.add('hidden');
+                objPanel.classList.remove('hidden');
+                pTitle.innerHTML = `<i class="fa-solid fa-sliders"></i> Object 物件方法控制`;
+                logConsole('更換視圖：切換到 Object (鍵值拓樸結構)。', 'system');
+                syncObjKeysDropdown();
+            }
+
+            rebuildNodes();
+            resetViewPort();
+            refreshStatePreview();
+        }
+
+        // 重置為預設數據
+        function resetMock() {
+            if (currentMode === 'array') {
+                rawArray = [
+                    { id: 'arr_0', val: 'Vue', type: 'string', address: generateMemoryAddress() },
+                    { id: 'arr_1', val: 101, type: 'number', address: generateMemoryAddress() },
+                    { id: 'arr_2', val: 'true', type: 'boolean', address: generateMemoryAddress() },
+                    { id: 'arr_3', val: 'Tailwind', type: 'string', address: generateMemoryAddress() }
+                ];
+                logConsole('// 重設為預設陣列結構');
+            } else {
+                rawObject.props = [
+                    { id: 'prop_0', key: 'username', val: 'Gemini', type: 'string', address: generateMemoryAddress() },
+                    { id: 'prop_1', key: 'version', val: 2026, type: 'number', address: generateMemoryAddress() },
+                    { id: 'prop_2', key: 'isAI', val: 'true', type: 'boolean', address: generateMemoryAddress() },
+                    { id: 'prop_3', key: 'online', val: 'true', type: 'boolean', address: generateMemoryAddress() }
+                ];
+                logConsole('// 重設為預設物件結構');
+                syncObjKeysDropdown();
+            }
+            rebuildNodes();
+            refreshStatePreview();
+            resetViewPort();
+        }
+
+        // 清空數據
+        function clearAllData() {
+            if (currentMode === 'array') {
+                rawArray = [];
+                logConsole('arr.length = 0; // 清空陣列');
+            } else {
+                rawObject.props = [];
+                logConsole('for (let k in obj) delete obj[k]; // 清空物件');
+                syncObjKeysDropdown();
+            }
+            rebuildNodes();
+            refreshStatePreview();
+        }
+
+        // --- 3. 元素定位重建與對齊 (物理動力學模擬) ---
+        function rebuildNodes() {
+            nodeElements = [];
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+
+            if (currentMode === 'array') {
+                const step = 115;
+                const totalWidth = rawArray.length * 85 + (rawArray.length - 1) * 30;
+                let startX = (w - totalWidth) / 2;
+                if (startX < 40) startX = 40;
+
+                rawArray.forEach((item, index) => {
+                    nodeElements.push({
+                        id: item.id,
+                        val: item.val,
+                        type: item.type,
+                        address: item.address,
+                        index: index,
+                        x: startX + index * step,
+                        y: h / 2 - 40,
+                        tx: startX + index * step,
+                        ty: h / 2 - 40,
+                        w: 85,
+                        h: 85,
+                        scale: 1,
+                        alpha: 1,
+                        flash: 0
+                    });
+                });
+            } else {
+                // 物件核心點
+                nodeElements.push({
+                    id: rawObject.id,
+                    address: rawObject.address,
+                    isRoot: true,
+                    x: w / 2,
+                    y: h / 2,
+                    tx: w / 2,
+                    ty: h / 2,
+                    radius: 55,
+                    scale: 1,
+                    alpha: 1,
+                    flash: 0
+                });
+
+                // 外部屬性點圍繞
+                const count = rawObject.props.length;
+                const radiusDist = 145;
+
+                rawObject.props.forEach((prop, i) => {
+                    const angle = (i * Math.PI * 2) / count - Math.PI / 2;
+                    const px = w / 2 + Math.cos(angle) * radiusDist;
+                    const py = h / 2 + Math.sin(angle) * radiusDist;
+
+                    nodeElements.push({
+                        id: prop.id,
+                        key: prop.key,
+                        val: prop.val,
+                        type: prop.type,
+                        address: prop.address,
+                        isRoot: false,
+                        x: w / 2, // 自核心膨脹
+                        y: h / 2,
+                        tx: px,
+                        ty: py,
+                        w: 100,
+                        h: 60,
+                        scale: 1,
+                        alpha: 1,
+                        flash: 0
+                    });
+                });
+            }
+        }
+
+        // 重新排列現有節點
+        function realignNodes() {
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+
+            if (currentMode === 'array') {
+                const step = 115;
+                const totalWidth = rawArray.length * 85 + (rawArray.length - 1) * 30;
+                let startX = (w - totalWidth) / 2;
+                if (startX < 40) startX = 40;
+
+                rawArray.forEach((item, index) => {
+                    const match = nodeElements.find(n => n.id === item.id);
+                    if (match) {
+                        match.index = index;
+                        match.tx = startX + index * step;
+                        match.ty = h / 2 - 40;
+                    } else {
+                        // 新建立節點，預設由外部滑入
+                        nodeElements.push({
+                            id: item.id,
+                            val: item.val,
+                            type: item.type,
+                            address: item.address,
+                            index: index,
+                            x: index === 0 ? -100 : w + 100,
+                            y: h / 2 - 40,
+                            tx: startX + index * step,
+                            ty: h / 2 - 40,
+                            w: 85,
+                            h: 85,
+                            scale: 0,
+                            alpha: 0,
+                            flash: 25
+                        });
+                    }
+                });
+
+                // 剔除多餘非同步節點
+                nodeElements = nodeElements.filter(n => {
+                    const matchIdx = rawArray.findIndex(item => item.id === n.id);
+                    if (matchIdx === -1) {
+                        n.alpha -= 0.12;
+                        n.scale -= 0.12;
+                        n.ty += 4; // 動態墜落
+                        return n.alpha > 0;
+                    }
+                    return true;
+                });
+
+            } else {
+                // 物件拓樸重新對位
+                const root = nodeElements.find(n => n.isRoot);
+                if (root) {
+                    root.tx = w / 2;
+                    root.ty = h / 2;
+                }
+
+                const count = rawObject.props.length;
+                const radiusDist = 145;
+
+                rawObject.props.forEach((prop, i) => {
+                    const angle = (i * Math.PI * 2) / count - Math.PI / 2;
+                    const px = (w / 2) + Math.cos(angle) * radiusDist;
+                    const py = (h / 2) + Math.sin(angle) * radiusDist;
+
+                    const match = nodeElements.find(n => n.id === prop.id);
+                    if (match) {
+                        match.tx = px;
+                        match.ty = py;
+                        match.key = prop.key;
+                        match.val = prop.val;
+                    } else {
+                        // 新建立鍵值節點，由中心吐出
+                        nodeElements.push({
+                            id: prop.id,
+                            key: prop.key,
+                            val: prop.val,
+                            type: prop.type,
+                            address: prop.address,
+                            isRoot: false,
+                            x: w / 2,
+                            y: h / 2,
+                            tx: px,
+                            ty: py,
+                            w: 100,
+                            h: 60,
+                            scale: 0,
+                            alpha: 0,
+                            flash: 25
+                        });
+                    }
+                });
+
+                // 剔除已被 delete 的屬性
+                nodeElements = nodeElements.filter(n => {
+                    if (n.isRoot) return true;
+                    const matchIdx = rawObject.props.findIndex(p => p.id === n.id);
+                    if (matchIdx === -1) {
+                        n.scale -= 0.12;
+                        n.alpha -= 0.12;
+                        return n.alpha > 0;
+                    }
+                    return true;
+                });
+            }
+        }
+
+        // --- 4. 陣列突變方法邏輯 ---
+        function parseValType(v) {
+            if (v === 'true' || v === 'false') return 'boolean';
+            if (!isNaN(v) && v.trim() !== '') return 'number';
+            return 'string';
+        }
+
+        function arrPush() {
+            const el = document.getElementById('array-input');
+            let val = el.value.trim();
+            if (val === '') val = randomStrings[Math.floor(Math.random() * randomStrings.length)];
+
+            const type = parseValType(val);
+            const id = 'arr_' + Date.now();
+            const address = generateMemoryAddress();
+
+            rawArray.push({ id, val, type, address });
+            logConsole(`arr.push(${type === 'string' ? `'${val}'` : val}); // 在陣列末端追加元素`);
+            
+            realignNodes();
+            refreshStatePreview();
+            el.value = '';
+        }
+
+        function arrUnshift() {
+            const el = document.getElementById('array-input');
+            let val = el.value.trim();
+            if (val === '') val = randomStrings[Math.floor(Math.random() * randomStrings.length)];
+
+            const type = parseValType(val);
+            const id = 'arr_' + Date.now();
+            const address = generateMemoryAddress();
+
+            rawArray.unshift({ id, val, type, address });
+            logConsole(`arr.unshift(${type === 'string' ? `'${val}'` : val}); // 在開頭擠入新元素，所有 Index 遞增`);
+
+            realignNodes();
+            refreshStatePreview();
+            el.value = '';
+        }
+
+        function arrPop() {
+            if (rawArray.length === 0) {
+                logConsole('Error: 陣列為空，無法執行 pop()', 'error');
+                return;
+            }
+            const item = rawArray.pop();
+            logConsole(`arr.pop(); // 回傳並彈出最後一位元素 "${item.val}"`);
+
+            realignNodes();
+            refreshStatePreview();
+        }
+
+        function arrShift() {
+            if (rawArray.length === 0) {
+                logConsole('Error: 陣列為空，無法執行 shift()', 'error');
+                return;
+            }
+            const item = rawArray.shift();
+            logConsole(`arr.shift(); // 回傳並移出首位元素 "${item.val}"`);
+
+            realignNodes();
+            refreshStatePreview();
+        }
+
+        function arrSplice() {
+            const idxVal = document.getElementById('splice-idx').value;
+            const delVal = document.getElementById('splice-del').value;
+            const addVal = document.getElementById('splice-add').value.trim();
+
+            const idx = parseInt(idxVal);
+            if (isNaN(idx) || idx < 0 || idx > rawArray.length) {
+                logConsole('Error: Splice 索引溢出或無效。', 'error');
+                return;
+            }
+
+            const delCount = isNaN(parseInt(delVal)) ? 0 : Math.max(0, parseInt(delVal));
+            const newNodes = [];
+
+            let cmd = `arr.splice(${idx}, ${delCount}`;
+
+            if (addVal !== '') {
+                const parts = addVal.split(',').map(s => s.trim());
+                parts.forEach((p, offset) => {
+                    const type = parseValType(p);
+                    newNodes.push({
+                        id: 'arr_splice_' + (Date.now() + offset),
+                        val: p,
+                        type: type,
+                        address: generateMemoryAddress()
+                    });
+                });
+                cmd += `, ${parts.map(p => parseValType(p) === 'string' ? `'${p}'` : p).join(', ')}`;
+            }
+            cmd += ');';
+
+            rawArray.splice(idx, delCount, ...newNodes);
+            logConsole(cmd);
+
+            realignNodes();
+            refreshStatePreview();
+
+            // 重設輸入
+            document.getElementById('splice-idx').value = '';
+            document.getElementById('splice-del').value = '';
+            document.getElementById('splice-add').value = '';
+        }
+
+        // --- 5. 物件屬性修改邏輯 ---
+        function objSet() {
+            const keyEl = document.getElementById('obj-key-input');
+            const valEl = document.getElementById('obj-val-input');
+
+            const keyRaw = keyEl.value.trim();
+            const valRaw = valEl.value.trim();
+
+            if (keyRaw === '' || valRaw === '') {
+                logConsole('Error: 必須填寫 Key 鍵與 Value 值。', 'error');
+                return;
+            }
+
+            // 過濾並確保 Key 名字符合 JS 命名規則
+            const key = keyRaw.replace(/[^a-zA-Z0-9_$]/g, '');
+            if (key !== keyRaw) {
+                logConsole(`// 偵測特殊字元，修正鍵名為: ${key}`, 'system');
+            }
+
+            const type = parseValType(valRaw);
+            const matchIndex = rawObject.props.findIndex(p => p.key === key);
+
+            if (matchIndex !== -1) {
+                const p = rawObject.props[matchIndex];
+                p.val = valRaw;
+                p.type = type;
+                logConsole(`obj.${key} = ${type === 'string' ? `'${valRaw}'` : valRaw}; // 覆寫已存在的屬性值`);
+
+                // 物理高亮回饋
+                const matchNode = nodeElements.find(n => n.id === p.id);
+                if (matchNode) matchNode.flash = 20;
+            } else {
+                const newProp = {
+                    id: 'prop_' + Date.now(),
+                    key: key,
+                    val: valRaw,
+                    type: type,
+                    address: generateMemoryAddress()
+                };
+                rawObject.props.push(newProp);
+                logConsole(`obj.${key} = ${type === 'string' ? `'${valRaw}'` : valRaw}; // 建立新的鍵值鏈接`);
+            }
+
+            realignNodes();
+            refreshStatePreview();
+            syncObjKeysDropdown();
+
+            keyEl.value = '';
+            valEl.value = '';
+        }
+
+        function objDelete() {
+            const sel = document.getElementById('obj-del-key-select');
+            const targetKey = sel.value;
+
+            if (!targetKey) {
+                logConsole('Error: 找不到可以刪除的 Key。', 'error');
+                return;
+            }
+
+            const idx = rawObject.props.findIndex(p => p.key === targetKey);
+            if (idx !== -1) {
+                rawObject.props.splice(idx, 1);
+                logConsole(`delete obj.${targetKey}; // 釋放屬性記憶體與指標`);
+                realignNodes();
+                refreshStatePreview();
+                syncObjKeysDropdown();
+            }
+        }
+
+        // 更新刪除下拉選單
+        function syncObjKeysDropdown() {
+            const sel = document.getElementById('obj-del-key-select');
+            sel.innerHTML = '';
+            rawObject.props.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.key;
+                opt.innerText = p.key;
+                sel.appendChild(opt);
+            });
+        }
+
+        // --- 6. 系統日誌與預覽同步 ---
+        function refreshStatePreview() {
+            const countBox = document.getElementById('elements-count');
+            const previewBox = document.getElementById('json-preview-box');
+
+            if (currentMode === 'array') {
+                countBox.innerText = `Length: ${rawArray.length}`;
+                const simpleArr = rawArray.map(item => {
+                    let v = item.val;
+                    if (item.type === 'number') v = Number(v);
+                    if (item.type === 'boolean') v = (v === 'true');
+                    return v;
+                });
+                previewBox.textContent = `const arr = ${JSON.stringify(simpleArr, null, 2)};`;
+            } else {
+                countBox.innerText = `Keys: ${rawObject.props.length}`;
+                const simpleObj = {};
+                rawObject.props.forEach(p => {
+                    let v = p.val;
+                    if (p.type === 'number') v = Number(v);
+                    if (p.type === 'boolean') v = (v === 'true');
+                    simpleObj[p.key] = v;
+                });
+                previewBox.textContent = `const obj = ${JSON.stringify(simpleObj, null, 2)};`;
+            }
+        }
+
+        function logConsole(text, type = 'command') {
+            const container = document.getElementById('console-output');
+            const stamp = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+            
+            let bullet = '❯ ';
+            let fontColor = 'text-sky-400';
+
+            if (type === 'system') {
+                bullet = '⚡ ';
+                fontColor = 'text-slate-500';
+            } else if (type === 'error') {
+                bullet = '❌ ';
+                fontColor = 'text-rose-400';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'border-l border-slate-800 hover:border-indigo-500 pl-2 transition-colors';
+            item.innerHTML = `<span class="text-slate-600 text-[10px] mr-1.5">${stamp}</span><span class="${fontColor} code-font">${bullet}${text}</span>`;
+            
+            container.appendChild(item);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearConsoleLogs() {
+            document.getElementById('console-output').innerHTML = '<div class="text-slate-500">// 控制台日誌已被清空</div>';
+        }
+
+        function copyMemoryJSON() {
+            const text = document.getElementById('json-preview-box').innerText;
+            const shadowText = document.createElement('textarea');
+            shadowText.value = text;
+            document.body.appendChild(shadowText);
+            shadowText.select();
+            document.execCommand('copy');
+            document.body.removeChild(shadowText);
+            logConsole('// JSON 資料架構已複製到剪貼簿。', 'system');
+        }
+
+        // --- 7. 螢幕空間座標系轉換與視角重設 ---
+        function resetViewPort() {
+            viewState.x = 0;
+            viewState.y = 0;
+            viewState.scale = 1;
+        }
+
+        function screenToWorld(sX, sY) {
+            return {
+                x: (sX - viewState.x) / viewState.scale,
+                y: (sY - viewState.y) / viewState.scale
+            };
+        }
+
+        function getMouseCoordinates(e) {
+            const box = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - box.left,
+                y: e.clientY - box.top
+            };
+        }
+
+        function getTouchCoordinates(e) {
+            if (e.touches.length === 0) return { x: 0, y: 0 };
+            const box = canvas.getBoundingClientRect();
+            return {
+                x: e.touches[0].clientX - box.left,
+                y: e.touches[0].clientY - box.top
+            };
+        }
+
+        // --- 8. 事件控制層 (支援拖拽/縮放/雙擊) ---
+        function onMouseDown(e) {
+            const mousePos = getMouseCoordinates(e);
+            const wPos = screenToWorld(mousePos.x, mousePos.y);
+
+            let hitNode = null;
+
+            // 逆序查找：高圖層優先
+            for (let i = nodeElements.length - 1; i >= 0; i--) {
+                const node = nodeElements[i];
+                if (currentMode === 'array') {
+                    if (wPos.x >= node.x && wPos.x <= node.x + node.w &&
+                        wPos.y >= node.y && wPos.y <= node.y + node.h) {
+                        hitNode = node;
+                        break;
+                    }
+                } else {
+                    if (node.isRoot) {
+                        if (Math.hypot(wPos.x - node.x, wPos.y - node.y) <= node.radius) {
+                            hitNode = node;
+                            break;
+                        }
+                    } else {
+                        const rx = node.x - node.w / 2;
+                        const ry = node.y - node.h / 2;
+                        if (wPos.x >= rx && wPos.x <= rx + node.w &&
+                            wPos.y >= ry && wPos.y <= ry + node.h) {
+                            hitNode = node;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (hitNode) {
+                mouseTracker.draggedNodeId = hitNode.id;
+                mouseTracker.offsetX = wPos.x - hitNode.x;
+                mouseTracker.offsetY = wPos.y - hitNode.y;
+            } else {
+                viewState.isDragging = true;
+                viewState.startX = mousePos.x - viewState.x;
+                viewState.startY = mousePos.y - viewState.y;
+            }
+        }
+
+        function onMouseMove(e) {
+            const mousePos = getMouseCoordinates(e);
+            const wPos = screenToWorld(mousePos.x, mousePos.y);
+
+            if (mouseTracker.draggedNodeId) {
+                const node = nodeElements.find(n => n.id === mouseTracker.draggedNodeId);
+                if (node) {
+                    node.tx = wPos.x - mouseTracker.offsetX;
+                    node.ty = wPos.y - mouseTracker.offsetY;
+                    node.x = node.tx;
+                    node.y = node.ty;
+                }
+                return;
+            }
+
+            if (viewState.isDragging) {
+                viewState.x = mousePos.x - viewState.startX;
+                viewState.y = mousePos.y - viewState.startY;
+                return;
+            }
+
+            // 懸停偵測
+            let hoverId = null;
+            for (let i = nodeElements.length - 1; i >= 0; i--) {
+                const node = nodeElements[i];
+                if (currentMode === 'array') {
+                    if (wPos.x >= node.x && wPos.x <= node.x + node.w &&
+                        wPos.y >= node.y && wPos.y <= node.y + node.h) {
+                        hoverId = node.id;
+                        break;
+                    }
+                } else {
+                    if (node.isRoot) {
+                        if (Math.hypot(wPos.x - node.x, wPos.y - node.y) <= node.radius) {
+                            hoverId = node.id;
+                            break;
+                        }
+                    } else {
+                        const rx = node.x - node.w / 2;
+                        const ry = node.y - node.h / 2;
+                        if (wPos.x >= rx && wPos.x <= rx + node.w &&
+                            wPos.y >= ry && wPos.y <= ry + node.h) {
+                            hoverId = node.id;
+                            break;
+                        }
+                    }
+                }
+            }
+            mouseTracker.hoveredNodeId = hoverId;
+        }
+
+        function onMouseUp() {
+            viewState.isDragging = false;
+            mouseTracker.draggedNodeId = null;
+        }
+
+        function onMouseWheel(e) {
+            e.preventDefault();
+            const mousePos = getMouseCoordinates(e);
+            const zoomCenter = screenToWorld(mousePos.x, mousePos.y);
+
+            const factor = 0.08;
+            if (e.deltaY < 0) {
+                viewState.scale = Math.min(viewState.scale + factor, 2.5);
+            } else {
+                viewState.scale = Math.max(viewState.scale - factor, 0.45);
+            }
+
+            viewState.x = mousePos.x - zoomCenter.x * viewState.scale;
+            viewState.y = mousePos.y - zoomCenter.y * viewState.scale;
+        }
+
+        // 行動端 touch 支援
+        function onTouchStart(e) {
+            if (e.touches.length === 1) {
+                const tPos = getTouchCoordinates(e);
+                const wPos = screenToWorld(tPos.x, tPos.y);
+
+                let hitNode = null;
+                for (let i = nodeElements.length - 1; i >= 0; i--) {
+                    const node = nodeElements[i];
+                    if (currentMode === 'array') {
+                        if (wPos.x >= node.x && wPos.x <= node.x + node.w &&
+                            wPos.y >= node.y && wPos.y <= node.y + node.h) {
+                            hitNode = node; break;
+                        }
+                    } else {
+                        if (node.isRoot) {
+                            if (Math.hypot(wPos.x - node.x, wPos.y - node.y) <= node.radius) {
+                                hitNode = node; break;
+                            }
+                        } else {
+                            const rx = node.x - node.w / 2;
+                            const ry = node.y - node.h / 2;
+                            if (wPos.x >= rx && wPos.x <= rx + node.w &&
+                                wPos.y >= ry && wPos.y <= ry + node.h) {
+                                hitNode = node; break;
+                            }
+                        }
+                    }
+                }
+
+                if (hitNode) {
+                    mouseTracker.draggedNodeId = hitNode.id;
+                    mouseTracker.offsetX = wPos.x - hitNode.x;
+                    mouseTracker.offsetY = wPos.y - hitNode.y;
+                    e.preventDefault();
+                } else {
+                    viewState.isDragging = true;
+                    viewState.startX = tPos.x - viewState.x;
+                    viewState.startY = tPos.y - viewState.y;
+                }
+            }
+        }
+
+        function onTouchMove(e) {
+            if (e.touches.length === 1) {
+                const tPos = getTouchCoordinates(e);
+                const wPos = screenToWorld(tPos.x, tPos.y);
+
+                if (mouseTracker.draggedNodeId) {
+                    const node = nodeElements.find(n => n.id === mouseTracker.draggedNodeId);
+                    if (node) {
+                        node.tx = wPos.x - mouseTracker.offsetX;
+                        node.ty = wPos.y - mouseTracker.offsetY;
+                        node.x = node.tx;
+                        node.y = node.ty;
+                    }
+                    e.preventDefault();
+                } else if (viewState.isDragging) {
+                    viewState.x = tPos.x - viewState.startX;
+                    viewState.y = tPos.y - viewState.startY;
+                    e.preventDefault();
+                }
+            }
+        }
+
+        function onTouchEnd() {
+            viewState.isDragging = false;
+            mouseTracker.draggedNodeId = null;
+        }
+
+        // --- 9. 繪製引擎主迴圈 (Drawing Engine) ---
+        function renderLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製科技感格線底板
+            drawSpaceGrid();
+
+            // 套用使用者拖曳與縮放矩陣
+            ctx.save();
+            ctx.translate(viewState.x, viewState.y);
+            ctx.scale(viewState.scale, viewState.scale);
+
+            // 阻尼彈性力學計算
+            applyNodePhysics();
+
+            if (currentMode === 'array') {
+                renderArrayView();
+            } else {
+                renderObjectView();
+            }
+
+            ctx.restore();
+            requestAnimationFrame(renderLoop);
+        }
+
+        // 格線底板繪圖
+        function drawSpaceGrid() {
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            const size = 45;
+
+            const shiftX = (viewState.x % (size * viewState.scale)) / viewState.scale - size;
+            const shiftY = (viewState.y % (size * viewState.scale)) / viewState.scale - size;
+
+            ctx.save();
+            ctx.scale(viewState.scale, viewState.scale);
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
+            ctx.lineWidth = 1;
+
+            for (let x = shiftX; x < w / viewState.scale + size; x += size) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h / viewState.scale);
+                ctx.stroke();
+            }
+
+            for (let y = shiftY; y < h / viewState.scale + size; y += size) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w / viewState.scale, y);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // 阻尼動畫彈性逼近
+        function applyNodePhysics() {
+            nodeElements.forEach(n => {
+                if (n.id === mouseTracker.draggedNodeId) return; // 拖動中不套用彈性物理
+                
+                const factor = 0.14;
+                n.x += (n.tx - n.x) * factor;
+                n.y += (n.ty - n.y) * factor;
+
+                if (n.scale < 1) n.scale += (1 - n.scale) * 0.15;
+                if (n.alpha < 1) n.alpha += (1 - n.alpha) * 0.15;
+                if (n.flash > 0) n.flash--;
+            });
+        }
+
+        // --- 10. 線性陣列繪製與連線 ---
+        function renderArrayView() {
+            // A. 連接關係線
+            ctx.save();
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+            ctx.lineWidth = 5;
+            ctx.setLineDash([5, 5]);
+
+            const active = nodeElements.filter(n => n.alpha > 0.15).sort((a,b) => a.index - b.index);
+            if (active.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(active[0].x + active[0].w / 2, active[0].y + active[0].h / 2);
+                for (let i = 1; i < active.length; i++) {
+                    ctx.lineTo(active[i].x + active[i].w / 2, active[i].y + active[i].h / 2);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // B. 節點本體
+            nodeElements.forEach(n => {
+                ctx.save();
+                ctx.globalAlpha = n.alpha;
+
+                const isHovered = (n.id === mouseTracker.hoveredNodeId);
+                const isDragged = (n.id === mouseTracker.draggedNodeId);
+
+                const currentW = n.w * n.scale;
+                const currentH = n.h * n.scale;
+                const rx = n.x + (n.w - currentW) / 2;
+                const ry = n.y + (n.h - currentH) / 2;
+
+                // 陰影
+                ctx.shadowColor = n.flash > 0 ? '#10b981' : isHovered ? '#6366f1' : 'transparent';
+                ctx.shadowBlur = (isHovered || n.flash > 0) ? 14 : 0;
+
+                // 漸層外殼
+                const gradient = ctx.createLinearGradient(rx, ry, rx, ry + currentH);
+                if (n.flash > 0) {
+                    gradient.addColorStop(0, '#064e3b');
+                    gradient.addColorStop(1, '#022c22');
+                } else if (isHovered || isDragged) {
+                    gradient.addColorStop(0, '#1e1b4b');
+                    gradient.addColorStop(1, '#0b0f19');
+                } else {
+                    gradient.addColorStop(0, '#0f172a');
+                    gradient.addColorStop(1, '#030712');
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.strokeStyle = n.flash > 0 ? '#10b981' : isHovered ? '#818cf8' : '#334155';
+                ctx.lineWidth = (isHovered || n.flash > 0) ? 2.5 : 1.5;
+
+                drawRoundedRect(rx, ry, currentW, currentH, 12, true, true);
+
+                // 文字層
+                ctx.shadowBlur = 0;
+
+                // Index 索引外層標記
+                ctx.fillStyle = isHovered ? '#818cf8' : '#475569';
+                ctx.font = 'bold 10px "Fira Code", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`[${n.index}]`, rx + currentW / 2, ry - 8);
+
+                // 記憶體位址
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+                ctx.font = '9px "Fira Code", monospace';
+                ctx.fillText(n.address, rx + currentW / 2, ry + 18);
+
+                // 主要值 (Value)
+                ctx.fillStyle = n.type === 'number' ? '#fbbf24' : n.type === 'boolean' ? '#f43f5e' : '#f8fafc';
+                ctx.font = 'bold 13px "Inter", sans-serif';
+                let display = String(n.val);
+                if (display.length > 8) display = display.substring(0, 6) + '...';
+                if (n.type === 'string') display = `"${display}"`;
+                ctx.fillText(display, rx + currentW / 2, ry + currentH / 2 + 5);
+
+                // 型別 (Type)
+                ctx.fillStyle = 'rgba(100, 116, 139, 0.75)';
+                ctx.font = 'italic 8px "Inter", sans-serif';
+                ctx.fillText(n.type, rx + currentW / 2, ry + currentH - 12);
+
+                ctx.restore();
+            });
+        }
+
+        // --- 11. 拓樸物件繪製與連線 ---
+        function renderObjectView() {
+            const root = nodeElements.find(n => n.isRoot);
+            if (!root) return;
+
+            // A. 彈簧連接線
+            ctx.save();
+            nodeElements.forEach(n => {
+                if (n.isRoot) return;
+                const isHovered = (n.id === mouseTracker.hoveredNodeId || root.id === mouseTracker.hoveredNodeId);
+                ctx.strokeStyle = isHovered ? 'rgba(168, 85, 247, 0.5)' : 'rgba(148, 163, 184, 0.15)';
+                ctx.lineWidth = isHovered ? 2 : 1.2;
+                ctx.setLineDash([4, 4]);
+
+                ctx.beginPath();
+                ctx.moveTo(root.x, root.y);
+                ctx.lineTo(n.x, n.y);
+                ctx.stroke();
+            });
+            ctx.restore();
+
+            // B. 節點繪圖
+            nodeElements.forEach(n => {
+                ctx.save();
+                ctx.globalAlpha = n.alpha;
+
+                const isHovered = (n.id === mouseTracker.hoveredNodeId);
+                const isDragged = (n.id === mouseTracker.draggedNodeId);
+
+                if (n.isRoot) {
+                    // 核心物件主節點
+                    const currentR = n.radius * n.scale;
+                    ctx.shadowColor = isHovered ? '#c084fc' : 'rgba(168, 85, 247, 0.2)';
+                    ctx.shadowBlur = isHovered ? 20 : 8;
+
+                    const radGrad = ctx.createRadialGradient(n.x - 6, n.y - 6, 2, n.x, n.y, currentR);
+                    radGrad.addColorStop(0, '#c084fc');
+                    radGrad.addColorStop(1, '#6b21a8');
+
+                    ctx.fillStyle = radGrad;
+                    ctx.strokeStyle = isHovered ? '#e9d5ff' : '#a855f7';
+                    ctx.lineWidth = 3;
+
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, currentR, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px "Inter", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Object {}', n.x, n.y - 1);
+
+                    ctx.fillStyle = '#f3e8ff';
+                    ctx.font = '9px "Fira Code", monospace';
+                    ctx.fillText(n.address, n.x, n.y + 15);
+
+                } else {
+                    // 外部 Key-Value 屬性卡片
+                    const currentW = n.w * n.scale;
+                    const currentH = n.h * n.scale;
+                    const rx = n.x - currentW / 2;
+                    const ry = n.y - currentH / 2;
+
+                    ctx.shadowColor = n.flash > 0 ? '#10b981' : isHovered ? '#a855f7' : 'transparent';
+                    ctx.shadowBlur = (isHovered || n.flash > 0) ? 14 : 0;
+
+                    const gradient = ctx.createLinearGradient(rx, ry, rx, ry + currentH);
+                    if (n.flash > 0) {
+                        gradient.addColorStop(0, '#064e3b');
+                        gradient.addColorStop(1, '#022c22');
+                    } else if (isHovered || isDragged) {
+                        gradient.addColorStop(0, '#2e1065');
+                        gradient.addColorStop(1, '#0b0f19');
+                    } else {
+                        gradient.addColorStop(0, '#0f172a');
+                        gradient.addColorStop(1, '#030712');
+                    }
+
+                    ctx.fillStyle = gradient;
+                    ctx.strokeStyle = n.flash > 0 ? '#10b981' : isHovered ? '#d8b4fe' : '#4b5563';
+                    ctx.lineWidth = (isHovered || n.flash > 0) ? 2 : 1.2;
+
+                    drawRoundedRect(rx, ry, currentW, currentH, 10, true, true);
+
+                    ctx.shadowBlur = 0;
+                    ctx.textAlign = 'center';
+
+                    // Key 鍵名
+                    ctx.fillStyle = '#d8b4fe';
+                    ctx.font = 'bold 11px "Fira Code", monospace';
+                    let displayKey = n.key;
+                    if (displayKey.length > 10) displayKey = displayKey.substring(0, 8) + '...';
+                    ctx.fillText(displayKey + ':', n.x, n.y - 8);
+
+                    // Value 鍵值
+                    ctx.fillStyle = n.type === 'number' ? '#fbbf24' : n.type === 'boolean' ? '#f43f5e' : '#f8fafc';
+                    ctx.font = 'bold 12px "Inter", sans-serif';
+                    let displayVal = String(n.val);
+                    if (displayVal.length > 10) displayVal = displayVal.substring(0, 8) + '...';
+                    if (n.type === 'string') displayVal = `"${displayVal}"`;
+                    ctx.fillText(displayVal, n.x, n.y + 9);
+
+                    // 屬性節點位址
+                    ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+                    ctx.font = '8px "Fira Code", monospace';
+                    ctx.fillText(n.address, n.x, n.y + 22);
+                }
+
+                ctx.restore();
+            });
+        }
+
+        // 輔助繪圖：圓角矩形
+        function drawRoundedRect(x, y, w, h, radius, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + w - radius, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+            ctx.lineTo(x + w, y + h - radius);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+            ctx.lineTo(x + radius, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+    </script>
+</body>
+</html>
