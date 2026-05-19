@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS API 與非同步 禪意與美食街號碼牌模擬器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* 呼叫器震動動畫 */
+        @keyframes vibrate {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-2px, 1px) rotate(-1deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            60% { transform: translate(-1px, 2px) rotate(0deg); }
+            80% { transform: translate(2px, 1px) rotate(1deg); }
+        }
+        .animate-vibrate {
+            animation: vibrate 0.15s infinite;
+        }
+        /* 小美生氣抖動動畫 */
+        @keyframes angry-shake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 0); }
+            20%, 40%, 60%, 80% { transform: translate(4px, 0); }
+        }
+        .animate-angry-shake {
+            animation: angry-shake 0.5s infinite;
+        }
+        /* 小美悠閒跳舞動畫 */
+        @keyframes happy-dance {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+        .animate-happy-dance {
+            animation: happy-dance 1s infinite ease-in-out;
+        }
+        .transition-all-500 {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-600 p-2.5 rounded-xl shadow-lg shadow-amber-500/30">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        JS API & Async <span class="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-normal">教學沙盒</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">避開中文語意陷阱，用「美食街號碼牌」與「點餐菜單」秒懂非同步與 API</p>
+                </div>
+            </div>
+            
+            <!-- 隱喻切換 Tab -->
+            <nav class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button onclick="switchTab('sync-vs-async')" id="tab-sync-vs-async" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-amber-600 text-white shadow">
+                    ⏰ 同步 vs 非同步
+                </button>
+                <button onclick="switchTab('promise-states')" id="tab-promise-states" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                    📟 Promise 三境界
+                </button>
+                <button onclick="switchTab('api-waiter')" id="tab-api-waiter" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                    🍽️ API 餐廳服務生
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側：視覺化模擬沙盒 (佔 7 格) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- 模擬器視窗 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[520px]">
+                <!-- 視窗標題列 -->
+                <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="text-xs text-slate-400 ml-2 font-medium">美食街/餐廳 實境劇場</span>
+                    </div>
+                    <span id="metaphor-badge" class="text-xs bg-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-md font-semibold border border-amber-500/20">⏰ 同步 vs 非同步</span>
+                </div>
+
+                <!-- 模擬內容展示區 -->
+                <div class="flex-grow p-6 flex flex-col justify-between relative overflow-hidden bg-slate-900/50">
+                    
+                    <div id="sandbox-sync-vs-async" class="sandbox-view flex flex-col justify-around h-full">
+                        <div class="text-center">
+                            <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">櫃檯點餐模式模擬</span>
+                        </div>
+
+                        <!-- 顧客排隊隊伍 -->
+                        <div class="flex items-center justify-center gap-4 my-4 min-h-[160px]">
+                            <!-- 櫃檯收銀員 -->
+                            <div class="flex flex-col items-center bg-slate-800 p-3 rounded-2xl border-2 border-amber-500 shadow-md w-24 relative z-10">
+                                <span class="text-4xl animate-pulse" id="cashier-avatar">👩‍🍳</span>
+                                <span class="text-[10px] font-bold text-amber-400 mt-2">櫃檯收銀員</span>
+                                <span class="text-[9px] text-slate-400" id="cashier-status">空閒中</span>
+                                <div id="cooking-progress" class="absolute -top-4 w-16 bg-slate-950 h-1.5 rounded-full overflow-hidden hidden">
+                                    <div class="bg-amber-500 h-full w-0" id="cooking-bar"></div>
+                                </div>
+                            </div>
+
+                            <div class="text-slate-600 text-2xl font-bold">←</div>
+
+                            <!-- 隊伍佇列 -->
+                            <div class="flex gap-2 overflow-x-auto p-2 border border-slate-800/60 bg-slate-950/40 rounded-2xl max-w-sm w-full min-h-[110px] items-center">
+                                <!-- 小明 -->
+                                <div id="customer-1" class="flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative">
+                                    <span class="text-2xl" id="cust-emoji-1">👨‍💼</span>
+                                    <span class="text-[10px] font-bold mt-1 text-slate-300">小明</span>
+                                    <span id="cust-desc-1" class="text-[8px] text-slate-500 mt-1">排隊中</span>
+                                </div>
+                                <!-- 小華 -->
+                                <div id="customer-2" class="flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative">
+                                    <span class="text-2xl" id="cust-emoji-2">👩‍🎨</span>
+                                    <span class="text-[10px] font-bold mt-1 text-slate-300">小華</span>
+                                    <span id="cust-desc-2" class="text-[8px] text-slate-500 mt-1">等候中</span>
+                                </div>
+                                <!-- 小美 (特寫焦點) -->
+                                <div id="customer-3" class="flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative">
+                                    <div id="xiaomei-flame" class="absolute -top-6 text-xs hidden">🔥😡🔥</div>
+                                    <span class="text-2xl" id="cust-emoji-3">🧑‍💻</span>
+                                    <span class="text-[10px] font-bold mt-1 text-slate-300">小美</span>
+                                    <span id="cust-desc-3" class="text-[8px] text-slate-500 mt-1">等候中</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 動態說明文字 -->
+                        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-center min-h-[75px]">
+                            <p id="sync-async-status-text" class="text-sm text-slate-300 font-medium">
+                                選擇一種點餐模式，觀察「收銀員」如何處理後面正在排隊的人！
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="sandbox-promise-states" class="sandbox-view hidden flex flex-col justify-around h-full">
+                        <div class="text-center">
+                            <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">點餐呼叫器 (Promise) 狀態追蹤</span>
+                        </div>
+
+                        <!-- 呼叫器本體 -->
+                        <div class="flex justify-center items-center my-4">
+                            <div id="beeper-device" class="w-48 h-64 bg-slate-800 border-4 border-slate-700 rounded-3xl shadow-2xl relative flex flex-col p-4 justify-between transition-all duration-300">
+                                <!-- 狀態顯示燈 -->
+                                <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Status:</span>
+                                    <span id="beeper-light" class="w-3.5 h-3.5 rounded-full bg-slate-600 shadow"></span>
+                                </div>
+
+                                <!-- 號碼螢幕 -->
+                                <div class="bg-slate-950 text-slate-500 py-6 text-center rounded-2xl border border-slate-900">
+                                    <h2 class="text-4xl font-bold code-font tracking-widest" id="beeper-screen">No. 08</h2>
+                                    <p class="text-[9px] uppercase tracking-widest text-slate-600 mt-1" id="beeper-state-label">Uninitialized</p>
+                                </div>
+
+                                <!-- 揚聲器孔 -->
+                                <div class="flex flex-col gap-1 items-center opacity-60">
+                                    <div class="w-24 h-1 bg-slate-600 rounded-full"></div>
+                                    <div class="w-16 h-1 bg-slate-600 rounded-full"></div>
+                                    <div class="w-8 h-1 bg-slate-600 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 狀態切換解說 -->
+                        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-center min-h-[50px]">
+                            <p id="promise-state-desc" class="text-xs text-slate-400">
+                                點餐後，你手上的號碼牌（Promise）會處於什麼狀態？點擊下方按鈕來推進時間！
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="sandbox-api-waiter" class="sandbox-view hidden flex flex-col justify-around h-full">
+                        <div class="text-center">
+                            <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">API 請求 (Request) 與 回應 (Response) 雙向傳輸</span>
+                        </div>
+
+                        <div class="flex justify-between items-center gap-4 px-6 relative min-h-[160px]">
+                            <!-- 你 (Frontend / Request) -->
+                            <div class="flex flex-col items-center bg-slate-800/50 border border-slate-700 p-4 rounded-2xl w-28 relative z-10">
+                                <span class="text-4xl" id="client-avatar">🧑‍💻</span>
+                                <span class="text-xs font-bold mt-2 text-slate-200">前端 (你)</span>
+                                <span class="text-[9px] text-indigo-400 code-font">fetch()</span>
+                            </div>
+
+                            <!-- 雙向傳輸管道 -->
+                            <div class="flex-grow h-3 bg-slate-950 relative overflow-hidden rounded-full border border-slate-800">
+                                <!-- 去程箭頭 -->
+                                <div class="absolute inset-y-0 left-0 text-[8px] text-indigo-500/30 flex items-center pl-4 font-bold tracking-widest pointer-events-none">REQUEST ➔➔➔</div>
+                                <!-- 回程箭頭 -->
+                                <div class="absolute inset-y-0 right-0 text-[8px] text-emerald-500/30 flex items-center pr-4 font-bold tracking-widest pointer-events-none">➔➔➔ RESPONSE</div>
+                                
+                                <!-- 雙向載體 (服務生) -->
+                                <div id="api-carrier" class="absolute top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-amber-500 text-slate-950 rounded-full shadow-lg font-bold transition-all duration-100 hidden">
+                                    ✉️
+                                </div>
+                            </div>
+
+                            <!-- 餐廳大廚 (API Server / Response) -->
+                            <div class="flex flex-col items-center bg-slate-800/50 border border-slate-700 p-4 rounded-2xl w-28 relative z-10">
+                                <span class="text-4xl" id="chef-avatar">👨‍🍳</span>
+                                <span class="text-xs font-bold mt-2 text-slate-200">後端大廚 (API)</span>
+                                <span class="text-[9px] text-emerald-400 code-font">Server JSON</span>
+                            </div>
+                        </div>
+
+                        <!-- 餐廳菜單對照 -->
+                        <div class="grid grid-cols-3 gap-2 px-2">
+                            <button onclick="requestMenu('weather')" class="api-menu-btn bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 p-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition">
+                                🌦️ 查詢天氣API
+                            </button>
+                            <button onclick="requestMenu('user')" class="api-menu-btn bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 p-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition">
+                                👤 載入會員API
+                            </button>
+                            <button onclick="requestMenu('error')" class="api-menu-btn bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/40 p-2 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 transition">
+                                💥 壞掉的API(404)
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 互動控制面板 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> 操控台 (Action Controller)
+                </h3>
+                
+                <!-- 1. 同步 vs 非同步控制組 -->
+                <div id="controls-sync-vs-async" class="control-group flex flex-wrap gap-3">
+                    <button onclick="runDemo('sync')" class="flex-1 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition shadow-lg shadow-rose-600/20">
+                        🔴 同步模式 (排隊卡死)
+                    </button>
+                    <button onclick="runDemo('async')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white px-4 py-3 rounded-xl text-sm font-semibold transition shadow-lg shadow-emerald-600/20">
+                        🟢 非同步模式 (發震動號碼牌)
+                    </button>
+                    <button onclick="resetSyncAsync()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white px-4 py-2 rounded-xl text-xs font-medium transition border border-slate-700">
+                        🔄 重置排隊隊伍
+                    </button>
+                </div>
+
+                <!-- 2. Promise 控制組 -->
+                <div id="controls-promise-states" class="control-group hidden flex flex-col gap-3">
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="setPromiseState('pending')" id="btn-promise-pending" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition">
+                            ① 點餐 (Pending)
+                        </button>
+                        <button onclick="setPromiseState('resolved')" id="btn-promise-resolved" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition" disabled>
+                            ② 好了震動 (Resolve)
+                        </button>
+                        <button onclick="setPromiseState('rejected')" id="btn-promise-rejected" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition" disabled>
+                            ② 沒料退款 (Reject)
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 text-center">依序點擊觀察：號碼牌（Promise）從「等待中（Pending）」到「實現（Resolved）」或「拒絕（Rejected）」。</p>
+                </div>
+
+                <!-- 3. API 控制組 -->
+                <div id="controls-api-waiter" class="control-group hidden flex flex-col gap-3">
+                    <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+                        點擊上方的「查詢API」按鈕，發送 Request ✉️ 到後端。
+                        後端處理完數據後，會包裝成 Response 📦 送回前端！
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- 隱喻說明與程式碼對照 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex-grow flex flex-col gap-4 text-slate-300">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400">
+                    💡 隱喻核心原理 & 代碼同步
+                </h3>
+                
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex-grow overflow-y-auto max-h-[280px] lg:max-h-[340px]">
+                    <!-- 1. 同步 vs 非同步說明 -->
+                    <div id="info-sync-vs-async" class="info-view flex flex-col gap-4">
+                        <div class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-rose-400">● 同步 (Blocking)</strong>：
+                            收銀員收完小明的錢就去煎漢堡。由於收銀員卡死在廚房，後面排隊的**小華、小美完全卡死，動彈不得**。看！**小美氣到渾身發抖、頭冒熊熊大火 😡**！這就是執行緒被完全阻塞（Block）的災難。
+                            <br><br>
+                            <strong class="text-emerald-400">● 非同步 (Non-Blocking)</strong>：
+                            收銀員給小明一個**號碼牌（Promise）**。收銀員**不等待漢堡做完**，立刻請下一個小華來點餐，小明去旁邊滑手機。而後面的**小美根本不受影響，快樂地跟著音樂扭屁股滑 TikTok 🤳✨**！
+                        </div>
+                        <div class="border-t border-slate-800 pt-3">
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase">JavaScript 同步 vs 非同步代碼：</span>
+                            <pre class="code-font text-xs text-amber-400 mt-1 bg-slate-900 p-3 rounded-lg overflow-x-auto" id="code-sync-vs-async">
+// 選擇排隊模式後，程式碼將在此即時生成...</pre>
+                        </div>
+                    </div>
+
+                    <!-- 2. Promise 說明 -->
+                    <div id="info-promise-states" class="info-view hidden flex flex-col gap-4">
+                        <div class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-amber-400">號碼牌 (Promise) 的三種境界：</strong><br>
+                            *   <strong>Pending (等待中)</strong>：點餐完拿到號碼牌，此時號碼牌不吵不鬧，代表廚房正在備餐中。
+                            *   <strong>Fulfilled (實現)</strong>：餐點做好，號碼牌突然震動閃爍！這就是呼叫了 <code class="code-font text-emerald-400">resolve()</code>，執行接著的 <code class="code-font text-emerald-400">.then()</code> 取餐。
+                            *   <strong>Rejected (拒絕)</strong>：廚房沒牛肉了，號碼牌響起警示。這就是呼叫了 <code class="code-font text-rose-400">reject()</code>，觸發 <code class="code-font text-rose-400">.catch()</code> 去退款。
+                        </div>
+                        <div class="border-t border-slate-800 pt-3">
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase">Promise 的內心獨白代碼：</span>
+                            <pre class="code-font text-xs text-emerald-400 mt-1 bg-slate-900 p-3 rounded-lg overflow-x-auto" id="code-promise-states">
+// 尚未點擊狀態...</pre>
+                        </div>
+                    </div>
+
+                    <!-- 3. API 說明 -->
+                    <div id="info-api-waiter" class="info-view hidden flex flex-col gap-4">
+                        <div class="text-xs text-slate-300 leading-relaxed">
+                            <strong class="text-amber-400">請求 Request 與 回應 Response 雙向流動：</strong><br>
+                            前端不可能直接入侵後端的廚房撈資料。我們必須發送 **Request（✉️ 需求信件）** 到後端，後端大廚處理完成後，再包裝成 **Response（📦 JSON 餐盒）** 送回給前端解析。這是一個來回的完整因緣。
+                        </div>
+                        <div class="border-t border-slate-800 pt-3">
+                            <span class="text-[10px] font-semibold text-slate-500 uppercase">JavaScript 請求 API 語法：</span>
+                            <pre class="code-font text-xs text-emerald-400 mt-1 bg-slate-900 p-3 rounded-lg overflow-x-auto" id="code-api-waiter">
+// 請點選上方按鈕來發送 API 請求...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模擬的 Console 輸出面板 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg h-[160px] flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 美食街後台日誌 (Async Engine Console)
+                    </span>
+                    <button onclick="clearConsole()" class="text-[10px] text-slate-500 hover:text-slate-300 transition uppercase font-semibold">
+                        [ 清除 ]
+                    </button>
+                </div>
+                <div id="console-output" class="flex-grow bg-slate-950 rounded-xl p-3 overflow-y-auto text-xs code-font text-emerald-400 border border-slate-800 flex flex-col gap-1">
+                    <span class="text-slate-500">&gt; 美食街模擬引擎初始化完成。</span>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="border-t border-slate-900 py-4 text-center text-xs text-slate-600 mt-auto">
+        JS API & Async Sandbox • 用直覺破除非同步障礙
+    </footer>
+
+    <script>
+        // --- 全域變數狀態管理 ---
+        let currentTab = 'sync-vs-async';
+        let promiseState = 'uninitialized';
+
+        // --- Console 模擬功能 ---
+        function writeLog(message, type = 'info') {
+            const consoleBox = document.getElementById('console-output');
+            const logItem = document.createElement('span');
+            
+            if (type === 'success') {
+                logItem.className = 'text-emerald-400';
+                logItem.innerHTML = `&gt; <span class="bg-emerald-500/10 px-1 py-0.5 rounded text-[10px] text-emerald-300 font-bold mr-1">SUCCESS</span> ${message}`;
+            } else if (type === 'error') {
+                logItem.className = 'text-rose-400';
+                logItem.innerHTML = `&gt; <span class="bg-rose-500/10 px-1 py-0.5 rounded text-[10px] text-rose-300 font-bold mr-1">ERROR</span> ${message}`;
+            } else if (type === 'warn') {
+                logItem.className = 'text-amber-400';
+                logItem.innerHTML = `&gt; <span class="bg-amber-500/10 px-1 py-0.5 rounded text-[10px] text-amber-300 font-bold mr-1">BLOCKED</span> ${message}`;
+            } else {
+                logItem.className = 'text-slate-300';
+                logItem.innerHTML = `&gt; ${message}`;
+            }
+            
+            consoleBox.appendChild(logItem);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '<span class="text-slate-500">&gt; 主機板已清空。</span>';
+        }
+
+        // --- Tab 切換功能 ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            
+            // 1. 更新導航按鈕樣式
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
+            });
+            const activeTabBtn = document.getElementById(`tab-${tabId}`);
+            activeTabBtn.className = "tab-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-amber-600 text-white shadow";
+
+            // 2. 切換左側模擬畫布
+            document.querySelectorAll('.sandbox-view').forEach(view => view.classList.add('hidden'));
+            document.getElementById(`sandbox-${tabId}`).classList.remove('hidden');
+
+            // 3. 切換控制面板
+            document.querySelectorAll('.control-group').forEach(ctrl => ctrl.classList.add('hidden'));
+            document.getElementById(`controls-${tabId}`).classList.remove('hidden');
+
+            // 4. 切換右側說明
+            document.querySelectorAll('.info-view').forEach(info => info.classList.add('hidden'));
+            document.getElementById(`info-${tabId}`).classList.remove('hidden');
+
+            // 5. 更新標記
+            const badges = {
+                'sync-vs-async': '⏰ 同步 vs 非同步',
+                'promise-states': '📟 Promise 三境界',
+                'api-waiter': '🍽️ API 餐廳服務生'
+            };
+            document.getElementById('metaphor-badge').innerText = badges[tabId];
+
+            writeLog(`切換到隱喻情境：[ ${badges[tabId]} ]`);
+            syncCode();
+        }
+
+        // --- STREAMING_CHUNK: Handling Sync vs Async timeline animations and dynamic CSS classes... ---
+        let isRunningDemo = false;
+
+        function runDemo(mode) {
+            if (isRunningDemo) return;
+            isRunningDemo = true;
+            
+            const cashierStatus = document.getElementById('cashier-status');
+            const cashierAvatar = document.getElementById('cashier-avatar');
+            const progress = document.getElementById('cooking-progress');
+            const progressBar = document.getElementById('cooking-bar');
+            const statusText = document.getElementById('sync-async-status-text');
+            const codeBox = document.getElementById('code-sync-vs-async');
+
+            const customer1 = document.getElementById('customer-1');
+            const customer2 = document.getElementById('customer-2');
+            const customer3 = document.getElementById('customer-3');
+
+            const desc1 = document.getElementById('cust-desc-1');
+            const desc2 = document.getElementById('cust-desc-2');
+            const desc3 = document.getElementById('cust-desc-3');
+            
+            const emoji1 = document.getElementById('cust-emoji-1');
+            const emoji2 = document.getElementById('cust-emoji-2');
+            const emoji3 = document.getElementById('cust-emoji-3');
+
+            const flame = document.getElementById('xiaomei-flame');
+
+            // 重置顧客狀態與顏色
+            customer1.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative";
+            customer2.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative";
+            customer3.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative";
+            
+            emoji1.innerText = "👨‍💼";
+            emoji2.innerText = "👩‍🎨";
+            emoji3.innerText = "🧑‍💻";
+            flame.classList.add('hidden');
+
+            if (mode === 'sync') {
+                // 同步模式 (排隊卡死)
+                writeLog("🔴 開啟：同步(Blocking)點餐模式！");
+                statusText.innerHTML = "<span class='text-rose-400 font-bold'>【同步阻塞】</span> 小明點餐中。由於收銀員必須「先煎熟漢堡」才能招呼下一個，整條隊伍被卡死！";
+                
+                // 動態碼更新
+                codeBox.innerHTML = `
+<span class="text-rose-400">// --- 🔴 同步（會卡死阻塞）寫法 ---</span>
+<span class="text-blue-400">const</span> burger1 = cookBurgerSync(); <span class="text-rose-500">// 卡在這一行 3 秒鐘</span>
+<span class="text-slate-500">// 只有當上面好了，下面的小華和小美才能繼續執行</span>
+<span class="text-blue-400">const</span> burger2 = cookBurgerSync();
+<span class="text-blue-400">const</span> burger3 = cookBurgerSync();
+                `.trim();
+
+                // 步驟一：小明點餐，收銀員開始煎漢堡
+                cashierStatus.innerText = "烹飪漢堡中...";
+                cashierAvatar.innerText = "🍳";
+                progress.classList.remove('hidden');
+                progressBar.style.width = '0%';
+                
+                customer1.classList.add('border-amber-500', 'bg-amber-950/40');
+                desc1.innerText = "枯等漢堡中...";
+
+                // 警告其他排隊者：小華與小美完全動彈不得
+                customer2.classList.add('opacity-40', 'scale-95');
+                desc2.innerText = "被迫乾等中 🙄";
+                emoji2.innerText = "🙄";
+
+                customer3.classList.add('opacity-40', 'scale-95', 'animate-angry-shake');
+                desc3.innerText = "暴怒想走 😡";
+                emoji3.innerText = "😡";
+                flame.classList.remove('hidden');
+
+                writeLog("小明正在等他的漢堡煎好... 此時收銀員卡在廚房中！", "warn");
+                writeLog("小華陷入「無奈等待」；小美生氣到發抖、冒火！整個美食街隊伍完全凍結！", "error");
+
+                let progressVal = 0;
+                const interval = setInterval(() => {
+                    progressVal += 10;
+                    progressBar.style.width = `${progressVal}%`;
+                    if (progressVal >= 100) {
+                        clearInterval(interval);
+                        
+                        // 煎好，交付小明
+                        cashierStatus.innerText = "空閒中";
+                        cashierAvatar.innerText = "👩‍🍳";
+                        writeLog("小明的漢堡做好了！小明滿意地拿著餐點離開櫃檯。", "success");
+                        emoji1.innerText = "🍔";
+                        desc1.innerText = "小明(拿到餐)";
+                        customer1.className = "flex flex-col items-center bg-emerald-950/20 border border-emerald-500/50 px-2.5 py-2 rounded-xl w-24 flex-shrink-0 relative";
+                        
+                        // 恢復隊伍
+                        customer2.classList.remove('opacity-40', 'scale-95');
+                        desc2.innerText = "終於輪到我 😅";
+                        emoji2.innerText = "👩‍🎨";
+
+                        customer3.classList.remove('opacity-40', 'scale-95', 'animate-angry-shake');
+                        flame.classList.add('hidden');
+                        desc3.innerText = "還好沒餓死 😩";
+                        emoji3.innerText = "🧑‍💻";
+
+                        progress.classList.add('hidden');
+                        
+                        statusText.innerHTML = "小明拿到餐點離開了。此時收銀員終於可以服務小華。排隊排了老半天，這就是同步阻塞！";
+                        isRunningDemo = false;
+                    }
+                }, 300);
+
+            } else {
+                // 非同步模式 (號碼牌)
+                writeLog("🟢 開啟：非同步(Non-blocking)點餐模式！");
+                statusText.innerHTML = "<span class='text-emerald-400 font-bold'>【非同步非阻塞】</span> 小明點完餐，立刻拿到一個「號碼牌 (Promise)」。收銀員直接叫下一個人點餐，完全不浪費時間！";
+
+                // 動態碼更新
+                codeBox.innerHTML = `
+<span class="text-emerald-400">// --- 🟢 非同步（Promise / 號碼牌）寫法 ---</span>
+cookBurgerAsync()
+  .<span class="text-cyan-400">then</span>(burger => {
+      <span class="text-slate-500">// 拿到號碼牌(Promise)，等它完成時才回呼</span>
+      xiaoming.<span class="text-yellow-400">eat</span>(burger);
+  });
+
+<span class="text-slate-500">// 收銀員「不卡死等待」，立刻往下走，服務小華</span>
+serveNextCustomer();
+                `.trim();
+
+                // 步驟一：小明點完餐，立刻拿到號碼牌，退出隊列去旁邊等
+                emoji1.innerText = "📟";
+                desc1.innerText = "滑手機等餐 📱";
+                customer1.classList.add('border-amber-500/50', 'bg-slate-900/60');
+                writeLog("小明拿到了號碼牌（等候 Promise 兌現），不占據櫃台。");
+
+                // 櫃台不阻塞，小華立刻可以點餐
+                setTimeout(() => {
+                    writeLog("收銀員保持待命！立刻開始服務小華。", "success");
+                    customer2.classList.add('border-amber-500', 'bg-amber-950/20');
+                    desc2.innerText = "快樂點餐中 🍔";
+                    emoji2.innerText = "🥳";
+                }, 800);
+
+                // 小美完全不受影響，在後面邊玩邊扭
+                setTimeout(() => {
+                    writeLog("小美在後面開心地玩起自拍、扭屁股跳舞，隊列完全沒卡死！", "success");
+                    customer3.classList.add('animate-happy-dance');
+                    desc3.innerText = "輕鬆玩自拍 🤳✨";
+                    emoji3.innerText = "🤳";
+                }, 1400);
+
+                // 漢堡做好，小明號碼牌震動，前去取餐
+                setTimeout(() => {
+                    writeLog("此時廚房叮咚！小明的號碼牌震動了 (Promise Resolved)！");
+                    emoji1.innerText = "🍔";
+                    desc1.innerText = "小明(開心取餐)";
+                    customer1.className = "flex flex-col items-center bg-emerald-950/20 border border-emerald-500/50 px-2.5 py-2 rounded-xl w-24 flex-shrink-0 relative animate-bounce";
+                    
+                    customer2.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl transition-all duration-300 w-24 flex-shrink-0 relative";
+                    desc2.innerText = "拿到號碼牌 📟";
+                    emoji2.innerText = "👩‍🎨";
+
+                    customer3.classList.remove('animate-happy-dance');
+                    desc3.innerText = "輪到我點囉 😆";
+                    emoji3.innerText = "🧑‍💻";
+
+                    writeLog("小明拿著震動的號碼牌順利拿到漢堡。非同步在煮飯時，大家依然自由！", "success");
+                    statusText.innerHTML = "你看！在後端備餐的同時，小華順利點餐，小美也悠閒地做自己的事。這就是高效率、非阻塞的「非同步」運作！";
+                    isRunningDemo = false;
+                }, 3000);
+            }
+        }
+
+        function resetSyncAsync() {
+            if (isRunningDemo) return;
+            const customer1 = document.getElementById('customer-1');
+            const customer2 = document.getElementById('customer-2');
+            const customer3 = document.getElementById('customer-3');
+            
+            const desc1 = document.getElementById('cust-desc-1');
+            const desc2 = document.getElementById('cust-desc-2');
+            const desc3 = document.getElementById('cust-desc-3');
+
+            const emoji1 = document.getElementById('cust-emoji-1');
+            const emoji2 = document.getElementById('cust-emoji-2');
+            const emoji3 = document.getElementById('cust-emoji-3');
+
+            const flame = document.getElementById('xiaomei-flame');
+            
+            customer1.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl w-24 flex-shrink-0 relative";
+            customer2.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl w-24 flex-shrink-0 relative";
+            customer3.className = "flex flex-col items-center bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-xl w-24 flex-shrink-0 relative";
+
+            emoji1.innerText = "👨‍💼";
+            emoji2.innerText = "👩‍🎨";
+            emoji3.innerText = "🧑‍💻";
+
+            desc1.innerText = "排隊中";
+            desc2.innerText = "等候中";
+            desc3.innerText = "等候中";
+
+            flame.classList.add('hidden');
+
+            document.getElementById('cooking-progress').classList.add('hidden');
+            document.getElementById('cashier-status').innerText = "空閒中";
+            document.getElementById('cashier-avatar').innerText = "👩‍🍳";
+            document.getElementById('sync-async-status-text').innerHTML = "排隊隊伍已復原。您可以再次選擇不同的點餐模式進行測試。";
+            writeLog("排隊隊伍與顧客心靈狀態重置。");
+        }
+
+
+        // --- STREAMING_CHUNK: Processing Promise states logic and styling... ---
+        function setPromiseState(state) {
+            promiseState = state;
+            const beeper = document.getElementById('beeper-device');
+            const light = document.getElementById('beeper-light');
+            const screen = document.getElementById('beeper-screen');
+            const stateLabel = document.getElementById('beeper-state-label');
+            const codeBox = document.getElementById('code-promise-states');
+            const desc = document.getElementById('promise-state-desc');
+
+            const btnPending = document.getElementById('btn-promise-pending');
+            const btnResolved = document.getElementById('btn-promise-resolved');
+            const btnRejected = document.getElementById('btn-promise-rejected');
+
+            // 移除所有震動動畫與過渡顏色
+            beeper.className = "w-48 h-64 bg-slate-800 border-4 border-slate-700 rounded-3xl shadow-2xl relative flex flex-col p-4 justify-between transition-all duration-300";
+            light.className = "w-3.5 h-3.5 rounded-full shadow";
+
+            if (state === 'pending') {
+                writeLog("📟 點餐完成！建立一個 new Promise()，號碼牌此時是 Pending (等待) 狀態。");
+                
+                beeper.classList.add('border-amber-500/40', 'bg-slate-800');
+                light.classList.add('bg-amber-500', 'animate-pulse', 'shadow-amber-500/50');
+                screen.innerText = "No. 08";
+                screen.className = "text-4xl font-bold code-font tracking-widest text-amber-500";
+                stateLabel.innerText = "PENDING...";
+                stateLabel.className = "text-[9px] uppercase tracking-widest text-amber-500/70 mt-1";
+
+                desc.innerHTML = "號碼牌閃著橘燈，安安靜靜地。這代表非同步任務**「正在執行、尚未有結果」**。此時你可以隨意走動。";
+
+                btnPending.disabled = true;
+                btnPending.className = "bg-slate-950 text-slate-600 text-xs font-bold py-3 px-2 rounded-xl cursor-not-allowed";
+                btnResolved.disabled = false;
+                btnResolved.className = "bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition";
+                btnRejected.disabled = false;
+                btnRejected.className = "bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition";
+
+                codeBox.innerHTML = `
+<span class="text-slate-500">// 1. 建立一個承諾 (號碼牌)</span>
+<span class="text-blue-400">const</span> beeper = <span class="text-blue-400">new</span> <span class="text-yellow-400">Promise</span>((resolve, reject) => {
+    <span class="text-slate-500">// 廚房正忙碌備餐中，尚未給出回覆</span>
+    <span class="text-amber-400">// [此時狀態：Pending]</span>
+});
+                `.trim();
+
+            } else if (state === 'resolved') {
+                writeLog("📟 嗶嗶！號碼牌劇烈震動！廚房呼叫了 resolve()。狀態轉為 Resolved (實現)！", "success");
+                
+                beeper.classList.add('border-emerald-500', 'bg-emerald-950/20', 'animate-vibrate');
+                light.classList.add('bg-emerald-500', 'shadow-emerald-500/50');
+                screen.className = "text-4xl font-bold code-font tracking-widest text-emerald-400";
+                stateLabel.innerText = "FULFILLED";
+                stateLabel.className = "text-[9px] uppercase tracking-widest text-emerald-400 mt-1";
+
+                desc.innerHTML = "嗶嗶嗶！號碼牌震動了！代表非同步任務**「成功圓滿完成」**，接著立刻會觸發 <code class='code-font text-emerald-400'>.then()</code> 前去取餐。";
+
+                btnResolved.disabled = true;
+                btnResolved.className = "bg-slate-950 text-slate-600 text-xs font-bold py-3 px-2 rounded-xl cursor-not-allowed";
+                btnRejected.disabled = true;
+                btnRejected.className = "bg-slate-950 text-slate-600 text-xs font-bold py-3 px-2 rounded-xl cursor-not-allowed";
+                btnPending.disabled = false;
+                btnPending.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition";
+
+                codeBox.innerHTML = `
+<span class="text-slate-500">// 2. 廚房通知：漢堡備好囉！呼叫 resolve()</span>
+<span class="text-yellow-400">resolve</span>(<span class="text-amber-300">"牛肉起司堡"</span>); 
+
+<span class="text-slate-500">// 順理成章，觸發了 .then() 取餐</span>
+beeper.<span class="text-cyan-400">then</span>(food => {
+    console.log(<span class="text-amber-300">"大口咬下："</span> + food); <span class="text-slate-500">// [此時狀態：Fulfilled]</span>
+});
+                `.trim();
+
+            } else if (state === 'rejected') {
+                writeLog("📟 嗶嗶！紅燈亮起！廚房通知沒料了，呼叫了 reject()。狀態轉為 Rejected (被拒絕)！", "error");
+                
+                beeper.classList.add('border-rose-500', 'bg-rose-950/20');
+                light.classList.add('bg-rose-500', 'shadow-rose-500/50');
+                screen.className = "text-4xl font-bold code-font tracking-widest text-rose-400";
+                stateLabel.innerText = "REJECTED";
+                stateLabel.className = "text-[9px] uppercase tracking-widest text-rose-400 mt-1";
+
+                desc.innerHTML = "紅燈警示！代表非同步任務**「失敗、出錯、或被拒絕」**。接著會呼叫 <code class='code-font text-rose-400'>.catch()</code> 去退款或做錯誤處理。";
+
+                btnResolved.disabled = true;
+                btnResolved.className = "bg-slate-950 text-slate-600 text-xs font-bold py-3 px-2 rounded-xl cursor-not-allowed";
+                btnRejected.disabled = true;
+                btnRejected.className = "bg-slate-950 text-slate-600 text-xs font-bold py-3 px-2 rounded-xl cursor-not-allowed";
+                btnPending.disabled = false;
+                btnPending.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-3 px-2 rounded-xl transition";
+
+                codeBox.innerHTML = `
+<span class="text-slate-500">// 2. 廚房通知：牛肉用光了！呼叫 reject()</span>
+<span class="text-rose-400">reject</span>(<span class="text-amber-300">"抱歉售完！"</span>);
+
+<span class="text-slate-500">// 順理成章，觸發了 .catch() 處理錯誤</span>
+beeper.<span class="text-cyan-400">catch</span>(error => {
+    console.log(<span class="text-rose-400">"退錢改吃別家！"</span> + error); <span class="text-slate-500">// [此時狀態：Rejected]</span>
+});
+                `.trim();
+            }
+        }
+
+
+        // --- STREAMING_CHUNK: Setting up the API dual-directional transfer waiter animation... ---
+        let isApiPending = false;
+
+        function requestMenu(apiType) {
+            if (isApiPending) return;
+            isApiPending = true;
+
+            const carrier = document.getElementById('api-carrier');
+            const chef = document.getElementById('chef-avatar');
+            const client = document.getElementById('client-avatar');
+            const codeBox = document.getElementById('code-api-waiter');
+
+            // 禁用按鈕樣式
+            document.querySelectorAll('.api-menu-btn').forEach(btn => btn.classList.add('opacity-40', 'cursor-not-allowed'));
+
+            writeLog(`📡 瀏覽器(前端) 發送請求 (HTTP Request) 呼叫 ${apiType === 'error' ? '壞掉的' : apiType} API...`);
+            
+            // 服務生出發 (前端 -> 後端)：去程 Request
+            carrier.classList.remove('hidden');
+            carrier.style.left = '0%';
+            carrier.innerText = '✉️'; // 顯示信件 icon
+            carrier.className = "absolute top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full shadow-lg font-bold transition-all duration-100";
+            
+            chef.innerText = "👨‍🍳";
+            client.innerText = "🧑‍💻";
+
+            let position = 0;
+            let isReturning = false;
+
+            const travelInterval = setInterval(() => {
+                if (!isReturning) {
+                    // 去程：往右移動到後端
+                    position += 10;
+                    carrier.style.left = `${position}%`;
+
+                    if (position >= 80) {
+                        // 抵達後端，開始處理
+                        isReturning = true;
+                        carrier.classList.add('hidden'); // 大廚接走信件
+                        chef.innerText = "🍳"; // 後端開始煮飯/備餐
+                        writeLog("後端伺服器 (大廚) 接到 Request ✉️，正在打包 JSON 數據中...");
+
+                        // 後端準備 1 秒鐘
+                        setTimeout(() => {
+                            writeLog("數據打包完畢！Response 📦 準備傳回前端。");
+                            chef.innerText = "👨‍🍳";
+                            
+                            // 載體變為回應包裝 (Response 📦)
+                            carrier.innerText = '📦';
+                            carrier.className = "absolute top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-emerald-600 text-white rounded-full shadow-lg font-bold transition-all duration-100";
+                            carrier.classList.remove('hidden');
+                        }, 1000);
+                    }
+                } else {
+                    // 只有在後端準備好後，且位置開始退回才執行
+                    if (chef.innerText === "👨‍🍳" && position > 0) {
+                        // 回程：往左移動到前端
+                        position -= 10;
+                        carrier.style.left = `${position}%`;
+
+                        if (position <= 0) {
+                            clearInterval(travelInterval);
+                            carrier.classList.add('hidden');
+                            client.innerText = "😋"; // 前端拿到大餐 (JSON)
+                            
+                            // 處理回應並更新畫面
+                            if (apiType === 'weather') {
+                                chef.innerText = "☀️";
+                                writeLog("Response 📦 順利抵達前端！狀態碼 200 OK。成功接收天氣 JSON 封包！", "success");
+                                
+                                codeBox.innerHTML = `
+<span class="text-slate-500">// 天氣查詢 API 回傳 JSON 結果：</span>
+{
+  <span class="text-amber-300">"status"</span>: <span class="text-emerald-400">200</span>,
+  <span class="text-amber-300">"city"</span>: <span class="text-emerald-400">"Taipei"</span>,
+  <span class="text-amber-300">"weather"</span>: <span class="text-emerald-400">"Sunny"</span>,
+  <span class="text-amber-300">"temperature"</span>: <span class="text-emerald-400">"26°C"</span>
+}
+                                `.trim();
+
+                            } else if (apiType === 'user') {
+                                chef.innerText = "💁‍♂️";
+                                writeLog("Response 📦 順利抵達前端！狀態碼 200 OK。成功解鎖會員 JSON 資料！", "success");
+
+                                codeBox.innerHTML = `
+<span class="text-slate-500">// 用戶資料 API 回傳 JSON 結果：</span>
+{
+  <span class="text-amber-300">"id"</span>: <span class="text-emerald-400">9527</span>,
+  <span class="text-amber-300">"name"</span>: <span class="text-emerald-400">"炭治郎"</span>,
+  <span class="text-amber-300">"level"</span>: <span class="text-emerald-400">"Hashira"</span>
+}
+                                `.trim();
+
+                            } else if (apiType === 'error') {
+                                chef.innerText = "😡";
+                                client.innerText = "😨";
+                                writeLog("Response 📦 錯誤抵達！狀態碼 404 Not Found。大廚表示查無此餐！", "error");
+
+                                codeBox.innerHTML = `
+<span class="text-rose-400">// API 請求失敗：404 找不到資源</span>
+{
+  <span class="text-rose-300">"error"</span>: <span class="text-rose-400">"Not Found"</span>,
+  <span class="text-rose-300">"message"</span>: <span class="text-rose-400">"大廚找不到這個菜單項目！"</span>
+}
+                                `.trim();
+                            }
+
+                            // 恢復按鈕樣式
+                            document.querySelectorAll('.api-menu-btn').forEach(btn => btn.classList.remove('opacity-40', 'cursor-not-allowed'));
+                            isApiPending = false;
+                        }
+                    }
+                }
+            }, 100);
+        }
+
+        // --- 全域同步調度 ---
+        function syncCode() {
+            if (currentTab === 'sync-vs-async') {
+                document.getElementById('code-sync-vs-async').innerHTML = `// 點選下方的「同步」或「非同步」模式開啟點餐動態...`;
+            } else if (currentTab === 'promise-states') {
+                setPromiseState('pending');
+            } else if (currentTab === 'api-waiter') {
+                document.getElementById('code-api-waiter').innerHTML = `// 請點選上方按鈕來發送 API 請求...`;
+            }
+        }
+
+        // 初始化
+        window.onload = function() {
+            syncCode();
+            writeLog("非同步與 API 沙盒準備完畢。請點擊上方頁籤開始探險！");
+        }
+    </script>
+</body>
+</html>
