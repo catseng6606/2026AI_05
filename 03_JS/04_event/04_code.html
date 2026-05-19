@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prism.js 程式碼高亮示範 (Python)</title>
+    <!-- 引入 Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- 1. 引入 Prism 的 CSS 主題 (這裡用的是 Okaidia 暗色主題) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      pre {
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container my-5">
+      <h1 class="text-center mb-4">Prism.js 程式碼高亮示範</h1>
+      <p class="lead text-center mb-5">
+        本頁面示範如何使用 Prism.js 在網頁上呈現高亮後的 Python 與 HTML 程式碼區塊，並修正了將 <code>&lt;pre&gt;</code> 標籤寫在 <code>&lt;head&gt;</code> 中的結構問題。
+      </p>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+          <h5 class="card-title mb-0">1. Python Hello World 程式碼區塊</h5>
+        </div>
+        <div class="card-body">
+          <!-- 呈現的實體 Python 程式碼區塊 -->
+          <pre><code class="language-python"># 這是一段 Python 的 Hello World 程式碼
+def say_hello(name="World"):
+    print(f"Hello, {name}!")
+
+say_hello("Python")</code></pre>
+
+          <hr />
+          <h6>實體元件 HTML 原始碼：</h6>
+          <pre><code class="language-html">&lt;pre&gt;&lt;code class="language-python"&gt;# 這是一段 Python 的 Hello World 程式碼
+def say_hello(name="World"):
+    print(f"Hello, {name}!")
+
+say_hello("Python")&lt;/code&gt;&lt;/pre&gt;</code></pre>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+          <h5 class="card-title mb-0">2. HTML 程式碼區塊</h5>
+        </div>
+        <div class="card-body">
+          <!-- 呈現的實體 HTML 程式碼區塊 -->
+          <pre><code class="language-html">&lt;div class="hello"&gt;Hello World&lt;/div&gt;</code></pre>
+
+          <hr />
+          <h6>實體元件 HTML 原始碼：</h6>
+          <pre><code class="language-html">&lt;pre&gt;&lt;code class="language-html"&gt;&amp;lt;div class="hello"&amp;gt;Hello World&amp;lt;/div&amp;gt;&lt;/code&gt;&lt;/pre&gt;</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 引入 Prism 的 JS 核心與語言包 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <!-- 引入 HTML/XML 渲染所需的 markup 支援 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <!-- 引入 JavaScript 語言包 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <!-- 必須額外引入 python 語言包以支援 python 語法高亮 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <!-- 引入 Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
