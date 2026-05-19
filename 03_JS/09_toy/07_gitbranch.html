@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動教學：Git 樹狀分支與 Gemini 備份控管機制</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* 自訂拉條與滾動條樣式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen flex flex-col overflow-hidden">
+
+    <!-- 頁首導覽 -->
+    <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0">
+        <div>
+            <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-indigo-400 flex items-center gap-2">
+                <span>🌿</span> Git 樹狀分支與 Gemini 智慧控管整合教學
+            </h1>
+            <p class="text-xs text-gray-400 mt-1">
+                學生 Date 1 自 C1 分出，老師更新 main (C3) 後，學生 Date 2 自新 main 分出。最後返回 main 由 AI 整合
+            </p>
+        </div>
+        <div class="mt-3 md:mt-0 flex gap-2">
+            <span class="px-2.5 py-1 rounded bg-blue-900/40 text-blue-300 border border-blue-800/60 text-xs">🌲 樹狀分支展示</span>
+            <span class="px-2.5 py-1 rounded bg-purple-900/40 text-purple-300 border border-purple-800/60 text-xs">🤖 Gemini CLI 命令指引</span>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        
+        <!-- 左側：Git Commit Graph 畫布區 -->
+        <div class="flex-1 relative bg-slate-950 flex flex-col">
+            <!-- 畫布控制面板 -->
+            <div class="absolute top-4 left-4 z-10 bg-gray-900/95 backdrop-blur-md p-4 rounded-xl border border-gray-800 shadow-2xl max-w-sm">
+                <h3 class="text-sm font-semibold text-gray-200 mb-1 flex items-center gap-2">
+                    <span class="text-emerald-400">●</span> Git 分支樹狀圖 (Interactive Graph)
+                </h3>
+                <p class="text-[11px] text-gray-400 mb-3">
+                    點擊節點可以查看該 Commit 提交的程式碼內容。注意：C4 是從 C3 (新 main) 分支出去的。
+                </p>
+                <div class="flex flex-col gap-2">
+                    <button id="btnSynthesize" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium py-2 px-4 rounded-lg text-xs transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2">
+                        <span>⚡</span> 模擬 Gemini CLI 提取三方代碼
+                    </button>
+                    <button id="btnReset" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-1 px-4 rounded-lg text-[10px] transition-colors border border-gray-700">
+                        重置模擬動畫
+                    </button>
+                </div>
+                
+                <!-- 狀態指示器 -->
+                <div class="mt-3 pt-3 border-t border-gray-800">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-gray-400">Git 目前 HEAD 位置:</span>
+                        <span id="currentHeadTag" class="font-mono text-blue-400">main</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] mt-1">
+                        <span class="text-gray-500">AI 融合狀態:</span>
+                        <span id="statusIndicator" class="font-semibold text-amber-500">等待提取</span>
+                    </div>
+                    <div class="w-full bg-gray-900 h-1 rounded-full mt-2 overflow-hidden">
+                        <div id="progressBar" class="w-0 h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 浮動圖例說明 -->
+            <div class="absolute bottom-4 left-4 z-10 bg-gray-900/80 backdrop-blur-md px-3 py-2 rounded-lg border border-gray-800/60 text-[10px] text-gray-400 flex flex-col gap-1 shadow-lg">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-blue-500 border border-blue-300"></span> 
+                    <span>老師主幹 (main) - 系統骨架基礎</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-green-500 border border-green-300"></span> 
+                    <span>學生階段一分支 (student/date1 - 基於 C1)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-300"></span> 
+                    <span>學生階段二分支 (student/date2 - 基於 C3)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3.5 h-3.5 rounded bg-purple-600 border border-purple-400 flex items-center justify-center text-[8px] text-white">AI</span> 
+                    <span>Gemini CLI 智慧融合端點</span>
+                </div>
+            </div>
+
+            <!-- Canvas 本體 -->
+            <div class="flex-1 w-full h-full min-h-[400px]">
+                <canvas id="interactiveCanvas" class="w-full h-full block"></canvas>
+            </div>
+        </div>
+
+        <!-- 右側：資訊與控制面板區 -->
+        <div class="w-full lg:w-[500px] bg-gray-950 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col shrink-0 h-[450px] lg:h-auto">
+            <!-- 分頁選擇器 -->
+            <div class="flex bg-gray-900 border-b border-gray-800 shrink-0">
+                <button id="tabConcept" class="flex-1 py-3 text-center text-xs font-semibold border-b-2 border-teal-500 text-teal-400 transition-all">
+                    💡 樹狀控管邏輯
+                </button>
+                <button id="tabCode" class="flex-1 py-3 text-center text-xs font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-all">
+                    💻 各節點代碼
+                </button>
+                <button id="tabPrompt" class="flex-1 py-3 text-center text-xs font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-all">
+                    🚀 Gemini CLI 提示詞
+                </button>
+            </div>
+
+            <!-- 內容區 -->
+            <div class="flex-1 overflow-y-auto p-5">
+                <!-- 概念分頁 -->
+                <div id="contentConcept" class="space-y-4">
+                    <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                        <h4 class="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-1.5">
+                            <span>🌿</span> 學生分支與備份樹狀結構
+                        </h4>
+                        <p class="text-xs text-gray-300 leading-relaxed font-semibold">
+                            本機制流程如下：
+                        </p>
+                        <ol class="text-xs text-gray-400 mt-2 space-y-2.5 list-decimal list-inside">
+                            <li>自主幹分出 <code class="text-green-400 font-mono">student/date1</code>，在舊架構 (C1) 下提交第一階段邏輯。</li>
+                            <li>老師重構主幹，提交 <code class="text-blue-400 font-mono">C3: 老師最新架構</code>。</li>
+                            <li>學生<strong>從最新主幹 (C3) 分出 <code class="text-emerald-400 font-mono">student/date2</code></strong>，繼承最新架構，並在其中完成第二階段重構與修正。</li>
+                            <li><strong>最後切回 <code class="text-blue-400 font-mono">main</code></strong>，保持 main 的乾淨，利用 Gemini CLI 智慧提取這兩個備份分支的精華進行無痕覆蓋整合。</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                        <h4 class="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-1.5">
+                            <span>🤖</span> 為什麼 Date 2 必須從新 main 出發？
+                        </h4>
+                        <p class="text-xs text-gray-300 leading-relaxed">
+                            這樣做能確保學生在進行進階開發時，程式碼**已經套用了最新發布的系統依賴、通訊介面與安全機制**。最後透過 Gemini CLI 整合時，AI 只需提取學生在 `student/date1` 寫過的功能，並比對 `student/date2` 的最新成果，無痛合併，完全省去手工解 Merge 衝突的時間與風險。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 程式碼快照對照分頁 -->
+                <div id="contentCode" class="hidden space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">🔍 選擇 Git 分支節點：</label>
+                        <select id="codeVersionSelect" class="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-teal-500">
+                            <option value="teacher_init">老師初始範本 (main - C1)</option>
+                            <option value="student1">學生階段一 (student/date1 - C2, 基於 C1)</option>
+                            <option value="teacher_update">老師最新架構 (main - C3)</option>
+                            <option value="student2">學生階段二 (student/date2 - C4, 基於 C3)</option>
+                            <option value="gemini_output">Gemini CLI 整合成果 (無衝突)</option>
+                        </select>
+                    </div>
+
+                    <div class="relative">
+                        <div class="absolute top-2 right-2 bg-gray-800/80 text-[10px] px-2 py-0.5 rounded text-gray-400 code-font" id="codeLangTag">
+                            C# (UserService.cs)
+                        </div>
+                        <pre class="bg-gray-900 p-4 rounded-xl border border-gray-800 text-[11px] code-font text-gray-300 overflow-x-auto min-h-[300px] leading-relaxed" id="codeBox">
+// 選擇分支節點以觀看代碼
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- 提示詞產生器分頁 -->
+                <div id="contentPrompt" class="hidden space-y-4">
+                    <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800 space-y-3">
+                        <h4 class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>📋</span> 讓 AI 來教學生下 Git 指令 的提示詞
+                        </h4>
+                        <p class="text-[11px] text-gray-400 leading-relaxed">
+                            請複製下方的提示詞並貼給 Gemini CLI，AI 將會為學生產出建立 `student/date1`、取得最新 `main` 並在此基礎上建立 `student/date2` 隨後返回主幹的標準化 Git 操作指令：
+                        </p>
+                    </div>
+
+                    <!-- 提示詞展示與一鍵複製 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs text-gray-400 font-semibold">🔥 複製此提示詞發送給 Gemini CLI：</label>
+                            <button id="btnCopyPrompt" class="text-[10px] bg-purple-900 hover:bg-purple-800 text-purple-200 px-3 py-1 rounded border border-purple-700 active:scale-95 transition-all">
+                                一鍵複製
+                            </button>
+                        </div>
+                        <pre id="codePromptText" class="bg-gray-900 p-4 rounded-xl border border-gray-800 text-[11px] code-font text-gray-300 overflow-y-auto max-h-[300px] whitespace-pre-wrap leading-relaxed select-all">
+你是一位嚴謹的軟體工程學教授。今天我們要教導學生『如何透過建立獨立的分支（Date 1 與 Date 2）保留不同開發階段的原始碼，然後回到 main 分支，以便利用 Gemini CLI 進行無衝突的代碼提取與整合』。
+
+請為學生撰寫一份極度清晰、步驟分明的教學指引，包含具體的 Git 指令：
+
+1. **第一階段：自初始主幹建立 Date 1 備份分支**
+   - 說明如何自當前的基礎開發狀態建立並切換至新分支 `student/date1`。
+   - 說明如何將程式碼加入暫存並進行 Commit 提交 (C2)。
+2. **第二階段：拉取老師最新 main，並分支出 Date 2**
+   - 說明如何切換回 `main` 分支並執行 `git pull` 取得老師最新的主幹代碼 (C3)。
+   - **核心重點**：指導學生如何「以此最新 main 狀態為起點」，分支出 `student/date2` (C4)。
+   - 說明在 Date 2 中繼承了最新架構，並提交完成進階開發與修正。
+3. **第三階段：回到 main 分支準備整合**
+   - 指導學生如何安全地切換回到 `main` 主幹。
+4. **最後：Gemini CLI 智慧提取命令**
+   - 提供一份 Shell 指令範例，說明回到 main 分支後，如何下達 `git show student/date1:路徑` 與 `git show student/date2:路徑` 的提取操作，完全不執行 `git merge`。
+
+輸出請結構分明，程式碼區塊務必加上註釋，方便學生直接理解與在本機 Terminal 複製執行。
+                        </pre>
+                    </div>
+
+                    <div class="bg-blue-950/30 p-3 rounded-lg border border-blue-900/40 text-[11px] text-blue-300 leading-relaxed">
+                        📌 <strong>實用小技巧</strong>：執行這個提示詞後，Gemini CLI 會直接在您的 Terminal 中吐出完整的教學文件，讓學生照著執行，就能建立完美的 Git 提交樹！
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部操作說明 -->
+            <div class="bg-gray-900/60 p-4 border-t border-gray-800 text-center shrink-0">
+                <p class="text-[11px] text-gray-500">
+                    提示：在左側畫布中點擊任何 Commit 圓點，右側將自動導引至對應程式碼。
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('interactiveCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 各分支版本程式碼資料庫
+        const codeSnapshots = {
+            teacher_init: `// 老師初始範本 [main - C1]
+// 功能說明：最基礎的介面與類別定義
+public class UserService : IUserService {
+    public UserService() { }
+
+    public async Task<User> GetUserAsync(int id) {
+        // TODO: 請學生在此實作具體的資料庫查詢邏輯
+        return null;
+    }
+}`,
+            student1: `// 學生第一階段備份 [student/date1 - C2]
+// 功能說明：完成了基本資料庫查詢邏輯，但有 bug (Null 漏洞)
+// 注意：此版本是自 C1 分支出來開發的。
+public class UserService {
+    public UserService() { }
+
+    public async Task<User> GetUserAsync(int id) {
+        var db = new DbConnection();
+        var rawData = db.Query("SELECT * FROM users WHERE id = " + id);
+        
+        // 學生 Date 1：直接取得欄位，若 rawData 為空會 Crash
+        return new User {
+            Id = id,
+            Name = rawData.Name
+        };
+    }
+}`,
+            teacher_update: `// 老師最新主幹 [main - C3]
+// 變更說明：老師重構了底層架構，引入了快取層與安全性驗證
+public class UserService : IUserService {
+    private readonly ISecurityService _security; // 👈 老師新增的安全框架
+    private readonly ICacheProvider _cache;       // 👈 老師新增的快取層
+
+    public UserService(ISecurityService sec, ICacheProvider cache) {
+        _security = sec;
+        _cache = cache;
+    }
+
+    public async Task<User> GetUserAsync(int id) {
+        // [預設架構] 使用快取讀取
+        return await _cache.GetOrCreateAsync($"user:{id}", async () => {
+            // TODO: 學生需要在此實作具體的資料庫查詢邏輯
+            return null;
+        });
+    }
+}`,
+            student2: `// 學生第二階段備份 [student/date2 - C4]
+// 說明：此版本是從【新 main - C3】分支出來的！
+// 已套用老師的最新快取與安全依賴注入，在此基礎下修正了 Bug 並追加 LastActive 邏輯
+public class UserService : IUserService {
+    private readonly ISecurityService _security; // 🎯 繼承 C3 架構
+    private readonly ICacheProvider _cache;       // 🎯 繼承 C3 架構
+
+    public UserService(ISecurityService sec, ICacheProvider cache) {
+        _security = sec;
+        _cache = cache;
+    }
+
+    public async Task<User> GetUserAsync(int id) {
+        // 學生 Date 2 優化：在老師最新的快取區塊下實作，並修正了 Date 1 的 Null 報錯問題
+        return await _cache.GetOrCreateAsync($"user:{id}", async () => {
+            var db = new DbConnection();
+            var rawData = db.Query("SELECT * FROM users WHERE id = " + id);
+            
+            if (rawData == null) {
+                throw new UserNotFoundException(id);
+            }
+
+            return new User {
+                Id = id,
+                Name = rawData.Name,
+                LastActive = DateTime.UtcNow // 👈 學生新增的商務邏輯
+            };
+        });
+    }
+}`,
+            gemini_output: `// Gemini CLI 智慧整合成果 [無 Merge 衝突]
+// 優勢：完美套用老師最新 C3 的架構，同時成功融合了學生的 C4 (Date 2) 商業邏輯
+public class UserService : IUserService {
+    private readonly ISecurityService _security; // 🎯 保留老師 C3 架構
+    private readonly ICacheProvider _cache;       // 🎯 保留老師 C3 快取
+
+    public UserService(ISecurityService sec, ICacheProvider cache) {
+        _security = sec;
+        _cache = cache;
+    }
+
+    public async Task<User> GetUserAsync(int id) {
+        // 🎯 智慧融合：以老師的快取架構包覆學生的實作邏輯！
+        return await _cache.GetOrCreateAsync($"user:{id}", async () => {
+            var db = new DbConnection();
+            var rawData = db.Query("SELECT * FROM users WHERE id = " + id);
+            
+            // 🎯 學生 Date 2 關鍵防護邏輯：被完美保留，沒有在 Merge 中遺失
+            if (rawData == null) {
+                throw new UserNotFoundException(id);
+            }
+
+            return new User {
+                Id = id,
+                Name = rawData.Name,
+                LastActive = DateTime.UtcNow // 🎯 學生追加欄位：保留！
+            };
+        });
+    }
+}`
+        };
+
+        // --- 樹狀 Git 分支節點定義 ---
+        let commits = [];
+        let particles = [];
+        let animationFrameId;
+        let isSynthesizing = false;
+        let synthesisProgress = 0;
+        let selectedNode = null;
+
+        // 定義 AI 動態整合處理節點
+        let aiNode = {
+            id: 'gemini_processor',
+            label: 'Gemini CLI 引擎',
+            x: 0,
+            y: 0,
+            radius: 42,
+            color: '#a855f7',
+            glow: 'rgba(168, 85, 247, 0.45)'
+        };
+
+        let outputNode = {
+            id: 'gemini_output',
+            label: '整合成果 (UserService.cs)',
+            x: 0,
+            y: 0,
+            radius: 38,
+            color: '#ec4899',
+            glow: 'rgba(236, 72, 153, 0.4)',
+            hidden: true
+        };
+
+        function initGitTree() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 定義兩條主要的分支軌道 (Lanes)
+            const mainLaneX = w * 0.25;       // 老師 Main 分支軌道
+            const studentLaneX = w * 0.55;    // 學生開發分支軌道
+
+            commits = [
+                {
+                    id: 'teacher_init',
+                    label: 'C1: 老師初始範本',
+                    branch: 'main',
+                    x: mainLaneX,
+                    y: h * 0.18,
+                    radius: 18,
+                    color: '#3b82f6',
+                    glow: 'rgba(59, 130, 246, 0.4)',
+                    parent: null
+                },
+                {
+                    id: 'student1',
+                    label: 'C2: 學生 Date 1',
+                    branch: 'student/date1',
+                    x: studentLaneX,
+                    y: h * 0.4,
+                    radius: 18,
+                    color: '#22c55e',
+                    glow: 'rgba(34, 197, 94, 0.3)',
+                    parent: 'teacher_init', // 從 C1 分支出去
+                    isBranchOff: true
+                },
+                {
+                    id: 'teacher_update',
+                    label: 'C3: 老師最新架構',
+                    branch: 'main',
+                    x: mainLaneX,
+                    y: h * 0.55,
+                    radius: 18,
+                    color: '#3b82f6',
+                    glow: 'rgba(59, 130, 246, 0.4)',
+                    parent: 'teacher_init' // main 本身的演進
+                },
+                {
+                    id: 'student2',
+                    label: 'C4: 學生 Date 2',
+                    branch: 'student/date2',
+                    x: studentLaneX,
+                    y: h * 0.75,
+                    radius: 18,
+                    color: '#10b981',
+                    glow: 'rgba(16, 185, 129, 0.3)',
+                    parent: 'teacher_update', // 🎯 關鍵變革：從 C3 (new main) 接續分支出去開發
+                    isBranchOff: true
+                }
+            ];
+
+            // AI 處理節點定位在右側
+            aiNode.x = w * 0.85;
+            aiNode.y = h * 0.35;
+
+            // 最終輸出節點定位在 AI 下方
+            outputNode.x = w * 0.85;
+            outputNode.y = h * 0.7;
+            outputNode.hidden = true;
+        }
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            initGitTree();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 1. 檢查是否點擊一般提交節點
+            for (let commit of commits) {
+                const dist = Math.hypot(commit.x - mouseX, commit.y - mouseY);
+                if (dist < commit.radius + 5) {
+                    selectedNode = commit;
+                    updateSidebarToNode(commit.id);
+                    document.getElementById('currentHeadTag').textContent = commit.branch;
+                    return;
+                }
+            }
+
+            // 2. 檢查是否點擊最終產出節點
+            if (!outputNode.hidden) {
+                const dist = Math.hypot(outputNode.x - mouseX, outputNode.y - mouseY);
+                if (dist < outputNode.radius + 5) {
+                    selectedNode = outputNode;
+                    updateSidebarToNode('gemini_output');
+                    document.getElementById('currentHeadTag').textContent = 'main (整合版)';
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let hovering = false;
+            const allInteractableNodes = [...commits];
+            if (!outputNode.hidden) allInteractableNodes.push(outputNode);
+
+            for (let node of allInteractableNodes) {
+                const dist = Math.hypot(node.x - mouseX, node.y - mouseY);
+                if (dist < node.radius + 5) {
+                    hovering = true;
+                    break;
+                }
+            }
+            canvas.style.cursor = hovering ? 'pointer' : 'default';
+        });
+
+        const tabConcept = document.getElementById('tabConcept');
+        const tabCode = document.getElementById('tabCode');
+        const tabPrompt = document.getElementById('tabPrompt');
+        
+        const contentConcept = document.getElementById('contentConcept');
+        const contentCode = document.getElementById('contentCode');
+        const contentPrompt = document.getElementById('contentPrompt');
+
+        const codeVersionSelect = document.getElementById('codeVersionSelect');
+        const codeBox = document.getElementById('codeBox');
+
+        function clearAllTabs() {
+            [tabConcept, tabCode, tabPrompt].forEach(tab => {
+                tab.className = "flex-1 py-3 text-center text-xs font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition-all";
+            });
+            [contentConcept, contentCode, contentPrompt].forEach(content => {
+                content.classList.add('hidden');
+            });
+        }
+
+        tabConcept.addEventListener('click', () => {
+            clearAllTabs();
+            tabConcept.className = "flex-1 py-3 text-center text-xs font-semibold border-b-2 border-teal-500 text-teal-400 transition-all";
+            contentConcept.classList.remove('hidden');
+        });
+
+        tabCode.addEventListener('click', () => {
+            clearAllTabs();
+            tabCode.className = "flex-1 py-3 text-center text-xs font-semibold border-b-2 border-teal-500 text-teal-400 transition-all";
+            contentCode.classList.remove('hidden');
+        });
+
+        tabPrompt.addEventListener('click', () => {
+            clearAllTabs();
+            tabPrompt.className = "flex-1 py-3 text-center text-xs font-semibold border-b-2 border-teal-500 text-teal-400 transition-all";
+            contentPrompt.classList.remove('hidden');
+        });
+
+        codeVersionSelect.addEventListener('change', (e) => {
+            codeBox.textContent = codeSnapshots[e.value] || '';
+        });
+
+        function updateSidebarToNode(nodeId) {
+            if (codeSnapshots[nodeId]) {
+                tabCode.click();
+                codeVersionSelect.value = nodeId;
+                codeBox.textContent = codeSnapshots[nodeId];
+            }
+        }
+
+        class CodeParticle {
+            constructor(startX, startY, endX, endY, color, speed = 2) {
+                this.startX = startX;
+                this.startY = startY;
+                this.endX = endX;
+                this.endY = endY;
+                this.color = color;
+                this.speed = speed;
+                this.progress = 0;
+            }
+
+            update() {
+                this.progress += 0.012 * this.speed;
+                if (this.progress > 1) this.progress = 1;
+                
+                // 使用二次貝茲曲線，增加粒子在空間飛舞的動態感
+                const t = this.progress;
+                const cpX = (this.startX + this.endX) / 2 + (Math.random() - 0.5) * 80;
+                const cpY = (this.startY + this.endY) / 2 - 60;
+                
+                this.x = (1-t)*(1-t)*this.startX + 2*(1-t)*t*cpX + t*t*this.endX;
+                this.y = (1-t)*(1-t)*this.startY + 2*(1-t)*t*cpY + t*t*this.endY;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function renderLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 繪制分支軌道背景虛線
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#1e293b';
+            
+            // 老師 Main 軌道
+            ctx.beginPath();
+            ctx.moveTo(canvas.width * 0.25, 0);
+            ctx.lineTo(canvas.width * 0.25, canvas.height);
+            ctx.stroke();
+
+            // 學生 開發 軌道
+            ctx.beginPath();
+            ctx.moveTo(canvas.width * 0.55, 0);
+            ctx.lineTo(canvas.width * 0.55, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 2. 繪制 Git Commit 樹狀連接線路 (實線)
+            ctx.lineWidth = 2.5;
+            commits.forEach(commit => {
+                if (commit.parent) {
+                    const parentNode = commits.find(c => c.id === commit.parent);
+                    if (parentNode) {
+                        ctx.beginPath();
+                        ctx.moveTo(parentNode.x, parentNode.y);
+                        
+                        // 若是分支出去的線，畫一條柔和的貝茲曲線
+                        if (commit.isBranchOff) {
+                            ctx.bezierCurveTo(
+                                parentNode.x + 30, parentNode.y,
+                                commit.x - 30, commit.y,
+                                commit.x, commit.y
+                            );
+                            ctx.strokeStyle = '#10b981'; // 學生分支線顏色
+                        } else {
+                            // 同分支的直線連接
+                            ctx.lineTo(commit.x, commit.y);
+                            ctx.strokeStyle = commit.branch === 'main' ? '#3b82f6' : '#10b981';
+                        }
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            // 3. 繪制與 Gemini CLI 整合的虛線 (代表無 Merge 智慧提取關係)
+            if (isSynthesizing || !outputNode.hidden) {
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([6, 6]);
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
+                
+                // C2 (Date 1) -> AI
+                const c2 = commits.find(c => c.id === 'student1');
+                ctx.beginPath(); ctx.moveTo(c2.x, c2.y); ctx.lineTo(aiNode.x, aiNode.y); ctx.stroke();
+                
+                // C3 (Teacher Update) -> AI
+                const c3 = commits.find(c => c.id === 'teacher_update');
+                ctx.beginPath(); ctx.moveTo(c3.x, c3.y); ctx.lineTo(aiNode.x, aiNode.y); ctx.stroke();
+
+                // C4 (Date 2) -> AI
+                const c4 = commits.find(c => c.id === 'student2');
+                ctx.beginPath(); ctx.moveTo(c4.x, c4.y); ctx.lineTo(aiNode.x, aiNode.y); ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 4. 處理模擬提取粒子動畫
+            if (isSynthesizing) {
+                synthesisProgress += 0.35;
+                document.getElementById('progressBar').style.width = `${Math.min(100, synthesisProgress)}%`;
+
+                const c2 = commits.find(c => c.id === 'student1');
+                const c3 = commits.find(c => c.id === 'teacher_update');
+                const c4 = commits.find(c => c.id === 'student2');
+
+                // 分流射出粒子
+                if (synthesisProgress < 65) {
+                    if (Math.random() < 0.15) particles.push(new CodeParticle(c2.x, c2.y, aiNode.x, aiNode.y, c2.color, 1.4));
+                    if (Math.random() < 0.15) particles.push(new CodeParticle(c3.x, c3.y, aiNode.x, aiNode.y, c3.color, 1.4));
+                    if (Math.random() < 0.15) particles.push(new CodeParticle(c4.x, c4.y, aiNode.x, aiNode.y, c4.color, 1.4));
+                }
+
+                // AI 解構完成後，發射粒子組裝成最終產出
+                if (synthesisProgress >= 50) {
+                    outputNode.hidden = false;
+                    document.getElementById('statusIndicator').textContent = "跨分支安全提取中 (不執行 Merge)...";
+                    document.getElementById('statusIndicator').className = "font-semibold text-purple-400";
+                    if (synthesisProgress < 95 && Math.random() < 0.2) {
+                        particles.push(new CodeParticle(aiNode.x, aiNode.y, outputNode.x, outputNode.y, '#a855f7', 1.8));
+                    }
+                }
+
+                if (synthesisProgress >= 100) {
+                    isSynthesizing = false;
+                    document.getElementById('statusIndicator').textContent = "智慧無痕重構成功！";
+                    document.getElementById('statusIndicator').className = "font-semibold text-emerald-400";
+                    updateSidebarToNode('gemini_output');
+                }
+            }
+
+            // 繪制並過濾粒子
+            particles = particles.filter(p => p.progress < 1);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // 5. 繪制 Git Commit 圓點節點
+            commits.forEach(commit => {
+                // 發光外圈
+                ctx.beginPath();
+                ctx.arc(commit.x, commit.y, commit.radius + 6, 0, Math.PI * 2);
+                ctx.fillStyle = commit.glow;
+                ctx.fill();
+
+                // 核心圓圈
+                ctx.beginPath();
+                ctx.arc(commit.x, commit.y, commit.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = commit.color;
+                ctx.lineWidth = selectedNode === commit ? 4 : 2.5;
+                ctx.fill();
+                ctx.stroke();
+
+                // 節點代號 (C1, C2, C3, C4)
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 9px Fira Code';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                let codeName = 'C1';
+                if (commit.id === 'student1') codeName = 'C2';
+                if (commit.id === 'teacher_update') codeName = 'C3';
+                if (commit.id === 'student2') codeName = 'C4';
+                ctx.fillText(codeName, commit.x, commit.y);
+
+                // 標籤文字 (Commit 說明與分支標籤)
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = 'bold 10px Inter';
+                ctx.textAlign = 'left';
+                ctx.fillText(commit.label, commit.x + commit.radius + 10, commit.y - 4);
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px Fira Code';
+                ctx.fillText(`[${commit.branch}]`, commit.x + commit.radius + 10, commit.y + 8);
+            });
+
+            // 6. 繪制 AI 處理引擎與產出節點
+            // AI 引擎節點
+            ctx.beginPath();
+            ctx.arc(aiNode.x, aiNode.y, aiNode.radius + 6, 0, Math.PI * 2);
+            ctx.fillStyle = aiNode.glow;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(aiNode.x, aiNode.y, aiNode.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e1b4b';
+            ctx.strokeStyle = aiNode.color;
+            ctx.lineWidth = 3;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#f3e8ff';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Gemini CLI', aiNode.x, aiNode.y - 4);
+            ctx.font = '8px Fira Code';
+            ctx.fillStyle = '#c084fc';
+            ctx.fillText('Extractor', aiNode.x, aiNode.y + 10);
+
+            // 最終產出成果節點
+            if (!outputNode.hidden) {
+                ctx.beginPath();
+                ctx.arc(outputNode.x, outputNode.y, outputNode.radius + 6, 0, Math.PI * 2);
+                ctx.fillStyle = outputNode.glow;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(outputNode.x, outputNode.y, outputNode.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#1f1625';
+                ctx.strokeStyle = outputNode.color;
+                ctx.lineWidth = selectedNode === outputNode ? 4 : 2.5;
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fdf2f8';
+                ctx.font = 'bold 9px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('完美整合檔', outputNode.x, outputNode.y - 4);
+                ctx.font = '7px Fira Code';
+                ctx.fillStyle = '#f472b6';
+                ctx.fillText('UserService.cs', outputNode.x, outputNode.y + 8);
+            }
+
+            animationFrameId = requestAnimationFrame(renderLoop);
+        }
+
+        // --- 控制按鈕點擊事件 ---
+        document.getElementById('btnSynthesize').addEventListener('click', () => {
+            if (isSynthesizing) return;
+            isSynthesizing = true;
+            synthesisProgress = 0;
+            particles = [];
+            outputNode.hidden = true;
+            document.getElementById('statusIndicator').textContent = "讀取各分支歷史快照中...";
+            document.getElementById('statusIndicator').className = "font-semibold text-purple-400";
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            isSynthesizing = false;
+            synthesisProgress = 0;
+            particles = [];
+            outputNode.hidden = true;
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('statusIndicator').textContent = "等待提取";
+            document.getElementById('statusIndicator').className = "font-semibold text-amber-500";
+            initGitTree();
+        });
+
+        // 複製提示詞機制
+        function copyTextToClipboard(textId) {
+            const preElement = document.getElementById(textId);
+            const range = document.createRange();
+            range.selectNode(preElement);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            try {
+                document.execCommand('copy');
+                return true;
+            } catch (err) {
+                console.error('無法複製', err);
+                return false;
+            }
+        }
+
+        document.getElementById('btnCopyPrompt').addEventListener('click', (e) => {
+            if (copyTextToClipboard('codePromptText')) {
+                const btn = e.target;
+                btn.textContent = '已複製到剪貼簿！';
+                btn.className = "text-[10px] bg-emerald-900 text-emerald-300 px-3 py-1 rounded border border-emerald-700 active:scale-95 transition-all";
+                setTimeout(() => {
+                    btn.textContent = '一鍵複製';
+                    btn.className = "text-[10px] bg-purple-900 hover:bg-purple-800 text-purple-200 px-3 py-1 rounded border border-purple-700 active:scale-95 transition-all";
+                }, 1500);
+            }
+        });
+
+        // 首次初始化
+        resizeCanvas();
+        selectedNode = commits[0];
+        updateSidebarToNode('teacher_init');
+        renderLoop();
+
+    </script>
+</body>
+</html>

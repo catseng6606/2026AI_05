@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>JS 事件監聽互動實驗室：計算機篇</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #333; margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; margin-bottom: 20px; }
+        
+        .container {
+            display: flex;
+            gap: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        /* 控制面板樣式 */
+        .control-panel {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .control-group {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .control-group.active {
+            border-color: #4cd137;
+            background: #f5fef6;
+        }
+        .operator-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #2f3640;
+            display: flex;
+            justify-content: space-between;
+        }
+        .status-badge {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #dcdde1;
+            color: #2f3640;
+        }
+        .status-badge.connected {
+            background: #4cd137;
+            color: white;
+        }
+        .btn-grid {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-connect { background-color: #4cd137; color: white; }
+        .btn-connect:hover { background-color: #44bd32; }
+        .btn-disconnect { background-color: #e84118; color: white; }
+        .btn-disconnect:hover { background-color: #c23616; }
+        
+        /* Canvas 樣式 */
+        canvas {
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            background-color: #2f3640;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>JS 事件監聽互動實驗室 🧮</h1>
+    <p>親手為計算機的運算子「接上電線 (addEventListener)」與「拔掉電線 (removeEventListener)」吧！</p>
+
+    <div class="container">
+        <!-- Canvas 計算機區塊 -->
+        <div>
+            <canvas id="calcCanvas" width="340" height="480"></canvas>
+        </div>
+
+        <!-- 運算子控制面板區塊 -->
+        <div class="control-panel">
+            <h3 style="margin: 0; color: #2f3640;">🔌 功能配線控制台</h3>
+            
+            <!-- 加號控制 -->
+            <div class="control-group" id="group-+">
+                <div class="operator-title">加法功能 (+) <span class="status-badge" id="status-+">未接線</span></div>
+                <div class="btn-grid">
+                    <button class="btn-connect" onclick="connect('+')">接上監聽器</button>
+                    <button class="btn-disconnect" onclick="disconnect('+')">取消監聽</button>
+                </div>
+            </div>
+
+            <!-- 減號控制 -->
+            <div class="control-group" id="group--">
+                <div class="operator-title">減法功能 (-) <span class="status-badge" id="status--">未接線</span></div>
+                <div class="btn-grid">
+                    <button class="btn-connect" onclick="connect('-')">接上監聽器</button>
+                    <button class="btn-disconnect" onclick="disconnect('-')">取消監聽</button>
+                </div>
+            </div>
+
+            <!-- 乘號控制 -->
+            <div class="control-group" id="group-*">
+                <div class="operator-title">乘法功能 (×) <span class="status-badge" id="status-*">未接線</span></div>
+                <div class="btn-grid">
+                    <button class="btn-connect" onclick="connect('*')">接上監聽器</button>
+                    <button class="btn-disconnect" onclick="disconnect('*')">取消監聽</button>
+                </div>
+            </div>
+
+            <!-- 除號控制 -->
+            <div class="control-group" id="group-/">
+                <div class="operator-title">除法功能 (÷) <span class="status-badge" id="status-/">未接線</span></div>
+                <div class="btn-grid">
+                    <button class="btn-connect" onclick="connect('/')">接上監聽器</button>
+                    <button class="btn-disconnect" onclick="disconnect('/')">取消監聽</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('calcCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 計算機狀態
+        let currentInput = '0';
+        let previousInput = '';
+        let selectedOperator = '';
+        let logMessage = '點擊右側按鈕來啟用功能！';
+
+        // 監聽器狀態表：記錄哪些運算子目前有「接線」
+        const listenersActive = {
+            '+': false,
+            '-': false,
+            '*': false,
+            '/': false
+        };
+
+        // 按鈕佈局定義 (用於 Canvas 繪製與碰撞偵測)
+        const buttons = [
+            { id: '7', x: 20, y: 140, w: 60, h: 60, text: '7', type: 'num' },
+            { id: '8', x: 95, y: 140, w: 60, h: 60, text: '8', type: 'num' },
+            { id: '9', x: 170, y: 140, w: 60, h: 60, text: '9', type: 'num' },
+            { id: '/', x: 250, y: 140, w: 70, h: 60, text: '÷', type: 'op' },
+
+            { id: '4', x: 20, y: 215, w: 60, h: 60, text: '4', type: 'num' },
+            { id: '5', x: 95, y: 215, w: 60, h: 60, text: '5', type: 'num' },
+            { id: '6', x: 170, y: 215, w: 60, h: 60, text: '6', type: 'num' },
+            { id: '*', x: 250, y: 215, w: 70, h: 60, text: '×', type: 'op' },
+
+            { id: '1', x: 20, y: 290, w: 60, h: 60, text: '1', type: 'num' },
+            { id: '2', x: 95, y: 290, w: 60, h: 60, text: '2', type: 'num' },
+            { id: '3', x: 170, y: 290, w: 60, h: 60, text: '3', type: 'num' },
+            { id: '-', x: 250, y: 290, w: 70, h: 60, text: '-', type: 'op' },
+
+            { id: 'C', x: 20, y: 365, w: 60, h: 60, text: 'C', type: 'clear' },
+            { id: '0', x: 95, y: 365, w: 60, h: 60, text: '0', type: 'num' },
+            { id: '=', x: 170, y: 365, w: 60, h: 60, text: '=', type: 'equal' },
+            { id: '+', x: 250, y: 365, w: 70, h: 60, text: '+', type: 'op' },
+        ];
+
+        // --- 核心邏輯功能函數 ---
+        function handleNumber(num) {
+            if (currentInput === '0') currentInput = num;
+            else currentInput += num;
+        }
+
+        function handleClear() {
+            currentInput = '0';
+            previousInput = '';
+            selectedOperator = '';
+            logMessage = '計算機重設。';
+        }
+
+        // 這是真正執行運算的核心，但必須透過對應的事件觸發
+        function handleOperator(op) {
+            // 【關鍵檢查】：如果該運算子沒有被接上監聽器，直接攔截不反應！
+            if (!listenersActive[op]) {
+                logMessage = `🚫 [未接線] 偵測到 ${op} 事件，但沒有 addEventListener 處理它！`;
+                drawCalculator();
+                return;
+            }
+
+            // 若有接線，則正常執行邏輯
+            logMessage = `⚡ [成功觸發] 執行了 ${op} 的事件處理器！`;
+            selectedOperator = op;
+            previousInput = currentInput;
+            currentInput = '0';
+        }
+
+        function handleEqual() {
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+            if (isNaN(prev) || isNaN(current)) return;
+
+            // 這裡再次確保，只有在接線狀態下，等號按下時才能執行該運算
+            if (!listenersActive[selectedOperator]) {
+                logMessage = `🚫 雖然按了=，但 ${selectedOperator} 的功能已被拔線，無法計算！`;
+                drawCalculator();
+                return;
+            }
+
+            let result = 0;
+            switch (selectedOperator) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '*': result = prev * current; break;
+                case '/': result = current !== 0 ? prev / current : 'Error'; break;
+            }
+            logMessage = `🎉 計算完成：${prev} ${selectedOperator} ${current} = ${result}`;
+            currentInput = result.toString();
+            selectedOperator = '';
+            previousInput = '';
+        }
+
+        // --- 控制面板的外部介面：模擬 addEventListener 與 removeEventListener ---
+        function connect(op) {
+            listenersActive[op] = true;
+            logMessage = `🔌 成功執行：btn_${op}.addEventListener('click', handle_${op})`;
+            updateUI();
+        }
+
+        function disconnect(op) {
+            listenersActive[op] = false;
+            logMessage = `❌ 成功執行：btn_${op}.removeEventListener('click', handle_${op})`;
+            if(selectedOperator === op) { // 如果斷開的是當前選取的運算子，重設它
+                selectedOperator = '';
+                currentInput = '0';
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            // 更新右側控制面板的 HTML 狀態
+            ['+', '-', '*', '/'].forEach(op => {
+                const badge = document.getElementById(`status-${op}`);
+                const group = document.getElementById(`group-${op}`);
+                if (listenersActive[op]) {
+                    badge.innerText = "已接線 (Active)";
+                    badge.className = "status-badge connected";
+                    group.className = "control-group active";
+                } else {
+                    badge.innerText = "未接線 (Dead)";
+                    badge.className = "status-badge";
+                    group.className = "control-group";
+                }
+            });
+            drawCalculator();
+        }
+
+        // --- Canvas 繪圖渲染 ---
+        function drawCalculator() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 繪製計算機外框
+            ctx.fillStyle = '#23272a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. 繪製顯示螢幕
+            ctx.fillStyle = '#2f3136';
+            ctx.fillRect(20, 20, 300, 70);
+            ctx.strokeStyle = '#4f545c';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(20, 20, 300, 70);
+
+            // 螢幕文字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 28px monospace';
+            ctx.textAlign = 'right';
+            // 如果有前一個輸入，淡淡顯示在上方
+            if (previousInput) {
+                ctx.fillStyle = '#72767d';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(`${previousInput} ${selectedOperator}`, 310, 42);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 28px monospace';
+            }
+            ctx.fillText(currentInput, 310, 70);
+
+            // 3. 繪製所有按鈕
+            buttons.forEach(btn => {
+                if (btn.type === 'num') {
+                    ctx.fillStyle = '#4f545c'; // 數字鍵灰色
+                } else if (btn.type === 'op') {
+                    // 根據該運算子是否有「接線(addEventListener)」來上色！
+                    ctx.fillStyle = listenersActive[btn.id] ? '#e67e22' : '#7f8c8d'; 
+                } else if (btn.type === 'clear') {
+                    ctx.fillStyle = '#e74c3c';
+                } else if (btn.type === 'equal') {
+                    ctx.fillStyle = '#2ecc71';
+                }
+
+                // 若運算子當前被選中，加外框特效
+                if (btn.id === selectedOperator) {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 4;
+                    ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
+                    ctx.strokeRect(btn.x, btn.y, btn.w, btn.h);
+                } else {
+                    ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
+                }
+
+                // 繪製按鈕文字
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(btn.text, btn.x + btn.w/2, btn.y + btn.h/2);
+
+                // 如果是未接線的運算子，在 Canvas 上畫一條「斷線」視覺提示
+                if (btn.type === 'op' && !listenersActive[btn.id]) {
+                    ctx.strokeStyle = 'rgba(255,0,0,0.6)';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(btn.x + 5, btn.y + btn.h - 5);
+                    ctx.lineTo(btn.x + btn.w - 5, btn.y + 5);
+                    ctx.stroke();
+                }
+            });
+
+            // 4. 底部狀態日誌欄 (模擬 Console.log)
+            ctx.fillStyle = '#1e2124';
+            ctx.fillRect(0, 440, canvas.width, 40);
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '12px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(logMessage, 15, 464);
+        }
+
+        // --- Canvas 點擊碰撞偵測 ---
+        canvas.addEventListener('click', function(event) {
+            // 計算滑鼠在 Canvas 內的精確座標
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            // 檢查點到了哪顆按鈕
+            buttons.forEach(btn => {
+                if (mouseX >= btn.x && mouseX <= btn.x + btn.w &&
+                    mouseY >= btn.y && mouseY <= btn.y + btn.h) {
+                    
+                    // 根據按鈕類型分流處理
+                    if (btn.type === 'num') {
+                        handleNumber(btn.id);
+                        logMessage = `点击了数字: ${btn.id}`;
+                    } else if (btn.type === 'op') {
+                        handleOperator(btn.id);
+                    } else if (btn.type === 'clear') {
+                        handleClear();
+                    } else if (btn.type === 'equal') {
+                        handleEqual();
+                    }
+                    drawCalculator();
+                }
+            });
+        });
+
+        // 初始初始化繪製
+        drawCalculator();
+    </script>
+</body>
+</html>
