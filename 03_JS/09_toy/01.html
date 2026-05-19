@@ -1,0 +1,1478 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>jQuery 邏輯魔法學院 🧙‍♂️</title>
+    <!-- 引入 Tailwind CSS (使用 CDN 進行快速開發) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 FontAwesome 圖示庫 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 引入 jQuery 核心庫 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- 自定義 Tailwind 設定與全域樣式 -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              magic: {
+                50: "#f0f5ff",
+                100: "#e5edff",
+                500: "#6366f1", // Indigo
+                700: "#4338ca",
+                900: "#312e81",
+              },
+            },
+            fontFamily: {
+              sans: ['"Inter"', "system-ui", "-apple-system", "sans-serif"],
+              mono: ['"Fira Code"', '"Consolas"', "monospace"],
+            },
+            animation: {
+              "pulse-fast": "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              "bounce-slight": "bounceSlight 2s infinite ease-in-out",
+            },
+            keyframes: {
+              bounceSlight: {
+                "0%, 100%": { transform: "translateY(-5%)" },
+                "50%": { transform: "translateY(0)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;600&display=swap");
+
+      body {
+        background-color: #0f172a; /* Slate 900 */
+        color: #f8fafc; /* Slate 50 */
+        background-image:
+          radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+          radial-gradient(
+            at 50% 0%,
+            hsla(225, 39%, 30%, 0.2) 0,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 0%,
+            hsla(339, 49%, 30%, 0.2) 0,
+            transparent 50%
+          );
+        min-height: 100vh;
+      }
+
+      /* 程式碼區塊樣式 */
+      .code-block {
+        background-color: #1e293b; /* Slate 800 */
+        border-left: 4px solid #6366f1;
+        font-family: "Fira Code", monospace;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        position: relative;
+      }
+
+      /* 高亮執行的程式碼行 */
+      .line-highlight {
+        background-color: rgba(99, 102, 241, 0.3); /* Indigo 500 w/ opacity */
+        box-shadow: inset 2px 0 0 #818cf8;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+      }
+
+      /* 隱藏原生滾動條，使用更細緻的 */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      /* 標籤頁過渡動畫 */
+      .tab-content {
+        display: none;
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* 特效用的 Class (由 jQuery 控制) */
+      .magic-pop {
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      @keyframes popIn {
+        0% {
+          transform: scale(0);
+          opacity: 0;
+        }
+        80% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* 客製化輸入框 Range 樣式 */
+      input[type="range"] {
+        -webkit-appearance: none;
+        width: 100%;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: #818cf8;
+        cursor: pointer;
+        margin-top: -8px;
+        box-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        cursor: pointer;
+        background: #334155;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body class="antialiased selection:bg-indigo-500 selection:text-white pb-20">
+    <!-- 頂部導航與標題 -->
+    <header
+      class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 shadow-lg"
+    >
+      <div class="max-w-6xl mx-auto px-4 py-4 sm:py-6">
+        <div
+          class="flex flex-col md:flex-row justify-between items-center gap-4"
+        >
+          <div class="flex items-center gap-3">
+            <i
+              class="fa-solid fa-hat-wizard text-indigo-400 text-3xl animate-bounce-slight"
+            ></i>
+            <h1
+              class="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-300"
+            >
+              jQuery 邏輯魔法學院
+            </h1>
+          </div>
+
+          <!-- 標籤頁導航按鈕 -->
+          <nav
+            class="flex space-x-1 bg-slate-800/50 p-1 rounded-xl w-full md:w-auto overflow-x-auto border border-slate-700/50"
+          >
+            <button
+              class="tab-btn active flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all text-white bg-indigo-600 shadow-md"
+              data-target="lab-variables"
+            >
+              <i class="fa-solid fa-calculator"></i>
+              <span class="whitespace-nowrap">變數與運算</span>
+            </button>
+            <button
+              class="tab-btn flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white hover:bg-slate-700/50"
+              data-target="lab-control"
+            >
+              <i class="fa-solid fa-code-branch"></i>
+              <span class="whitespace-nowrap">流程控制</span>
+            </button>
+            <button
+              class="tab-btn flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white hover:bg-slate-700/50"
+              data-target="lab-loops"
+            >
+              <i class="fa-solid fa-rotate"></i>
+              <span class="whitespace-nowrap">迴圈的奧秘</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <!-- ========================================== -->
+      <!-- 實驗室 1：變數與運算 (Variables & Operators) -->
+      <!-- ========================================== -->
+      <section id="lab-variables" class="tab-content active">
+        <div class="mb-8 text-center">
+          <h2 class="text-3xl font-bold text-white mb-2">
+            <i class="fa-solid fa-flask text-emerald-400 mr-2"></i>
+            鍊金大鍋：變數與運算子
+          </h2>
+          <p class="text-slate-400 text-lg">
+            設定材料（變數），放入不同屬性的催化劑（運算子），看看會合成出什麼結果！
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- 互動控制面板 -->
+          <div
+            class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700 shadow-xl backdrop-blur-sm relative overflow-hidden"
+          >
+            <div
+              class="absolute -top-10 -right-10 text-slate-700/30 text-9xl z-0 pointer-events-none"
+            >
+              <i class="fa-solid fa-plus-minus"></i>
+            </div>
+
+            <div class="relative z-10 space-y-6">
+              <!-- 變數 A -->
+              <div
+                class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50"
+              >
+                <label class="block text-sm font-medium text-slate-300 mb-2"
+                  >材料 A ( 變數 a )</label
+                >
+                <div class="flex gap-2">
+                  <input
+                    type="number"
+                    id="var-a"
+                    value="10"
+                    class="w-full bg-slate-800 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              <!-- 運算子選擇 -->
+              <div class="grid grid-cols-4 gap-2">
+                <button
+                  class="op-btn bg-slate-700 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition-all border border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 active"
+                  data-op="+"
+                >
+                  <i class="fa-solid fa-plus text-xl"></i
+                  ><span class="block text-xs font-normal mt-1 text-slate-300"
+                    >相加/串接</span
+                  >
+                </button>
+                <button
+                  class="op-btn bg-slate-700 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition-all border border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  data-op="-"
+                >
+                  <i class="fa-solid fa-minus text-xl"></i
+                  ><span class="block text-xs font-normal mt-1 text-slate-300"
+                    >相減</span
+                  >
+                </button>
+                <button
+                  class="op-btn bg-slate-700 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition-all border border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  data-op="*"
+                >
+                  <i class="fa-solid fa-xmark text-xl"></i
+                  ><span class="block text-xs font-normal mt-1 text-slate-300"
+                    >相乘</span
+                  >
+                </button>
+                <button
+                  class="op-btn bg-slate-700 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition-all border border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  data-op="/"
+                >
+                  <i class="fa-solid fa-divide text-xl"></i
+                  ><span class="block text-xs font-normal mt-1 text-slate-300"
+                    >相除</span
+                  >
+                </button>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  class="op-btn bg-slate-700 hover:bg-pink-500 text-white font-bold py-2 rounded-lg transition-all border border-slate-600 text-sm"
+                  data-op=">="
+                >
+                  大於等於 ( >= )
+                </button>
+                <button
+                  class="op-btn bg-slate-700 hover:bg-pink-500 text-white font-bold py-2 rounded-lg transition-all border border-slate-600 text-sm"
+                  data-op="=="
+                >
+                  等於 ( == )
+                </button>
+                <button
+                  class="op-btn bg-slate-700 hover:bg-pink-500 text-white font-bold py-2 rounded-lg transition-all border border-slate-600 text-sm"
+                  data-op="<="
+                >
+                  小於等於 ( <= )
+                </button>
+              </div>
+
+              <!-- 變數 B -->
+              <div
+                class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50"
+              >
+                <div class="flex justify-between mb-2">
+                  <label class="block text-sm font-medium text-slate-300"
+                    >材料 B ( 變數 b )</label
+                  >
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400">當作字串</span>
+                    <label
+                      class="relative inline-flex items-center cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        id="var-b-is-string"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"
+                      ></div>
+                    </label>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  id="var-b"
+                  value="5"
+                  class="w-full bg-slate-800 text-white px-4 py-2 rounded-lg border border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+                />
+                <p class="text-xs text-slate-400 mt-2">
+                  <i class="fa-solid fa-circle-info mr-1"></i>
+                  若勾選當作字串，使用 `+` 時會發生「字串串接」而非數學相加。
+                </p>
+              </div>
+
+              <button
+                id="calc-btn"
+                class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/30 transform transition active:scale-95 text-lg"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 執行煉金術
+                (執行程式碼)
+              </button>
+            </div>
+          </div>
+
+          <!-- 結果與程式碼展示區 -->
+          <div class="flex flex-col gap-4">
+            <!-- 視覺化結果 -->
+            <div
+              class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700 shadow-xl backdrop-blur-sm flex-1 flex flex-col justify-center items-center relative min-h-[250px]"
+            >
+              <div class="text-sm text-slate-400 absolute top-4 left-4">
+                <i class="fa-solid fa-eye"></i> 視覺化結果 (#result-box)
+              </div>
+
+              <div
+                class="flex items-center gap-4 text-3xl font-mono text-slate-300 mb-6"
+              >
+                <span
+                  id="display-a"
+                  class="bg-slate-900 px-4 py-2 rounded-lg border border-indigo-500/50"
+                  >10</span
+                >
+                <span id="display-op" class="text-indigo-400 font-bold">+</span>
+                <span
+                  id="display-b"
+                  class="bg-slate-900 px-4 py-2 rounded-lg border border-pink-500/50"
+                  >5</span
+                >
+                <span class="text-slate-500">=</span>
+              </div>
+
+              <!-- 動畫結果框 -->
+              <div
+                id="result-box"
+                class="text-5xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent px-8 py-4 rounded-2xl border-2 border-indigo-500/30 bg-slate-900 shadow-inner"
+              >
+                ?
+              </div>
+            </div>
+
+            <!-- 程式碼視窗 -->
+            <div
+              class="bg-[#1e1e1e] rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col"
+            >
+              <div
+                class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex justify-between items-center"
+              >
+                <div class="flex gap-2">
+                  <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <span class="text-xs text-slate-400 font-mono">script.js</span>
+              </div>
+              <div
+                class="code-block flex-1 text-sm md:text-base m-0 border-l-0 rounded-none rounded-b-2xl"
+              >
+                <pre><code class="text-slate-300"><span id="c1-l1" class="block py-1"><span class="text-purple-400">let</span> a = <span class="text-orange-300" id="code-var-a">10</span>;</span>
+<span id="c1-l2" class="block py-1"><span class="text-purple-400">let</span> b = <span class="text-orange-300" id="code-var-b">5</span>;</span>
+<span id="c1-l3" class="block py-1"><span class="text-purple-400">let</span> result = a <span class="text-cyan-400 font-bold" id="code-op">+</span> b;</span>
+<span id="c1-l4" class="block py-1"></span>
+<span id="c1-l5" class="block py-1"><span class="text-slate-500 italic">// 透過 jQuery 選取元素並更改內容</span></span>
+<span id="c1-l6" class="block py-1"><span class="text-blue-400">$</span>(<span class="text-green-300">'#result-box'</span>).<span class="text-yellow-200">text</span>(result);</span>
+<span id="c1-l7" class="block py-1"></span>
+<span id="c1-l8" class="block py-1"><span class="text-slate-500 italic">// 加上特效 Class (動畫)</span></span>
+<span id="c1-l9" class="block py-1"><span class="text-blue-400">$</span>(<span class="text-green-300">'#result-box'</span>).<span class="text-yellow-200">addClass</span>(<span class="text-green-300">'magic-pop'</span>);</span></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 實驗室 2：流程控制 (If-Else, Switch) -->
+      <!-- ========================================== -->
+      <section id="lab-control" class="tab-content">
+        <div class="mb-8 text-center">
+          <h2 class="text-3xl font-bold text-white mb-2">
+            <i class="fa-solid fa-door-open text-amber-400 mr-2"></i>
+            命運之門：條件判斷
+          </h2>
+          <p class="text-slate-400 text-lg">
+            設定勇者的狀態，程式會根據條件 (if/else/switch)
+            決定命運之門是否開啟，以及遇到什麼怪物！
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- 勇者狀態設定 -->
+          <div
+            class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700 shadow-xl backdrop-blur-sm flex flex-col gap-6"
+          >
+            <div class="flex items-center gap-4 border-b border-slate-700 pb-4">
+              <div
+                class="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center border-2 border-slate-500 shadow-inner"
+              >
+                <i class="fa-solid fa-user-shield text-3xl text-slate-300"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white">勇者狀態設定板</h3>
+                <p class="text-sm text-slate-400">
+                  改變數值以觸發不同的 if/else 分支
+                </p>
+              </div>
+            </div>
+
+            <!-- if/else 測試：金幣與鑰匙 -->
+            <div
+              class="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/50"
+            >
+              <h4
+                class="font-semibold text-indigo-300 mb-2 border-b border-slate-700 pb-1"
+              >
+                挑戰一：大門守衛 ( If - Else )
+              </h4>
+
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <label class="text-slate-300"
+                    ><i class="fa-solid fa-coins text-yellow-400 mr-1"></i> 金幣
+                    (gold)</label
+                  >
+                  <span id="gold-val" class="text-yellow-400 font-bold"
+                    >50</span
+                  >
+                </div>
+                <input
+                  type="range"
+                  id="gold-range"
+                  min="0"
+                  max="100"
+                  value="50"
+                />
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 text-sm"
+                  ><i class="fa-solid fa-key text-amber-500 mr-1"></i>
+                  擁有萬能鑰匙 (hasKey)</label
+                >
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="key-checkbox"
+                    class="sr-only peer"
+                  />
+                  <div
+                    class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"
+                  ></div>
+                </label>
+              </div>
+
+              <p class="text-xs text-slate-500 mt-2">
+                過關條件：金幣 >= 80 <b>或者</b> 擁有鑰匙 (hasKey == true)
+              </p>
+
+              <button
+                id="run-if-btn"
+                class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-lg transition-colors flex justify-center items-center gap-2"
+              >
+                <i class="fa-solid fa-play text-xs"></i> 驗證條件 (執行 If/Else)
+              </button>
+            </div>
+
+            <!-- Switch 測試：地形選擇 -->
+            <div
+              class="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700/50"
+            >
+              <h4
+                class="font-semibold text-indigo-300 mb-2 border-b border-slate-700 pb-1"
+              >
+                挑戰二：選擇傳送點 ( Switch )
+              </h4>
+
+              <div>
+                <label class="text-slate-300 text-sm block mb-2"
+                  ><i
+                    class="fa-solid fa-map-location-dot text-cyan-400 mr-1"
+                  ></i>
+                  選擇目的地 (destination)</label
+                >
+                <select
+                  id="dest-select"
+                  class="w-full bg-slate-800 text-white border border-slate-600 rounded-lg p-2.5 outline-none focus:border-indigo-500"
+                >
+                  <option value="forest">森林 (forest)</option>
+                  <option value="volcano">火山 (volcano)</option>
+                  <option value="castle">魔王城 (castle)</option>
+                  <option value="unknown">未知區域 (??)</option>
+                </select>
+              </div>
+
+              <button
+                id="run-switch-btn"
+                class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-lg transition-colors flex justify-center items-center gap-2"
+              >
+                <i class="fa-solid fa-play text-xs"></i> 傳送 (執行 Switch)
+              </button>
+            </div>
+          </div>
+
+          <!-- 視覺化結果與程式碼 -->
+          <div class="flex flex-col gap-4">
+            <!-- 視覺化結果區 -->
+            <div class="grid grid-cols-2 gap-4">
+              <!-- 大門視覺 -->
+              <div
+                id="door-visual"
+                class="bg-slate-800 p-4 rounded-xl border-2 border-slate-600 flex flex-col items-center justify-center min-h-[150px] transition-all duration-500 relative overflow-hidden group"
+              >
+                <div
+                  class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent z-0"
+                ></div>
+                <i
+                  id="door-icon"
+                  class="fa-solid fa-door-closed text-5xl text-slate-500 z-10 transition-colors duration-500"
+                ></i>
+                <span
+                  id="door-status"
+                  class="mt-3 text-sm font-bold text-slate-400 z-10 bg-slate-900/80 px-3 py-1 rounded-full"
+                  >門關閉著</span
+                >
+              </div>
+
+              <!-- 傳送點視覺 -->
+              <div
+                id="map-visual"
+                class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center min-h-[150px] transition-all duration-500 relative overflow-hidden"
+              >
+                <div
+                  class="absolute inset-0 opacity-20 transition-all duration-500"
+                  id="map-bg"
+                ></div>
+                <i
+                  id="map-icon"
+                  class="fa-solid fa-compass text-5xl text-slate-500 z-10"
+                ></i>
+                <span
+                  id="map-status"
+                  class="mt-3 text-sm font-bold text-slate-400 z-10 text-center"
+                  >尚未傳送</span
+                >
+              </div>
+            </div>
+
+            <!-- 程式碼視窗 (動態切換顯示內容) -->
+            <div
+              class="bg-[#1e1e1e] rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex-1 flex flex-col min-h-[300px]"
+            >
+              <div
+                class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex justify-between items-center"
+              >
+                <div class="flex gap-2">
+                  <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+                <span class="text-xs text-slate-400 font-mono" id="code-title"
+                  >if-else.js</span
+                >
+              </div>
+
+              <!-- If Else 程式碼 -->
+              <div
+                id="code-view-if"
+                class="code-block flex-1 text-sm m-0 border-l-0 rounded-none rounded-b-2xl overflow-y-auto"
+              >
+                <pre><code class="text-slate-300"><span id="c2-l1" class="block py-0.5"><span class="text-purple-400">let</span> gold = <span class="text-orange-300" id="code-gold-val">50</span>;</span>
+<span id="c2-l2" class="block py-0.5"><span class="text-purple-400">let</span> hasKey = <span class="text-cyan-300" id="code-key-val">false</span>;</span>
+<span id="c2-l3" class="block py-0.5"></span>
+<span id="c2-l4" class="block py-0.5"><span class="text-slate-500 italic">// 條件判斷：金幣滿80「或」有鑰匙</span></span>
+<span id="c2-l5" class="block py-0.5"><span class="text-pink-400 font-bold">if</span> ( gold >= <span class="text-orange-300">80</span> <span class="text-cyan-400 font-bold">||</span> hasKey <span class="text-cyan-400 font-bold">===</span> <span class="text-cyan-300">true</span> ) {</span>
+<span id="c2-l6" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// 條件成立執行這區塊 (開門)</span></span>
+<span id="c2-l7" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#door-visual'</span>).<span class="text-yellow-200">css</span>(<span class="text-green-300">'border-color'</span>, <span class="text-green-300">'#10b981'</span>);</span>
+<span id="c2-l8" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#door-icon'</span>).<span class="text-yellow-200">removeClass</span>(<span class="text-green-300">'fa-door-closed text-slate-500'</span>)</span>
+<span id="c2-l9" class="block py-0.5 pl-14">.<span class="text-yellow-200">addClass</span>(<span class="text-green-300">'fa-door-open text-emerald-400'</span>);</span>
+<span id="c2-l10" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#door-status'</span>).<span class="text-yellow-200">text</span>(<span class="text-green-300">'大門開啟！'</span>).<span class="text-yellow-200">css</span>(<span class="text-green-300">'color'</span>, <span class="text-green-300">'#34d399'</span>);</span>
+<span id="c2-l11" class="block py-0.5">} <span class="text-pink-400 font-bold">else</span> {</span>
+<span id="c2-l12" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// 條件不成立執行這區塊 (拒絕)</span></span>
+<span id="c2-l13" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#door-visual'</span>).<span class="text-yellow-200">css</span>(<span class="text-green-300">'border-color'</span>, <span class="text-green-300">'#ef4444'</span>);</span>
+<span id="c2-l14" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#door-icon'</span>).<span class="text-yellow-200">removeClass</span>(<span class="text-green-300">'fa-door-open text-emerald-400'</span>)</span>
+<span id="c2-l15" class="block py-0.5 pl-14">.<span class="text-yellow-200">addClass</span>(<span class="text-green-300">'fa-door-closed text-red-500'</span>);</span>
+<span id="c2-l16" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#door-status'</span>).<span class="text-yellow-200">text</span>(<span class="text-green-300">'條件不足，無法進入'</span>).<span class="text-yellow-200">css</span>(<span class="text-green-300">'color'</span>, <span class="text-green-300">'#f87171'</span>);</span>
+<span id="c2-l17" class="block py-0.5">}</span></code></pre>
+              </div>
+
+              <!-- Switch 程式碼 (預設隱藏) -->
+              <div
+                id="code-view-switch"
+                class="code-block flex-1 text-sm m-0 border-l-0 rounded-none rounded-b-2xl overflow-y-auto hidden"
+              >
+                <pre><code class="text-slate-300"><span id="c3-l1" class="block py-0.5"><span class="text-purple-400">let</span> dest = <span class="text-green-300">"<span id="code-dest-val">forest</span>"</span>;</span>
+<span id="c3-l2" class="block py-0.5"></span>
+<span id="c3-l3" class="block py-0.5"><span class="text-pink-400 font-bold">switch</span> (dest) {</span>
+<span id="c3-l4" class="block py-0.5 pl-4"><span class="text-pink-400 font-bold">case</span> <span class="text-green-300">'forest'</span>:</span>
+<span id="c3-l5" class="block py-0.5 pl-8"><span class="text-slate-500 italic">// 進入森林邏輯...</span></span>
+<span id="c3-l6" class="block py-0.5 pl-8"><span class="text-blue-400">$</span>(<span class="text-green-300">'#map-icon'</span>).<span class="text-yellow-200">attr</span>(<span class="text-green-300">'class'</span>, <span class="text-green-300">'fa-solid fa-tree text-green-500 text-5xl'</span>);</span>
+<span id="c3-l7" class="block py-0.5 pl-8"><span class="text-pink-400 font-bold">break</span>;</span>
+<span id="c3-l8" class="block py-0.5 pl-4"><span class="text-pink-400 font-bold">case</span> <span class="text-green-300">'volcano'</span>:</span>
+<span id="c3-l9" class="block py-0.5 pl-8"><span class="text-slate-500 italic">// 進入火山邏輯...</span></span>
+<span id="c3-l10" class="block py-0.5 pl-8"><span class="text-blue-400">$</span>(<span class="text-green-300">'#map-icon'</span>).<span class="text-yellow-200">attr</span>(<span class="text-green-300">'class'</span>, <span class="text-green-300">'fa-solid fa-fire text-red-500 text-5xl'</span>);</span>
+<span id="c3-l11" class="block py-0.5 pl-8"><span class="text-pink-400 font-bold">break</span>;</span>
+<span id="c3-l12" class="block py-0.5 pl-4"><span class="text-pink-400 font-bold">case</span> <span class="text-green-300">'castle'</span>:</span>
+<span id="c3-l13" class="block py-0.5 pl-8"><span class="text-slate-500 italic">// 進入城堡邏輯...</span></span>
+<span id="c3-l14" class="block py-0.5 pl-8"><span class="text-blue-400">$</span>(<span class="text-green-300">'#map-icon'</span>).<span class="text-yellow-200">attr</span>(<span class="text-green-300">'class'</span>, <span class="text-green-300">'fa-brands fa-fort-awesome text-purple-500 text-5xl'</span>);</span>
+<span id="c3-l15" class="block py-0.5 pl-8"><span class="text-pink-400 font-bold">break</span>;</span>
+<span id="c3-l16" class="block py-0.5 pl-4"><span class="text-pink-400 font-bold">default</span>:</span>
+<span id="c3-l17" class="block py-0.5 pl-8"><span class="text-slate-500 italic">// 以上皆非(預設邏輯)</span></span>
+<span id="c3-l18" class="block py-0.5 pl-8"><span class="text-blue-400">$</span>(<span class="text-green-300">'#map-icon'</span>).<span class="text-yellow-200">attr</span>(<span class="text-green-300">'class'</span>, <span class="text-green-300">'fa-solid fa-question text-slate-400 text-5xl'</span>);</span>
+<span id="c3-l19" class="block py-0.5">}</span></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 實驗室 3：迴圈的奧秘 (For, While, Each) -->
+      <!-- ========================================== -->
+      <section id="lab-loops" class="tab-content">
+        <div class="mb-8 text-center">
+          <h2 class="text-3xl font-bold text-white mb-2">
+            <i class="fa-solid fa-rotate text-purple-400 mr-2"></i>
+            複製兵工廠：迴圈操作
+          </h2>
+          <p class="text-slate-400 text-lg">
+            程式最強大的能力之一就是「重複」。在這裡觀察 For、While 與強大的
+            jQuery $.each()！
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- 迴圈控制與展示面板 -->
+          <div class="flex flex-col gap-6">
+            <!-- For 迴圈：生成元素 -->
+            <div
+              class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700 shadow-xl backdrop-blur-sm"
+            >
+              <div
+                class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2"
+              >
+                <h3 class="text-lg font-bold text-white">
+                  <i class="fa-solid fa-star text-yellow-400 mr-2"></i> For
+                  迴圈：星辰創造
+                </h3>
+                <button
+                  id="run-for-btn"
+                  class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold py-1.5 px-4 rounded-lg transition-colors"
+                >
+                  執行 For
+                </button>
+              </div>
+              <div class="flex items-center gap-4 mb-4">
+                <label class="text-sm text-slate-300 whitespace-nowrap"
+                  >創造數量:</label
+                >
+                <input
+                  type="range"
+                  id="for-count"
+                  min="1"
+                  max="15"
+                  value="5"
+                  class="flex-1"
+                />
+                <span
+                  id="for-count-val"
+                  class="text-purple-400 font-mono font-bold w-6 text-center"
+                  >5</span
+                >
+              </div>
+              <!-- 放置星星的容器 -->
+              <div
+                id="star-container"
+                class="bg-slate-900/80 min-h-[80px] p-4 rounded-xl border border-slate-700 flex flex-wrap gap-2 content-start"
+              >
+                <span class="text-slate-600 text-sm italic w-full text-center"
+                  >等待生成中... (#star-container)</span
+                >
+              </div>
+            </div>
+
+            <!-- While 迴圈：充能系統 -->
+            <div
+              class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700 shadow-xl backdrop-blur-sm"
+            >
+              <div
+                class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2"
+              >
+                <h3 class="text-lg font-bold text-white">
+                  <i class="fa-solid fa-battery-half text-green-400 mr-2"></i>
+                  While 迴圈：魔力充能
+                </h3>
+                <button
+                  id="run-while-btn"
+                  class="bg-green-600 hover:bg-green-500 text-white text-sm font-semibold py-1.5 px-4 rounded-lg transition-colors"
+                >
+                  執行 While
+                </button>
+              </div>
+              <div class="flex items-center gap-4 mb-4">
+                <label class="text-sm text-slate-300 whitespace-nowrap"
+                  >每次充電量:</label
+                >
+                <input
+                  type="range"
+                  id="while-step"
+                  min="5"
+                  max="50"
+                  step="5"
+                  value="20"
+                  class="flex-1"
+                />
+                <span
+                  id="while-step-val"
+                  class="text-green-400 font-mono font-bold w-8 text-center"
+                  >+20</span
+                >
+              </div>
+              <!-- 電池視覺 -->
+              <div
+                class="h-10 bg-slate-900 rounded-full border-2 border-slate-600 p-1 relative overflow-hidden"
+              >
+                <div
+                  id="battery-level"
+                  class="h-full bg-gradient-to-r from-red-500 to-green-500 rounded-full w-0 transition-all duration-300"
+                ></div>
+                <div
+                  class="absolute inset-0 flex items-center justify-center font-bold text-white text-sm drop-shadow-md"
+                >
+                  <span id="battery-text">0%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- jQuery .each()：批次處理 -->
+            <div
+              class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700 shadow-xl backdrop-blur-sm"
+            >
+              <div
+                class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2"
+              >
+                <h3 class="text-lg font-bold text-white">
+                  <i class="fa-brands fa-js text-yellow-300 mr-2"></i> jQuery
+                  .each()：士兵點名
+                </h3>
+                <div class="space-x-2">
+                  <button
+                    id="reset-each-btn"
+                    class="bg-slate-600 hover:bg-slate-500 text-white text-sm font-semibold py-1.5 px-3 rounded-lg transition-colors"
+                  >
+                    <i class="fa-solid fa-rotate-left"></i> 重置
+                  </button>
+                  <button
+                    id="run-each-btn"
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-1.5 px-4 rounded-lg transition-colors"
+                  >
+                    執行 .each()
+                  </button>
+                </div>
+              </div>
+              <!-- 待處理的卡片列 -->
+              <div class="grid grid-cols-4 gap-2 mb-2" id="soldier-list">
+                <div
+                  class="soldier-card bg-slate-700 rounded-lg p-2 text-center text-xs text-slate-400 border border-slate-600 transition-all duration-300"
+                >
+                  <i class="fa-solid fa-chess-pawn text-2xl mb-1 block"></i>
+                  <span class="s-num">?</span>
+                </div>
+                <div
+                  class="soldier-card bg-slate-700 rounded-lg p-2 text-center text-xs text-slate-400 border border-slate-600 transition-all duration-300"
+                >
+                  <i class="fa-solid fa-chess-pawn text-2xl mb-1 block"></i>
+                  <span class="s-num">?</span>
+                </div>
+                <div
+                  class="soldier-card bg-slate-700 rounded-lg p-2 text-center text-xs text-slate-400 border border-slate-600 transition-all duration-300"
+                >
+                  <i class="fa-solid fa-chess-pawn text-2xl mb-1 block"></i>
+                  <span class="s-num">?</span>
+                </div>
+                <div
+                  class="soldier-card bg-slate-700 rounded-lg p-2 text-center text-xs text-slate-400 border border-slate-600 transition-all duration-300"
+                >
+                  <i class="fa-solid fa-chess-pawn text-2xl mb-1 block"></i>
+                  <span class="s-num">?</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 程式碼視窗 (動態切換) -->
+          <div
+            class="bg-[#1e1e1e] rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col h-full min-h-[500px]"
+          >
+            <div
+              class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex justify-between items-center"
+            >
+              <div class="flex gap-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <span
+                class="text-xs text-slate-400 font-mono"
+                id="loop-code-title"
+                >loops.js</span
+              >
+            </div>
+
+            <!-- For 程式碼 -->
+            <div
+              id="code-view-for"
+              class="code-block flex-1 text-sm m-0 border-l-0 rounded-none rounded-b-2xl overflow-y-auto hidden"
+            >
+              <pre><code class="text-slate-300"><span id="c4-l1" class="block py-0.5"><span class="text-blue-400">$</span>(<span class="text-green-300">'#star-container'</span>).<span class="text-yellow-200">empty</span>(); <span class="text-slate-500 italic">// 先清空容器</span></span>
+<span id="c4-l2" class="block py-0.5"><span class="text-purple-400">let</span> count = <span class="text-orange-300" id="code-for-count">5</span>;</span>
+<span id="c4-l3" class="block py-0.5"></span>
+<span id="c4-l4" class="block py-0.5"><span class="text-slate-500 italic">// 宣告變數 i=0; 若 i < count 繼續執行; 每次結束 i+1</span></span>
+<span id="c4-l5" class="block py-0.5"><span class="text-pink-400 font-bold">for</span> (<span class="text-purple-400">let</span> i = <span class="text-orange-300">0</span>; i <span class="text-cyan-400"><</span> count; i<span class="text-cyan-400">++</span>) {</span>
+<span id="c4-l6" class="block py-0.5 pl-4"><span class="text-purple-400">let</span> starHTML = <span class="text-green-300">'&lt;i class="fa-solid fa-star text-yellow-400"&gt;&lt;/i&gt;'</span>;</span>
+<span id="c4-l7" class="block py-0.5 pl-4"></span>
+<span id="c4-l8" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// 迴圈每跑一次，就向容器中添加一個星星</span></span>
+<span id="c4-l9" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#star-container'</span>).<span class="text-yellow-200">append</span>(starHTML);</span>
+<span id="c4-l10" class="block py-0.5">}</span></code></pre>
+            </div>
+
+            <!-- While 程式碼 -->
+            <div
+              id="code-view-while"
+              class="code-block flex-1 text-sm m-0 border-l-0 rounded-none rounded-b-2xl overflow-y-auto hidden"
+            >
+              <pre><code class="text-slate-300"><span id="c5-l1" class="block py-0.5"><span class="text-purple-400">let</span> power = <span class="text-orange-300">0</span>; <span class="text-slate-500 italic">// 初始電量</span></span>
+<span id="c5-l2" class="block py-0.5"><span class="text-purple-400">let</span> step = <span class="text-orange-300" id="code-while-step">20</span>; <span class="text-slate-500 italic">// 每次充電量</span></span>
+<span id="c5-l3" class="block py-0.5"></span>
+<span id="c5-l4" class="block py-0.5"><span class="text-slate-500 italic">// 當(while)電量小於 100 時，持續執行區塊內程式</span></span>
+<span id="c5-l5" class="block py-0.5"><span class="text-pink-400 font-bold">while</span> (power <span class="text-cyan-400"><</span> <span class="text-orange-300">100</span>) {</span>
+<span id="c5-l6" class="block py-0.5 pl-4">power = power <span class="text-cyan-400">+</span> step; <span class="text-slate-500 italic">// 增加電量</span></span>
+<span id="c5-l7" class="block py-0.5 pl-4"></span>
+<span id="c5-l8" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// 確保不超過 100</span></span>
+<span id="c5-l9" class="block py-0.5 pl-4"><span class="text-pink-400 font-bold">if</span> (power > <span class="text-orange-300">100</span>) power = <span class="text-orange-300">100</span>;</span>
+<span id="c5-l10" class="block py-0.5 pl-4"></span>
+<span id="c5-l11" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// 更新畫面 (這行在真實網頁會瞬間完成)</span></span>
+<span id="c5-l12" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// 我們用動畫延遲來讓你看見過程！</span></span>
+<span id="c5-l13" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-green-300">'#battery-level'</span>).<span class="text-yellow-200">css</span>(<span class="text-green-300">'width'</span>, power + <span class="text-green-300">'%'</span>);</span>
+<span id="c5-l14" class="block py-0.5">}</span></code></pre>
+            </div>
+
+            <!-- Each 程式碼 -->
+            <div
+              id="code-view-each"
+              class="code-block flex-1 text-sm m-0 border-l-0 rounded-none rounded-b-2xl overflow-y-auto block"
+            >
+              <pre><code class="text-slate-300"><span id="c6-l1" class="block py-0.5"><span class="text-slate-500 italic">// jQuery 特有！選取多個元素後，對「每一個」執行函式</span></span>
+<span id="c6-l2" class="block py-0.5"><span class="text-blue-400">$</span>(<span class="text-green-300">'.soldier-card'</span>).<span class="text-yellow-200">each</span>(<span class="text-pink-400 font-bold">function</span>( <span class="text-orange-200 italic">index</span>, <span class="text-orange-200 italic">element</span> ) {</span>
+<span id="c6-l3" class="block py-0.5 pl-4"></span>
+<span id="c6-l4" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// $(this) 代表當前正在處理的這個元素</span></span>
+<span id="c6-l5" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-purple-400">this</span>).<span class="text-yellow-200">addClass</span>(<span class="text-green-300">'bg-blue-600 border-blue-400 text-white'</span>);</span>
+<span id="c6-l6" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-purple-400">this</span>).<span class="text-yellow-200">removeClass</span>(<span class="text-green-300">'bg-slate-700 text-slate-400'</span>);</span>
+<span id="c6-l7" class="block py-0.5 pl-4"></span>
+<span id="c6-l8" class="block py-0.5 pl-4"><span class="text-slate-500 italic">// index 是從 0 開始的索引值</span></span>
+<span id="c6-l9" class="block py-0.5 pl-4"><span class="text-purple-400">let</span> number = index <span class="text-cyan-400">+</span> <span class="text-orange-300">1</span>;</span>
+<span id="c6-l10" class="block py-0.5 pl-4"><span class="text-blue-400">$</span>(<span class="text-purple-400">this</span>).<span class="text-yellow-200">find</span>(<span class="text-green-300">'.s-num'</span>).<span class="text-yellow-200">text</span>(<span class="text-green-300">'No.'</span> + number);</span>
+<span id="c6-l11" class="block py-0.5"></span>
+<span id="c6-l12" class="block py-0.5">});</span></code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- jQuery 互動邏輯腳本區 (核心大腦) -->
+    <!-- ========================================== -->
+    <script>
+      $(document).ready(function () {
+        // --- UI 標籤頁切換邏輯 ---
+        $(".tab-btn").click(function () {
+          $(".tab-btn")
+            .removeClass("active bg-indigo-600 text-white shadow-md")
+            .addClass("text-slate-400 hover:bg-slate-700/50 hover:text-white");
+          $(this)
+            .addClass("active bg-indigo-600 text-white shadow-md")
+            .removeClass("text-slate-400 hover:bg-slate-700/50");
+
+          let target = $(this).data("target");
+          $(".tab-content").removeClass("active");
+          $("#" + target).addClass("active");
+        });
+
+        // --- 共用：程式碼高亮動畫函式 ---
+        // 模擬解譯器逐行執行，幫助學生理解流程
+        async function highlightLines(containerId, lines, delayMs = 600) {
+          // 清除所有高亮
+          $(`#${containerId} span.block`).removeClass("line-highlight");
+
+          for (let i = 0; i < lines.length; i++) {
+            let lineId = lines[i];
+            let $line = $(`#${lineId}`);
+
+            // 若傳入字串陣列，代表多行同時亮
+            if (Array.isArray(lineId)) {
+              lineId.forEach((id) => $(`#${id}`).addClass("line-highlight"));
+            } else {
+              $line.addClass("line-highlight");
+            }
+
+            // 滾動到可視區域 (平滑)
+            let container = $(`#${containerId}`)[0];
+            if (container && $line.length > 0) {
+              let offset = $line[0].offsetTop - container.offsetTop;
+              $(container).animate({ scrollTop: offset - 50 }, 200);
+            }
+
+            await new Promise((r) => setTimeout(r, delayMs));
+
+            // 執行完暗掉 (可選，看是否要保留痕跡)
+            if (Array.isArray(lineId)) {
+              lineId.forEach((id) => $(`#${id}`).removeClass("line-highlight"));
+            } else {
+              $line.removeClass("line-highlight");
+            }
+          }
+        }
+
+        // =========================================
+        // 實驗室 1：變數與運算
+        // =========================================
+        let currentOp = "+";
+
+        // 運算子按鈕點擊
+        $(".op-btn").click(function () {
+          $(".op-btn")
+            .removeClass("active ring-2 ring-indigo-400 border-indigo-400")
+            .addClass("border-slate-600");
+          $(this)
+            .addClass("active ring-2 ring-indigo-400 border-indigo-400")
+            .removeClass("border-slate-600");
+
+          currentOp = $(this).data("op");
+
+          // 更新視覺與程式碼顯示
+          let displayOp = currentOp;
+          if (currentOp === "==") displayOp = "=="; // 可擴展 ===
+
+          $("#display-op").text(displayOp);
+          $("#code-op").text(displayOp);
+
+          // 重置結果
+          $("#result-box").text("?").removeClass("magic-pop");
+        });
+
+        // 變數輸入變更即時更新程式碼預覽
+        $("#var-a, #var-b, #var-b-is-string").on("input change", function () {
+          $("#display-a").text($("#var-a").val());
+          $("#code-var-a").text($("#var-a").val());
+
+          let bVal = $("#var-b").val();
+          let isString = $("#var-b-is-string").is(":checked");
+
+          if (isString) {
+            $("#display-b").text('"' + bVal + '"');
+            $("#code-var-b")
+              .text('"' + bVal + '"')
+              .removeClass("text-orange-300")
+              .addClass("text-green-300");
+          } else {
+            $("#display-b").text(bVal);
+            $("#code-var-b")
+              .text(bVal)
+              .removeClass("text-green-300")
+              .addClass("text-orange-300");
+          }
+          $("#result-box").text("?").removeClass("magic-pop");
+        });
+
+        // 執行計算
+        $("#calc-btn").click(async function () {
+          let $btn = $(this);
+          $btn.prop("disabled", true).addClass("opacity-70 cursor-not-allowed");
+          $("#result-box").removeClass("magic-pop");
+
+          let a = Number($("#var-a").val());
+          let bVal = $("#var-b").val();
+          let isString = $("#var-b-is-string").is(":checked");
+          let b = isString ? bVal : Number(bVal);
+          let result;
+
+          // 實際計算邏輯
+          switch (currentOp) {
+            case "+":
+              result = a + b;
+              break;
+            case "-":
+              result = a - b;
+              break;
+            case "*":
+              result = a * b;
+              break;
+            case "/":
+              result = a / b;
+              break;
+            case ">=":
+              result = a >= b;
+              break;
+            case "<=":
+              result = a <= b;
+              break;
+            case "==":
+              result = a == b;
+              break; // 教學用寬鬆比較
+          }
+
+          // 處理小數點與布林值顯示
+          if (typeof result === "number" && !Number.isInteger(result))
+            result = result.toFixed(2);
+          if (typeof result === "boolean")
+            result = result ? "true (真)" : "false (假)";
+
+          // --- 動畫演示逐行程式碼 ---
+          await highlightLines("c1-l1", ["c1-l1"], 400); // let a = ...
+          await highlightLines("c1-l1", ["c1-l2"], 400); // let b = ...
+          await highlightLines("c1-l1", ["c1-l3"], 600); // let result = ...
+
+          // 改變結果
+          await highlightLines("c1-l1", ["c1-l6"], 300);
+          $("#result-box").text(result);
+
+          // 加入動畫
+          await highlightLines("c1-l1", ["c1-l9"], 300);
+          $("#result-box").addClass("magic-pop");
+
+          $btn
+            .prop("disabled", false)
+            .removeClass("opacity-70 cursor-not-allowed");
+        });
+
+        // =========================================
+        // 實驗室 2：流程控制 (If-Else, Switch)
+        // =========================================
+
+        // --- If/Else 挑戰 ---
+        $("#gold-range").on("input", function () {
+          let val = $(this).val();
+          $("#gold-val").text(val);
+          $("#code-gold-val").text(val);
+          resetDoor();
+        });
+
+        $("#key-checkbox").change(function () {
+          let hasKey = $(this).is(":checked");
+          $("#code-key-val")
+            .text(hasKey)
+            .toggleClass("text-cyan-300", hasKey)
+            .toggleClass("text-red-400", !hasKey);
+          resetDoor();
+        });
+
+        function resetDoor() {
+          $("#door-visual").css("border-color", "#475569"); // slate-600
+          $("#door-icon").attr(
+            "class",
+            "fa-solid fa-door-closed text-5xl text-slate-500 z-10 transition-colors duration-500",
+          );
+          $("#door-status").text("門關閉著").css("color", "#94a3b8"); // slate-400
+          $(".code-block").hide();
+          $("#code-view-if").show();
+          $("#code-title").text("if-else.js");
+          $("#code-view-if span.block").removeClass("line-highlight");
+        }
+
+        $("#run-if-btn").click(async function () {
+          let $btn = $(this);
+          $btn.prop("disabled", true);
+          resetDoor();
+
+          let gold = parseInt($("#gold-range").val());
+          let hasKey = $("#key-checkbox").is(":checked");
+          let isSuccess = gold >= 80 || hasKey === true;
+
+          // 動畫：定義變數
+          await highlightLines("code-view-if", ["c2-l1", "c2-l2"], 600);
+
+          // 動畫：判斷條件式
+          await highlightLines("code-view-if", ["c2-l5"], 800);
+
+          if (isSuccess) {
+            // 走 If 區塊
+            await highlightLines(
+              "code-view-if",
+              ["c2-l7", "c2-l8", "c2-l9", "c2-l10"],
+              200,
+            );
+            $("#door-visual").css("border-color", "#10b981"); // emerald-500
+            $("#door-icon")
+              .removeClass("fa-door-closed text-slate-500")
+              .addClass("fa-door-open text-emerald-400 magic-pop");
+            $("#door-status").text("大門開啟！").css("color", "#34d399");
+          } else {
+            // 走 Else 區塊
+            await highlightLines(
+              "code-view-if",
+              ["c2-l11", "c2-l13", "c2-l14", "c2-l15", "c2-l16"],
+              200,
+            );
+            $("#door-visual").css("border-color", "#ef4444"); // red-500
+            // 搖晃動畫
+            $("#door-icon")
+              .removeClass("fa-door-open text-emerald-400")
+              .addClass("fa-door-closed text-red-500")
+              .animate({ marginLeft: "-10px" }, 50)
+              .animate({ marginLeft: "10px" }, 50)
+              .animate({ marginLeft: "-10px" }, 50)
+              .animate({ marginLeft: "0" }, 50);
+            $("#door-status")
+              .text("條件不足，無法進入")
+              .css("color", "#f87171");
+          }
+
+          // 結束保留最後區塊高亮 1秒
+          setTimeout(
+            () => $("#code-view-if span.block").removeClass("line-highlight"),
+            1000,
+          );
+          $btn.prop("disabled", false);
+        });
+
+        // --- Switch 挑戰 ---
+        $("#dest-select").change(function () {
+          $("#code-dest-val").text($(this).val());
+
+          // 重置視覺
+          $("#map-bg").attr(
+            "class",
+            "absolute inset-0 opacity-20 transition-all duration-500 bg-transparent",
+          );
+          $("#map-icon").attr(
+            "class",
+            "fa-solid fa-compass text-5xl text-slate-500 z-10",
+          );
+          $("#map-status").text("尚未傳送");
+
+          // 切換程式碼視圖
+          $(".code-block").hide();
+          $("#code-view-switch").show();
+          $("#code-title").text("switch.js");
+          $("#code-view-switch span.block").removeClass("line-highlight");
+        });
+
+        $("#run-switch-btn").click(async function () {
+          let $btn = $(this);
+          $btn.prop("disabled", true);
+
+          // 確保顯示 switch 程式碼
+          $(".code-block").hide();
+          $("#code-view-switch").show();
+          $("#code-title").text("switch.js");
+
+          let dest = $("#dest-select").val();
+
+          await highlightLines("code-view-switch", ["c3-l1"], 500);
+          await highlightLines("code-view-switch", ["c3-l3"], 600); // switch(dest)
+
+          $("#map-icon").addClass("magic-pop"); // 準備變身動畫
+
+          switch (dest) {
+            case "forest":
+              await highlightLines("code-view-switch", ["c3-l4"], 400); // case 'forest'
+              await highlightLines("code-view-switch", ["c3-l6"], 400); // 執行邏輯
+              $("#map-icon").attr(
+                "class",
+                "fa-solid fa-tree text-emerald-500 text-5xl magic-pop",
+              );
+              $("#map-bg").addClass("bg-emerald-500");
+              $("#map-status").text("抵達幽暗森林").css("color", "#34d399");
+              await highlightLines("code-view-switch", ["c3-l7"], 400); // break
+              break;
+            case "volcano":
+              await highlightLines("code-view-switch", ["c3-l4", "c3-l8"], 300); // 尋找 case
+              await highlightLines("code-view-switch", ["c3-l10"], 400); // 執行邏輯
+              $("#map-icon").attr(
+                "class",
+                "fa-solid fa-fire text-red-500 text-5xl magic-pop",
+              );
+              $("#map-bg").addClass("bg-red-500");
+              $("#map-status").text("抵達烈焰火山").css("color", "#f87171");
+              await highlightLines("code-view-switch", ["c3-l11"], 400); // break
+              break;
+            case "castle":
+              await highlightLines(
+                "code-view-switch",
+                ["c3-l4", "c3-l8", "c3-l12"],
+                200,
+              ); // 尋找 case
+              await highlightLines("code-view-switch", ["c3-l14"], 400); // 執行邏輯
+              $("#map-icon").attr(
+                "class",
+                "fa-brands fa-fort-awesome text-purple-500 text-5xl magic-pop",
+              );
+              $("#map-bg").addClass("bg-purple-500");
+              $("#map-status").text("抵達魔王城").css("color", "#c084fc");
+              await highlightLines("code-view-switch", ["c3-l15"], 400); // break
+              break;
+            default:
+              await highlightLines(
+                "code-view-switch",
+                ["c3-l4", "c3-l8", "c3-l12", "c3-l16"],
+                150,
+              ); // 落入 default
+              await highlightLines("code-view-switch", ["c3-l18"], 400); // 執行邏輯
+              $("#map-icon").attr(
+                "class",
+                "fa-solid fa-question text-slate-400 text-5xl magic-pop",
+              );
+              $("#map-bg").addClass("bg-slate-500");
+              $("#map-status").text("迷失於時空裂縫").css("color", "#94a3b8");
+              break;
+          }
+
+          setTimeout(() => $("#map-icon").removeClass("magic-pop"), 500);
+          setTimeout(
+            () =>
+              $("#code-view-switch span.block").removeClass("line-highlight"),
+            800,
+          );
+          $btn.prop("disabled", false);
+        });
+
+        // =========================================
+        // 實驗室 3：迴圈的奧秘
+        // =========================================
+
+        // 為了讓這頁預設顯示 $.each() 的 code
+        $("#code-view-for, #code-view-while").hide();
+        $("#code-view-each").show();
+
+        function showLoopCode(type, title) {
+          $(".code-block").hide(); // 隱藏所有
+          $(`#code-view-${type}`).show();
+          $("#loop-code-title").text(title);
+          $(`#code-view-${type} span.block`).removeClass("line-highlight");
+        }
+
+        // --- For 迴圈 ---
+        $("#for-count").on("input", function () {
+          let val = $(this).val();
+          $("#for-count-val").text(val);
+          $("#code-for-count").text(val);
+          showLoopCode("for", "for-loop.js");
+          $("#star-container").html(
+            '<span class="text-slate-600 text-sm italic w-full text-center">等待生成中... (#star-container)</span>',
+          );
+        });
+
+        $("#run-for-btn").click(async function () {
+          let $btn = $(this);
+          $btn.prop("disabled", true);
+          showLoopCode("for", "for-loop.js");
+
+          let count = parseInt($("#for-count").val());
+
+          await highlightLines("code-view-for", ["c4-l1"], 400); // empty
+          $("#star-container").empty();
+
+          await highlightLines("code-view-for", ["c4-l2"], 400); // let count = ...
+
+          // 模擬 For 迴圈執行過程
+          for (let i = 0; i < count; i++) {
+            await highlightLines("code-view-for", ["c4-l5"], 200); // for(...) 條件判斷
+            await highlightLines("code-view-for", ["c4-l6", "c4-l9"], 200); // 內部執行
+
+            // 視覺化：生出星星，加入微小延遲讓學生看清動畫
+            let starHTML =
+              '<i class="fa-solid fa-star text-yellow-400 magic-pop" style="font-size: 1.5rem; text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);"></i>';
+            $("#star-container").append(starHTML);
+
+            // 讓捲軸跟著長大的星星容器稍微往下滾 (如果有需要)
+          }
+
+          setTimeout(
+            () => $("#code-view-for span.block").removeClass("line-highlight"),
+            500,
+          );
+          $btn.prop("disabled", false);
+        });
+
+        // --- While 迴圈 ---
+        $("#while-step").on("input", function () {
+          let val = $(this).val();
+          $("#while-step-val").text("+" + val);
+          $("#code-while-step").text(val);
+          showLoopCode("while", "while-loop.js");
+          // 重置電池
+          $("#battery-level").css("width", "0%");
+          $("#battery-text").text("0%");
+        });
+
+        $("#run-while-btn").click(async function () {
+          let $btn = $(this);
+          $btn.prop("disabled", true);
+          showLoopCode("while", "while-loop.js");
+
+          // 重置畫面
+          $("#battery-level").css("width", "0%");
+          $("#battery-text").text("0%");
+
+          await highlightLines("code-view-while", ["c5-l1", "c5-l2"], 600);
+
+          let power = 0;
+          let step = parseInt($("#while-step").val());
+
+          // 模擬 While 迴圈
+          // 為避免瀏覽器卡死，使用非同步 await 模擬迴圈
+          while (power < 100) {
+            await highlightLines("code-view-while", ["c5-l5"], 300); // while 條件
+
+            power += step;
+            await highlightLines("code-view-while", ["c5-l6"], 100);
+
+            if (power > 100) {
+              power = 100;
+              await highlightLines("code-view-while", ["c5-l9"], 100);
+            }
+
+            await highlightLines("code-view-while", ["c5-l13"], 200); // 改變 CSS
+
+            // 更新視覺
+            $("#battery-level").css("width", power + "%");
+            $("#battery-text").text(power + "%");
+
+            // 稍微停頓，讓學生感受「重複」的過程
+            await new Promise((r) => setTimeout(r, 200));
+          }
+
+          // 閃爍一下表示滿電
+          $("#battery-level").addClass("animate-pulse");
+          setTimeout(
+            () => $("#battery-level").removeClass("animate-pulse"),
+            2000,
+          );
+
+          setTimeout(
+            () =>
+              $("#code-view-while span.block").removeClass("line-highlight"),
+            500,
+          );
+          $btn.prop("disabled", false);
+        });
+
+        // --- jQuery .each() ---
+        $("#run-each-btn").click(async function () {
+          let $btn = $(this);
+          $btn.prop("disabled", true);
+          $("#reset-each-btn").prop("disabled", true);
+          showLoopCode("each", "jquery-each.js");
+
+          await highlightLines("code-view-each", ["c6-l2"], 600); // $('.soldier-card').each...
+
+          let elements = $(".soldier-card").toArray();
+
+          // 為了教學視覺化，我們不直接呼叫 jQuery的 each，而是用 for 迴圈來「慢動作重播」 each 的行為
+          for (let i = 0; i < elements.length; i++) {
+            let element = elements[i];
+            let $el = $(element);
+
+            await highlightLines("code-view-each", ["c6-l2"], 200); // 開頭
+
+            // $this 操作
+            await highlightLines("code-view-each", ["c6-l5", "c6-l6"], 200);
+            $el
+              .removeClass("bg-slate-700 text-slate-400")
+              .addClass("bg-blue-600 border-blue-400 text-white magic-pop");
+
+            // 索引操作
+            await highlightLines("code-view-each", ["c6-l9", "c6-l10"], 200);
+            let num = i + 1;
+            $el
+              .find(".s-num")
+              .text("No." + num)
+              .addClass("font-bold text-yellow-300");
+            $el
+              .find("i")
+              .removeClass("fa-chess-pawn")
+              .addClass("fa-chess-knight"); // 加碼升級動畫
+
+            await new Promise((r) => setTimeout(r, 300));
+            $el.removeClass("magic-pop");
+          }
+
+          setTimeout(
+            () => $("#code-view-each span.block").removeClass("line-highlight"),
+            500,
+          );
+          $btn.prop("disabled", false);
+          $("#reset-each-btn").prop("disabled", false);
+        });
+
+        $("#reset-each-btn").click(function () {
+          showLoopCode("each", "jquery-each.js");
+          $(".soldier-card")
+            .removeClass("bg-blue-600 border-blue-400 text-white")
+            .addClass("bg-slate-700 text-slate-400");
+          $(".soldier-card")
+            .find(".s-num")
+            .text("?")
+            .removeClass("font-bold text-yellow-300");
+          $(".soldier-card")
+            .find("i")
+            .removeClass("fa-chess-knight")
+            .addClass("fa-chess-pawn");
+        });
+      });
+    </script>
+  </body>
+</html>
