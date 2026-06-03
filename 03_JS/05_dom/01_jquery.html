@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>jQuery 與 JavaScript 選擇器對照教學 (Bootstrap 5)</title>
+    <!-- 引入 Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- 引入 jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  </head>
+  <body class="bg-light">
+    <div class="container my-5">
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="p-4 bg-white rounded shadow-sm border">
+            <h1 class="display-6 fw-bold text-primary">jQuery 選擇器與 Native JS 選擇器對照</h1>
+            <p class="lead text-secondary mb-0">本範例展示 jQuery 常用的選擇器（ID、Class、標籤選擇器）配合 <code>.text()</code> 的用法，並提供 JavaScript 原生（Native JS）使用 <code>.innerText</code> 的對照方式。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. ID 選擇器對照 -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <h2 class="h5 mb-0">1. ID 選擇器 (#id)</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="alert alert-primary mb-0">
+                <h5 class="alert-heading text-primary-emphasis">jQuery (使用 <code>.text()</code>)</h5>
+                <p id="jq-id-demo" class="mb-0 fw-semibold">等待 jQuery 修改 (ID)</p>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="alert alert-success mb-0">
+                <h5 class="alert-heading text-success-emphasis">Native JS (getElementById)</h5>
+                <p id="js-id-demo" class="mb-0 fw-semibold">等待 getElementById 修改 (ID)</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="alert alert-success mb-0">
+                <h5 class="alert-heading text-success-emphasis">Native JS (querySelector)</h5>
+                <p id="js-query-demo" class="mb-0 fw-semibold">等待 querySelector 修改 (ID)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Class 選擇器對照 -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <h2 class="h5 mb-0">2. Class 選擇器 (.class)</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <div class="alert alert-primary mb-0">
+                <h5 class="alert-heading text-primary-emphasis mb-3">jQuery (自動隱式迭代所有同類別元素)</h5>
+                <p class="jq-class-demo mb-2 fw-semibold">等待 jQuery 修改 (Class 1)</p>
+                <p class="jq-class-demo mb-0 fw-semibold">等待 jQuery 修改 (Class 2)</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="alert alert-success mb-0">
+                <h5 class="alert-heading text-success-emphasis mb-3">Native JS (需使用迴圈逐一變更)</h5>
+                <p class="js-class-demo mb-2 fw-semibold">等待 Native JS 修改 (Class 1)</p>
+                <p class="js-class-demo mb-0 fw-semibold">等待 Native JS 修改 (Class 2)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 標籤選擇器對照 -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <h2 class="h5 mb-0">3. 標籤選擇器 (tag)</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <div class="alert alert-primary mb-0">
+                <h5 class="alert-heading text-primary-emphasis mb-3">jQuery (選取子元素 span)</h5>
+                <div id="jq-tag-container">
+                  <span class="badge bg-primary fs-6 my-1">等待 jQuery 修改 (Tag 1)</span>
+                  <span class="badge bg-primary fs-6 my-1">等待 jQuery 修改 (Tag 2)</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="alert alert-success mb-0">
+                <h5 class="alert-heading text-success-emphasis mb-3">Native JS (使用 querySelectorAll)</h5>
+                <div id="js-tag-container">
+                  <span class="badge bg-success fs-6 my-1">等待 Native JS 修改 (Tag 1)</span>
+                  <span class="badge bg-success fs-6 my-1">等待 Native JS 修改 (Tag 2)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // 當網頁 DOM 載入完成後執行
+        $(document).ready(function() {
+          
+          // ==========================================
+          // 1. ID 選擇器對照
+          // ==========================================
+          // jQuery: 使用 $() 選取 ID 並使用 .text() 賦值
+          $('#jq-id-demo').text('【jQuery】成功使用 ID 選擇器更改文字！');
+
+          // Native JS: 使用 getElementById() 並使用 .innerText 屬性賦值
+          document.getElementById('js-id-demo').innerText = '【Native JS】使用 getElementById 更改文字！';
+
+          // Native JS (類似 jQuery 寫法): 使用 querySelector() 並帶入 CSS 選擇器 '#id'
+          document.querySelector('#js-query-demo').innerText = '【Native JS】使用 querySelector(\'#id\') 更改文字！';
+
+          // ==========================================
+          // 2. Class 選擇器對照
+          // ==========================================
+          // jQuery: 會自動將選取到的所有 class 元素一次變更 (隱式迭代)
+          $('.jq-class-demo').text('【jQuery】成功使用 Class 選擇器更改所有元素的文字！');
+
+          // Native JS: getElementsByClassName 回傳的是類陣列，必須透過迴圈逐一更改元素
+          var jsClassElements = document.getElementsByClassName('js-class-demo');
+          for (var i = 0; i < jsClassElements.length; i++) {
+            jsClassElements[i].innerText = '【Native JS】使用 Class 與迴圈更改文字 (第 ' + (i + 1) + ' 個)';
+          }
+
+          // ==========================================
+          // 3. 標籤選擇器對照
+          // ==========================================
+          // jQuery: 選取 #jq-tag-container span 並用 .text() 一次變更
+          $('#jq-tag-container span').text('【jQuery】標籤選擇器變更');
+
+          // Native JS: 使用 querySelectorAll 選取後，用 forEach 迴圈逐一變更
+          var jsTagElements = document.querySelectorAll('#js-tag-container span');
+          jsTagElements.forEach(function(element, index) {
+            element.innerText = '【Native JS】標籤選擇器變更 (第 ' + (index + 1) + ' 個)';
+          });
+
+        });
+      </script>
+
+      <hr class="my-5" />
+      
+      <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+          <h2 class="h5 mb-0">教學原始碼對照</h2>
+        </div>
+        <div class="card-body p-0">
+          <pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="overflow-x: auto; max-height: 500px;">&lt;!doctype html&gt;
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+    &lt;title&gt;jQuery 與 JavaScript 選擇器對照教學 (Bootstrap 5)&lt;/title&gt;
+    &lt;!-- 引入 Bootstrap 5 CSS CDN --&gt;
+    &lt;link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" /&gt;
+    &lt;!-- 引入 jQuery CDN --&gt;
+    &lt;script src="https://code.jquery.com/jquery-3.7.1.min.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body class="bg-light"&gt;
+    &lt;div class="container my-5"&gt;
+      &lt;div class="row mb-4"&gt;
+        &lt;div class="col-12"&gt;
+          &lt;div class="p-4 bg-white rounded shadow-sm border"&gt;
+            &lt;h1 class="display-6 fw-bold text-primary"&gt;jQuery 選擇器與 Native JS 選擇器對照&lt;/h1&gt;
+            &lt;p class="lead text-secondary mb-0"&gt;本範例展示 jQuery 常用的選擇器（ID、Class、標籤選擇器）配合 &lt;code&gt;.text()&lt;/code&gt; 的用法，並提供 JavaScript 原生（Native JS）使用 &lt;code&gt;.innerText&lt;/code&gt; 的對照方式。&lt;/p>
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;!-- 1. ID 選擇器對照 --&gt;
+      &lt;div class="card mb-4 shadow-sm"&gt;
+        &lt;div class="card-header bg-dark text-white"&gt;
+          &lt;h2 class="h5 mb-0"&gt;1. ID 選擇器 (#id)&lt;/h2&gt;
+        &lt;/div&gt;
+        &lt;div class="card-body"&gt;
+          &lt;div class="row"&gt;
+            &lt;div class="col-md-4 mb-3 mb-md-0"&gt;
+              &lt;div class="alert alert-primary mb-0"&gt;
+                &lt;h5 class="alert-heading text-primary-emphasis"&gt;jQuery (使用 &lt;code&gt;.text()&lt;/code&gt;)&lt;/h5&gt;
+                &lt;p id="jq-id-demo" class="mb-0 fw-semibold"&gt;等待 jQuery 修改 (ID)&lt;/p&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class="col-md-4 mb-3 mb-md-0"&gt;
+              &lt;div class="alert alert-success mb-0"&gt;
+                &lt;h5 class="alert-heading text-success-emphasis"&gt;Native JS (getElementById)&lt;/h5&gt;
+                &lt;p id="js-id-demo" class="mb-0 fw-semibold"&gt;等待 getElementById 修改 (ID)&lt;/p&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class="col-md-4"&gt;
+              &lt;div class="alert alert-success mb-0"&gt;
+                &lt;h5 class="alert-heading text-success-emphasis"&gt;Native JS (querySelector)&lt;/h5&gt;
+                &lt;p id="js-query-demo" class="mb-0 fw-semibold"&gt;等待 querySelector 修改 (ID)&lt;/p&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div>
+
+      &lt;!-- 2. Class 選擇器對照 --&gt;
+      &lt;div class="card mb-4 shadow-sm"&gt;
+        &lt;div class="card-header bg-dark text-white"&gt;
+          &lt;h2 class="h5 mb-0"&gt;2. Class 選擇器 (.class)&lt;/h2&gt;
+        &lt;/div&gt;
+        &lt;div class="card-body"&gt;
+          &lt;div class="row"&gt;
+            &lt;div class="col-md-6 mb-3 mb-md-0"&gt;
+              &lt;div class="alert alert-primary mb-0"&gt;
+                &lt;h5 class="alert-heading text-primary-emphasis mb-3"&gt;jQuery (自動隱式迭代所有同類別元素)&lt;/h5&gt;
+                &lt;p class="jq-class-demo mb-2 fw-semibold"&gt;等待 jQuery 修改 (Class 1)&lt;/p&gt;
+                &lt;p class="jq-class-demo mb-0 fw-semibold"&gt;等待 jQuery 修改 (Class 2)&lt;/p>
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class="col-md-6"&gt;
+              &lt;div class="alert alert-success mb-0"&gt;
+                &lt;h5 class="alert-heading text-success-emphasis mb-3"&gt;Native JS (需使用迴圈逐一變更)&lt;/h5&gt;
+                &lt;p class="js-class-demo mb-2 fw-semibold"&gt;等待 Native JS 修改 (Class 1)&lt;/p&gt;
+                &lt;p class="js-class-demo mb-0 fw-semibold"&gt;等待 Native JS 修改 (Class 2)&lt;/p>
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;!-- 3. 標籤選擇器對照 --&gt;
+      &lt;div class="card mb-4 shadow-sm"&gt;
+        &lt;div class="card-header bg-dark text-white"&gt;
+          &lt;h2 class="h5 mb-0"&gt;3. 標籤選擇器 (tag)&lt;/h2&gt;
+        &lt;/div&gt;
+        &lt;div class="card-body"&gt;
+          &lt;div class="row"&gt;
+            &lt;div class="col-md-6 mb-3 mb-md-0"&gt;
+              &lt;div class="alert alert-primary mb-0"&gt;
+                &lt;h5 class="alert-heading text-primary-emphasis mb-3"&gt;jQuery (選取子元素 span)&lt;/h5&gt;
+                &lt;div id="jq-tag-container"&gt;
+                  &lt;span class="badge bg-primary fs-6 my-1"&gt;等待 jQuery 修改 (Tag 1)&lt;/span&gt;
+                  &lt;span class="badge bg-primary fs-6 my-1"&gt;等待 jQuery 修改 (Tag 2)&lt;/span&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class="col-md-6"&gt;
+              &lt;div class="alert alert-success mb-0"&gt;
+                &lt;h5 class="alert-heading text-success-emphasis mb-3"&gt;Native JS (使用 querySelectorAll)&lt;/h5&gt;
+                &lt;div id="js-tag-container"&gt;
+                  &lt;span class="badge bg-success fs-6 my-1"&gt;等待 Native JS 修改 (Tag 1)&lt;/span&gt;
+                  &lt;span class="badge bg-success fs-6 my-1"&gt;等待 Native JS 修改 (Tag 2)&lt;/span&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;script&gt;
+        // 當網頁 DOM 載入完成後執行
+        $(document).ready(function() {
+          
+          // ==========================================
+          // 1. ID 選擇器對照
+          // ==========================================
+          // jQuery: 使用 $() 選取 ID 並使用 .text() 賦值
+          $('#jq-id-demo').text('【jQuery】成功使用 ID 選擇器更改文字！');
+
+          // Native JS: 使用 getElementById() 並使用 .innerText 屬性賦值
+          document.getElementById('js-id-demo').innerText = '【Native JS】使用 getElementById 更改文字！';
+
+          // Native JS (類似 jQuery 寫法): 使用 querySelector() 並帶入 CSS 選擇器 \'#id\'
+          document.querySelector('#js-query-demo').innerText = '【Native JS】使用 querySelector(\\\'#id\\\') 更改文字！';
+
+          // ==========================================
+          // 2. Class 選擇器對照
+          // ==========================================
+          // jQuery: 會自動將選取到的所有 class 元素一次變更 (隱式迭代)
+          $('.jq-class-demo').text('【jQuery】成功使用 Class 選擇器更改所有元素的文字！');
+
+          // Native JS: getElementsByClassName 回傳的是類陣列，必須透過迴圈逐一更改元素
+          var jsClassElements = document.getElementsByClassName('js-class-demo');
+          for (var i = 0; i < jsClassElements.length; i++) {
+            jsClassElements[i].innerText = '【Native JS】使用 Class 與迴圈更改文字 (第 ' + (i + 1) + ' 個)';
+          }
+
+          // ==========================================
+          // 3. 標籤選擇器對照
+          // ==========================================
+          // jQuery: 選取 #jq-tag-container span 並用 .text() 一次變更
+          $('#jq-tag-container span').text('【jQuery】標籤選擇器變更');
+
+          // Native JS: 使用 querySelectorAll 選取後，用 forEach 迴圈逐一變更
+          var jsTagElements = document.querySelectorAll('#js-tag-container span');
+          jsTagElements.forEach(function(element, index) {
+            element.innerText = '【Native JS】標籤選擇器變更 (第 ' + (index + 1) + ' 個)';
+          });
+
+        });
+      &lt;/script&gt;
+    &lt;/div&gt;
+    
+    &lt;!-- 引入 Bootstrap 5 JS Bundle CDN --&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 引入 Bootstrap 5 JS Bundle CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

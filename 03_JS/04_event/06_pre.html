@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML pre 標籤教學範例</title>
+</head>
+<body>
+    <h1>HTML &lt;pre&gt; 標籤教學範例</h1>
+    <p>&lt;pre&gt; 標籤（Preformatted Text）用於呈現預格式化文字。在此標籤內的內容會保留原有的空格與換行，且瀏覽器通常會以等寬字型（Monospace）來顯示它。</p>
+
+    <hr>
+
+    <h2>範例 1：一般 &lt;p&gt; 標籤（換行與連續空格會被瀏覽器忽略並壓縮）</h2>
+    <p>
+        第一行文字。
+            縮排四個空格的第二行文字。
+        第三行文字。
+    </p>
+
+    <hr>
+
+    <h2>範例 2：&lt;pre&gt; 標籤（完整保留換行與空格）</h2>
+    <pre>
+        第一行文字。
+            縮排四個空格的第二行文字。
+        第三行文字。
+    </pre>
+
+    <hr>
+
+    <h2>實體元件 HTML 原始碼：</h2>
+    <pre>&lt;!-- 一般段落標籤，連續空格與換行會被壓縮 --&gt;
+&lt;p&gt;
+    第一行文字。
+        縮排四個空格的第二行文字。
+    第三行文字。
+&lt;/p&gt;
+
+&lt;!-- 預格式化標籤，會完整保留空格與換行 --&gt;
+&lt;pre&gt;
+    第一行文字。
+        縮排四個空格 of 第二行文字。
+    第三行文字。
+&lt;/pre&gt;</pre>
+
+</body>
+</html>

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel 轉 SQL 互動式學習指南</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        .excel-grid {
+            background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px), linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+            background-size: 100px 30px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-600 text-white p-2 rounded-lg flex items-center justify-center shadow-md">
+                    <i data-lucide="database" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        Excel ➔ SQL 互動學習 Canvas
+                    </h1>
+                    <p class="text-xs text-slate-500">用你熟悉的 Excel 邏輯，10 分鐘無痛學會 SQL 資料庫查詢</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                    Excel 綠 ➔ Sheet1 & 2
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                    SQL 藍 ➔ SQLite 模擬器
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主體內容區 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側：教學步驟與觀念對照 (5/12 寬) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            
+            <!-- 學習進度面板 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="compass" class="text-indigo-600"></i> 四大核心關卡
+                </h2>
+                
+                <!-- 關卡清單 -->
+                <div class="space-y-3">
+                    <!-- Step 1 -->
+                    <button onclick="switchStep(1)" id="btn-step-1" class="w-full text-left p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 transition-all flex items-start gap-3">
+                        <div class="bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold shadow-sm">1</div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">SELECT * FROM table1;</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">對應 Excel：切換並選取整個 Sheet1 員工表</p>
+                        </div>
+                    </button>
+
+                    <!-- Step 2 -->
+                    <button onclick="switchStep(2)" id="btn-step-2" class="w-full text-left p-3 rounded-xl border-2 border-transparent hover:bg-slate-50 transition-all flex items-start gap-3">
+                        <div class="bg-slate-400 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">2</div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">WHERE field1 = '1234';</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">對應 Excel：篩選特定員工編號（Filter）</p>
+                        </div>
+                    </button>
+
+                    <!-- Step 3 -->
+                    <button onclick="switchStep(3)" id="btn-step-3" class="w-full text-left p-3 rounded-xl border-2 border-transparent hover:bg-slate-50 transition-all flex items-start gap-3">
+                        <div class="bg-slate-400 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">3</div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">LEFT JOIN 縣市對照表;</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">對應 Excel：VLOOKUP 串接 Sheet2 縣市資訊</p>
+                        </div>
+                    </button>
+
+                    <!-- Step 4 -->
+                    <button onclick="switchStep(4)" id="btn-step-4" class="w-full text-left p-3 rounded-xl border-2 border-transparent hover:bg-slate-50 transition-all flex items-start gap-3">
+                        <div class="bg-slate-400 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">4</div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm">CASE WHEN sex = 1 ... END;</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">對應 Excel：IF 判斷式（1轉男、非1轉女）</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 當前關卡詳細解說卡片 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="step-badge" class="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-2.5 py-1 rounded-md">第一關：基礎選取</span>
+                        <h3 class="text-base font-bold text-slate-800" id="step-title">SELECT * FROM table1;</h3>
+                    </div>
+                    
+                    <!-- Excel vs SQL 深入說明 -->
+                    <div class="space-y-4">
+                        <!-- Excel 做法 -->
+                        <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                            <h4 class="text-xs font-bold text-emerald-800 flex items-center gap-1.5 mb-1">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Excel 邏輯做法：
+                            </h4>
+                            <p class="text-xs text-slate-600 leading-relaxed" id="excel-desc">
+                                當你在 Excel 打開工作簿，點選下方的 <b>Sheet1 (員工表)</b>，並用滑鼠圈選或查看整張表格時，你其實就是在進行資料的「全選」。
+                            </p>
+                            <div class="mt-2 text-[11px] code-font bg-white p-1.5 rounded border border-emerald-200 text-emerald-700 font-medium" id="excel-formula">
+                                操作：點擊 Sheet1 標籤 ➔ Ctrl + A
+                            </div>
+                        </div>
+
+                        <!-- SQL 做法 -->
+                        <div class="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                            <h4 class="text-xs font-bold text-blue-800 flex items-center gap-1.5 mb-1">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                SQL 語法結構：
+                            </h4>
+                            <p class="text-xs text-slate-600 leading-relaxed" id="sql-desc">
+                                SQL 中，我們使用 <code class="bg-white px-1 py-0.5 rounded border text-blue-600 font-bold">SELECT</code> 來指定要拿取哪些欄位（<code class="bg-white px-1 py-0.5 rounded border text-blue-600 font-bold">*</code> 代表全部），並用 <code class="bg-white px-1 py-0.5 rounded border text-blue-600 font-bold">FROM</code> 指向我們的資料表（工作表）。
+                            </p>
+                            <div class="mt-2 text-[11px] code-font bg-white p-1.5 rounded border border-blue-200 text-blue-700 font-medium" id="sql-syntax">
+                                SELECT * FROM table1;
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 教學小提示 -->
+                    <div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 text-xs text-amber-800 flex gap-2">
+                        <i data-lucide="lightbulb" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold">關鍵金句：</span>
+                            <span id="step-tip">「SQL 的 FROM 代表 Excel 的分頁名稱，SELECT 代表你框選的欄位範圍。」</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                    <button id="prev-btn" onclick="navigateStep(-1)" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> 上一步
+                    </button>
+                    <button id="next-btn" onclick="navigateStep(1)" class="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition flex items-center gap-1 shadow-sm shadow-indigo-100">
+                        下一步 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右側：互動操練面板 (7/12 寬) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- 原始資料庫狀態（Sheet 檢視） -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h3 class="text-sm font-bold text-slate-800">Excel 來源資料分頁</h3>
+                    </div>
+                    <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                        <button onclick="toggleSourceTab('table1')" id="tab-btn-table1" class="px-3 py-1 rounded-md text-xs font-bold transition bg-white text-emerald-700 shadow-sm">
+                            📁 Sheet1 (員工表)
+                        </button>
+                        <button onclick="toggleSourceTab('table2')" id="tab-btn-table2" class="px-3 py-1 rounded-md text-xs font-semibold transition text-slate-600 hover:text-slate-800">
+                            📁 Sheet2 (縣市表)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Excel 工作表樣式呈現 -->
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <!-- Excel 頂部欄標題 (A, B, C...) -->
+                    <div class="bg-slate-100 px-4 py-1 text-[11px] text-slate-400 font-mono flex border-b border-slate-200">
+                        <div class="w-8 shrink-0 border-r border-slate-200"></div>
+                        <div class="w-24 px-2 border-r border-slate-200">A</div>
+                        <div class="w-24 px-2 border-r border-slate-200">B</div>
+                        <div class="w-16 px-2 border-r border-slate-200">C</div>
+                        <div class="w-20 px-2">D</div>
+                    </div>
+
+                    <!-- 實際表格 -->
+                    <table class="w-full text-xs text-left" id="source-table">
+                        <!-- JS 將在此處動態生成 Excel 樣式列 -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- SQL 程式碼編輯器 & 執行器 -->
+            <div class="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 overflow-hidden flex flex-col">
+                <div class="bg-slate-800 px-4 py-3 flex items-center justify-between border-b border-slate-700">
+                    <div class="flex items-center gap-2">
+                        <span class="flex gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                        </span>
+                        <span class="text-xs text-slate-400 font-mono ml-2">SQLite 語法終端機 (可自由編輯)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="restorePresetQuery()" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> 重置本關語法
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 編輯區 -->
+                <div class="p-4 relative">
+                    <textarea id="sql-editor" rows="4" class="w-full bg-slate-950 text-emerald-400 code-font p-4 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm leading-relaxed tracking-wide resize-none" placeholder="輸入 SELECT 語法..."></textarea>
+                    
+                    <!-- 快速填入工具列 -->
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="text-[11px] text-slate-500 flex items-center gap-1 mr-1">
+                            <i data-lucide="tag" class="w-3 h-3"></i> 常用關鍵字：
+                        </span>
+                        <button onclick="insertSqlKeyword('SELECT * FROM table1;')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-[10px] code-font transition border border-slate-700">
+                            SELECT *
+                        </button>
+                        <button onclick="insertSqlKeyword('WHERE field1 = \'1234\';')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-[10px] code-font transition border border-slate-700">
+                            WHERE field1 = '1234'
+                        </button>
+                        <button onclick="insertSqlKeyword('SELECT table1.field1, table1.name, table2.city_name FROM table1 LEFT JOIN table2 ON table1.city_id = table2.city_id;')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-[10px] code-font transition border border-slate-700">
+                            LEFT JOIN ...
+                        </button>
+                        <button onclick="insertSqlKeyword('SELECT name, sex, CASE WHEN sex = 1 THEN \'男\' ELSE \'女\' END AS sex_text FROM table1;')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-[10px] code-font transition border border-slate-700">
+                            CASE WHEN ...
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 執行控制列 -->
+                <div class="bg-slate-950 px-4 py-3 flex items-center justify-between border-t border-slate-800">
+                    <div id="query-status" class="text-xs text-slate-500 flex items-center gap-1">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-blue-400"></i> 按下執行按鈕看結果
+                    </div>
+                    <button onclick="runSQL()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-900/30">
+                        <i data-lucide="play" class="w-4 h-4 fill-white"></i> 執行 SQL 語法 (Run)
+                    </button>
+                </div>
+            </div>
+
+            <!-- SQL 執行結果區 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex-1 flex flex-col min-h-[250px]">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-blue-600 text-white p-1 rounded">
+                            <i data-lucide="table-properties" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-800">SQL 查詢結果 (Output Dataset)</h3>
+                    </div>
+                    <div id="execution-time" class="text-xs text-slate-400 font-mono">
+                        回傳 0 筆結果
+                    </div>
+                </div>
+
+                <!-- 結果表格 -->
+                <div class="overflow-x-auto flex-1 rounded-xl border border-slate-100 bg-slate-50/50">
+                    <table class="w-full text-xs text-left" id="result-table">
+                        <thead class="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-2 text-center text-slate-400 w-12">#</th>
+                                <th class="px-4 py-2">尚未執行任何查詢</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-150">
+                            <tr>
+                                <td class="px-4 py-8 text-center text-slate-400 font-medium" colspan="2">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <i data-lucide="terminal" class="w-8 h-8 text-slate-300"></i>
+                                        請在上方寫入 SQL 語法並點擊「執行 SQL 語法」
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 貼心的執行對照說明 -->
+                <div id="execution-explanation" class="mt-3 p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl text-xs text-indigo-900 hidden flex gap-2">
+                    <i data-lucide="messages-square" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                    <div>
+                        <span class="font-bold">運算過程解析：</span>
+                        <span id="explanation-text"></span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-slate-900 text-slate-500 border-t border-slate-800 text-center py-4 text-xs">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-2">
+            <p>© 2026 SQL 互動式教學系統. 專為 Excel 轉職與學習資料處理開發.</p>
+            <p class="flex items-center gap-1"><i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-rose-500"></i> 讓大數據查詢變得像拉試算表一樣簡單</p>
+        </div>
+    </footer>
+
+    <!-- 全域 JavaScript 引擎 -->
+    <script>
+        // 初始化 Lucide 圖標
+        lucide.createIcons();
+
+        // 1. 初始化資料庫資料 (模擬 SQLite 的 table1 與 table2)
+        const db = {
+            table1: [
+                { field1: '1001', name: '張小明', sex: 1, city_id: 'A' },
+                { field1: '1234', name: '李美麗', sex: 2, city_id: 'B' },
+                { field1: '1003', name: '王大同', sex: 1, city_id: 'A' },
+                { field1: '1004', name: '陳小華', sex: 2, city_id: 'C' }
+            ],
+            table2: [
+                { city_id: 'A', city_name: '台北市' },
+                { city_id: 'B', city_name: '台中市' },
+                { city_id: 'C', city_name: '高雄市' }
+            ]
+        };
+
+        // 欄位中文化對照 (用於顯示友善提示)
+        const colNames = {
+            field1: '員工編號 (field1)',
+            name: '姓名 (name)',
+            sex: '性別 (sex)',
+            city_id: '縣市代碼 (city_id)',
+            city_name: '縣市名稱 (city_name)',
+            sex_text: '性別名稱 (sex_text)'
+        };
+
+        // 2. 當前選取的 Excel 分頁與關卡
+        let currentSourceTab = 'table1';
+        let currentStep = 1;
+
+        // 關卡預設的 SQL 查詢（已優化為含有標準分號且結構完整的 SQL）
+        const presetQueries = {
+            1: "SELECT * FROM table1;",
+            2: "SELECT * FROM table1 WHERE field1 = '1234';",
+            3: "SELECT table1.field1, table1.name, table2.city_name \nFROM table1 \nLEFT JOIN table2 ON table1.city_id = table2.city_id;",
+            4: "SELECT name, sex, \nCASE WHEN sex = 1 THEN '男' ELSE '女' END AS sex_text \nFROM table1;"
+        };
+
+        // 關卡詳細說明對應資料
+        const stepDetails = {
+            1: {
+                badge: "第一關：基礎選取",
+                title: "SELECT * FROM table1;",
+                excelDesc: "當你在 Excel 打開工作表，點選下方的 <b>Sheet1 (員工表)</b>，並用滑鼠圈選或查看整張表格時，你就是在進行資料的「全選」。",
+                excelFormula: "對應操作：點擊 Sheet1 工作表分頁 ➔ 查看整張 Table 內容",
+                sqlDesc: "SQL 中，我們使用 <code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>SELECT</code> 來指定要拿取哪些欄位（<code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>*</code> 代表全部），並用 <code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>FROM</code> 指向我們的資料表（也就是 Excel 中的 Sheet1）。",
+                sqlSyntax: "SELECT * FROM table1;",
+                tip: "「SQL 的 FROM 代表 Excel 的分頁名稱，SELECT 代表你框選的欄位範圍。」"
+            },
+            2: {
+                badge: "第二關：資料篩選",
+                title: "WHERE field1 = '1234';",
+                excelDesc: "在 Excel 中，我們會對第一行建立「篩選器」，點選 <b>field1 (員工編號)</b> 欄位的小下拉箭頭，勾選 <b>'1234'</b> 來將其餘不相干的資料隱藏。",
+                excelFormula: "對應操作：在 A 欄建立篩選 ➔ 點擊下拉 ➔ 只勾選 '1234'",
+                sqlDesc: "SQL 使用 <code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>WHERE</code> 語法來做條件過濾。資料庫會逐行檢查是否滿足條件，只有條件成立（True）的資料才會被顯示出來。",
+                sqlSyntax: "SELECT * FROM table1 WHERE field1 = '1234';",
+                tip: "「WHERE 就等於 Excel 的『篩選條件』。文字要用單引號 ' 包起來喔！」"
+            },
+            3: {
+                badge: "第三關：跨表串接 (雙表合併)",
+                title: "LEFT JOIN ... ON ...",
+                excelDesc: "此操作等同於 Excel 的大魔王 <b>VLOOKUP</b> 或 <b>XLOOKUP</b>！當你要藉由「縣市代碼」去對照 Sheet2 的「縣市名稱」時，你會在 Sheet1 隔壁格輸入公式來查出對應名稱。",
+                excelFormula: "Excel 公式：=VLOOKUP(D2, Sheet2!A:B, 2, FALSE)",
+                sqlDesc: "SQL 透過 <code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>LEFT JOIN</code> 以左表(table1)為主，把右表(table2)拼接到右邊。並用 <code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>ON</code> 來指定兩張表用哪一欄進行配對。",
+                sqlSyntax: "SELECT table1.field1, table1.name, table2.city_name FROM table1 LEFT JOIN table2 ON table1.city_id = table2.city_id;",
+                tip: "「LEFT JOIN 就是 VLOOKUP 的進化版！ON 的後方就是你要 VLOOKUP 相互對照的那根鑰匙 (Key)。」"
+            },
+            4: {
+                badge: "第四關：條件判斷分支",
+                title: "CASE WHEN ... THEN ... ELSE ... END;",
+                excelDesc: "在 Excel 中，若要將性別欄位「1」呈現為「男」、「2」呈現為「女」，我們常用 <b>IF 邏輯函數</b> 來進行轉換。",
+                excelFormula: "Excel 公式：=IF(C2=1, \"男\", \"女\")",
+                sqlDesc: "SQL 使用優雅的 <code class='bg-white px-1 py-0.5 rounded border text-blue-600 font-bold'>CASE WHEN ... THEN ... ELSE ... END</code> 結構。它像多重 IF 語句，可以逐行判斷條件並轉換成新字串輸出。",
+                sqlSyntax: "SELECT name, sex, CASE WHEN sex = 1 THEN '男' ELSE '女' END AS sex_text FROM table1;",
+                tip: "「CASE WHEN 的最尾端一定要加上 END，並建議用 AS 設定新欄位名稱！」"
+            }
+        };
+
+        // 3. 初始執行
+        window.onload = function() {
+            renderExcelSource();
+            restorePresetQuery();
+            runSQL();
+        };
+
+        // 渲染 Excel 來源資料
+        function renderExcelSource() {
+            const tableEl = document.getElementById('source-table');
+            const data = db[currentSourceTab];
+            
+            let html = '';
+            
+            if (currentSourceTab === 'table1') {
+                // 員工表標頭
+                html += `
+                    <thead class="bg-emerald-50 text-emerald-800 border-b border-emerald-200">
+                        <tr>
+                            <th class="px-4 py-2 border-r border-slate-200 text-center text-slate-400 w-10"></th>
+                            <th class="px-4 py-2 border-r border-slate-200">field1 (員工編號)</th>
+                            <th class="px-4 py-2 border-r border-slate-200">name (姓名)</th>
+                            <th class="px-4 py-2 border-r border-slate-200">sex (性別代碼)</th>
+                            <th class="px-4 py-2">city_id (縣市代碼)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 font-mono text-[13px]">
+                `;
+                
+                // 員工表內容
+                data.forEach((row, i) => {
+                    const isFiltered = (currentStep === 2 && row.field1 === '1234');
+                    const bgClass = isFiltered ? 'bg-amber-100 font-semibold' : 'bg-white hover:bg-slate-50';
+                    
+                    html += `
+                        <tr class="${bgClass} transition">
+                            <td class="px-4 py-1.5 border-r border-slate-200 text-center text-slate-400 select-none">${i+2}</td>
+                            <td class="px-4 py-1.5 border-r border-slate-200">${row.field1}</td>
+                            <td class="px-4 py-1.5 border-r border-slate-200 font-sans">${row.name}</td>
+                            <td class="px-4 py-1.5 border-r border-slate-200">${row.sex}</td>
+                            <td class="px-4 py-1.5">${row.city_id}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                // 縣市對照表標頭
+                html += `
+                    <thead class="bg-emerald-50 text-emerald-800 border-b border-emerald-200">
+                        <tr>
+                            <th class="px-4 py-2 border-r border-slate-200 text-center text-slate-400 w-10"></th>
+                            <th class="px-4 py-2 border-r border-slate-200">city_id (縣市代碼)</th>
+                            <th class="px-4 py-2">city_name (縣市名稱)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 font-mono text-[13px]">
+                `;
+                
+                // 縣市表內容
+                data.forEach((row, i) => {
+                    html += `
+                        <tr class="bg-white hover:bg-slate-50 transition">
+                            <td class="px-4 py-1.5 border-r border-slate-200 text-center text-slate-400 select-none">${i+2}</td>
+                            <td class="px-4 py-1.5 border-r border-slate-200">${row.city_id}</td>
+                            <td class="px-4 py-1.5 font-sans">${row.city_name}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `</tbody>`;
+            tableEl.innerHTML = html;
+        }
+
+        // 切換 Excel 來源 Sheet 分頁
+        function toggleSourceTab(tabName) {
+            currentSourceTab = tabName;
+            
+            const btnT1 = document.getElementById('tab-btn-table1');
+            const btnT2 = document.getElementById('tab-btn-table2');
+            
+            if (tabName === 'table1') {
+                btnT1.className = "px-3 py-1 rounded-md text-xs font-bold transition bg-white text-emerald-700 shadow-sm";
+                btnT2.className = "px-3 py-1 rounded-md text-xs font-semibold transition text-slate-600 hover:text-slate-800";
+            } else {
+                btnT2.className = "px-3 py-1 rounded-md text-xs font-bold transition bg-white text-emerald-700 shadow-sm";
+                btnT1.className = "px-3 py-1 rounded-md text-xs font-semibold transition text-slate-600 hover:text-slate-800";
+            }
+            
+            renderExcelSource();
+        }
+
+        // 插入 SQL 關鍵字到編輯器
+        function insertSqlKeyword(text) {
+            const editor = document.getElementById('sql-editor');
+            editor.value = text;
+            runSQL();
+        }
+
+        // 重置當前關卡的語法
+        function restorePresetQuery() {
+            document.getElementById('sql-editor').value = presetQueries[currentStep];
+        }
+
+        // 觀卡切換 (手動點擊)
+        function switchStep(stepNum) {
+            currentStep = stepNum;
+            
+            // 更新關卡按鈕樣式
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`btn-step-${i}`);
+                const badge = btn.querySelector('.rounded-full');
+                if (i === stepNum) {
+                    btn.className = "w-full text-left p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 transition-all flex items-start gap-3";
+                    badge.className = "bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold shadow-sm";
+                } else {
+                    btn.className = "w-full text-left p-3 rounded-xl border-2 border-transparent hover:bg-slate-50 transition-all flex items-start gap-3";
+                    badge.className = "bg-slate-400 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold";
+                }
+            }
+
+            // 更新左側說明內容
+            const details = stepDetails[stepNum];
+            document.getElementById('step-badge').innerText = details.badge;
+            document.getElementById('step-title').innerText = details.title;
+            document.getElementById('excel-desc').innerHTML = details.excelDesc;
+            document.getElementById('excel-formula').innerText = details.excelFormula;
+            document.getElementById('sql-desc').innerHTML = details.sqlDesc;
+            document.getElementById('sql-syntax').innerText = details.sqlSyntax;
+            document.getElementById('step-tip').innerText = details.tip;
+
+            // 更新按鈕狀態
+            document.getElementById('prev-btn').disabled = (stepNum === 1);
+            
+            const nextBtn = document.getElementById('next-btn');
+            if (stepNum === 4) {
+                nextBtn.innerHTML = `重頭開始 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>`;
+            } else {
+                nextBtn.innerHTML = `下一步 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>`;
+            }
+            lucide.createIcons();
+
+            // 若到 JOIN 關卡，建議直接幫使用者切到對應的 Tab 來做提示
+            if (stepNum === 3) {
+                toggleSourceTab('table1');
+            } else {
+                renderExcelSource();
+            }
+
+            // 載入該關卡預設 query
+            restorePresetQuery();
+            // 執行
+            runSQL();
+        }
+
+        // 上一步 / 下一步導覽
+        function navigateStep(direction) {
+            let target = currentStep + direction;
+            if (target > 4) {
+                target = 1; // 循環回到關卡一
+            }
+            if (target >= 1 && target <= 4) {
+                switchStep(target);
+            }
+        }
+
+
+        // ==========================================
+        // 核心：純前端 SQLite 語法微型模擬編譯器（已強化重構）
+        // ==========================================
+        function runSQL() {
+            const queryRaw = document.getElementById('sql-editor').value;
+            
+            // 語法預處理：去除前後空白、將所有換行與連續空白取代為單一空格
+            let query = queryRaw.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            
+            // 容錯機制 1：自動去除結尾的標準 SQL 分號
+            if (query.endsWith(';')) {
+                query = query.slice(0, -1).trim();
+            }
+
+            const statusEl = document.getElementById('query-status');
+            const resultTable = document.getElementById('result-table');
+            const countEl = document.getElementById('execution-time');
+            const expEl = document.getElementById('execution-explanation');
+            const expTextEl = document.getElementById('explanation-text');
+
+            statusEl.innerHTML = `<span class="text-indigo-400 animate-pulse flex items-center gap-1"><i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> 正在執行查詢...</span>`;
+            lucide.createIcons();
+
+            setTimeout(() => {
+                try {
+                    let parsedData = [];
+                    let parsedCols = [];
+                    let summaryText = "";
+
+                    // A. 基本語義完整性檢查
+                    if (!query.toUpperCase().includes('SELECT') || !query.toUpperCase().includes('FROM')) {
+                        throw new Error("語法錯誤：標準查詢必須包含 'SELECT [欄位]' 與 'FROM [資料表]' 結構。");
+                    }
+
+                    // 1. 動態解析基底資料表 (From Table)
+                    const fromMatch = query.match(/FROM\s+(\w+)/i);
+                    let baseTableName = '';
+                    if (fromMatch) {
+                        baseTableName = fromMatch[1].toLowerCase();
+                    } else {
+                        throw new Error("語法錯誤：未偵測到正確的 FROM 資料來源。");
+                    }
+
+                    let baseTable = [];
+                    let sourceTableName = '';
+                    if (baseTableName === 'table1') {
+                        baseTable = JSON.parse(JSON.stringify(db.table1)); // 深拷貝防污染
+                        sourceTableName = 'table1 (員工表)';
+                    } else if (baseTableName === 'table2') {
+                        baseTable = JSON.parse(JSON.stringify(db.table2));
+                        sourceTableName = 'table2 (縣市對照表)';
+                    } else {
+                        throw new Error(`找不到名稱為 '${baseTableName}' 的資料表！此模擬器支援 'table1' 或 'table2'。`);
+                    }
+
+                    summaryText += `1. 開啟工作表：從 <b>${sourceTableName}</b> 作為基底開始進行提取。<br/>`;
+
+                    // 2. 處理 LEFT JOIN 跨表結合
+                    let isJoin = false;
+                    const joinRegex = /LEFT\s+JOIN\s+(\w+)\s+ON\s+([\w\.]+)\s*=\s*([\w\.]+)/i;
+                    const joinMatch = query.match(joinRegex);
+
+                    if (joinMatch) {
+                        isJoin = true;
+                        const joinTableName = joinMatch[1].toLowerCase();
+                        if (joinTableName !== 'table2') {
+                            throw new Error(`無法 LEFT JOIN '${joinTableName}'。目前只支援與 table2 縣市表進行跨表合併。`);
+                        }
+
+                        summaryText += `2. 跨表串接 (VLOOKUP)：如同 Excel 中的 <b>VLOOKUP</b>，系統依據兩表的 <b>city_id</b> 進行比對，成功把 table2 的「縣市名稱 (city_name)」對應合併過來。<br/>`;
+
+                        // 執行 Join 邏輯
+                        baseTable = baseTable.map(row => {
+                            const match = db.table2.find(t2 => t2.city_id === row.city_id);
+                            return {
+                                ...row,
+                                city_name: match ? match.city_name : null
+                            };
+                        });
+                    }
+
+                    // 3. 處理 WHERE 篩選邏輯 (支援高容錯的空白與引號)
+                    const whereRegex = /WHERE\s+(.+)$/i;
+                    const whereMatch = query.match(whereRegex);
+                    let hasFilter = false;
+
+                    if (whereMatch) {
+                        hasFilter = true;
+                        let conditionStr = whereMatch[1].trim();
+                        // 移除結尾的 ORDER BY / LIMIT 等其他子句（若有）
+                        conditionStr = conditionStr.split(/ORDER|LIMIT|CASE|LEFT/i)[0].trim();
+                        
+                        // 將條件中的等號兩側空白標準化，並移除單雙引號，以利高容錯解析
+                        conditionStr = conditionStr.replace(/\s*=\s*/g, ' = ');
+                        conditionStr = conditionStr.replace(/['"]/g, '');
+
+                        if (conditionStr.includes('field1 = 1234')) {
+                            baseTable = baseTable.filter(row => row.field1 === '1234');
+                            summaryText += `3. 條件篩選 (Filter)：就像在 Excel 的 A 欄勾選 <b>'1234'</b>，排除其餘不符的 3 筆資料列。<br/>`;
+                        } else if (conditionStr.includes('sex = 1')) {
+                            baseTable = baseTable.filter(row => row.sex === 1);
+                            summaryText += `3. 條件篩選 (Filter)：僅保留性別代碼為 1 (男性) 的資料列。<br/>`;
+                        } else if (conditionStr.includes('sex = 2')) {
+                            baseTable = baseTable.filter(row => row.sex === 2);
+                            summaryText += `3. 條件篩選 (Filter)：僅保留性別代碼為 2 (女性) 的資料列。<br/>`;
+                        } else if (conditionStr.includes('city_id = A') || conditionStr.includes('city_id = a')) {
+                            baseTable = baseTable.filter(row => row.city_id.toUpperCase() === 'A');
+                            summaryText += `3. 條件篩選 (Filter)：僅保留居住於台北市 (代碼 A) 的資料列。<br/>`;
+                        } else {
+                            // 萬用自訂等值篩選
+                            const parts = conditionStr.split('=');
+                            if (parts.length === 2) {
+                                const col = parts[0].trim().replace('table1.', '').replace('table2.', '');
+                                const val = parts[1].trim();
+                                baseTable = baseTable.filter(row => String(row[col]).toLowerCase() === val.toLowerCase());
+                                summaryText += `3. 自訂篩選 (Filter)：過濾出 [${colNames[col] || col}] 等於 [${val}] 的資料。<br/>`;
+                            } else {
+                                throw new Error("篩選器條件語法錯誤。請依照格式撰寫，例如：WHERE field1 = '1234'");
+                            }
+                        }
+                    }
+
+                    // 4. 解析 SELECT 投影欄位與 CASE WHEN
+                    const selectRegex = /SELECT\s+(.*?)\s+FROM/i;
+                    const selectMatch = query.match(selectRegex);
+                    if (!selectMatch) {
+                        throw new Error("語法錯誤：標準查詢必須以 'SELECT' 開頭。");
+                    }
+
+                    const selectFieldsStr = selectMatch[1].trim();
+                    
+                    // 偵測並解析 CASE WHEN (高容錯正则)
+                    let hasCaseWhen = false;
+                    const caseWhenRegex = /CASE\s+WHEN\s+(\w+)\s*=\s*['"]?(\w+)['"]?\s+THEN\s+['"](.+?)['"]\s+ELSE\s+['"](.+?)['"]\s+END\s+AS\s+(\w+)/i;
+                    const caseMatch = selectFieldsStr.match(caseWhenRegex);
+
+                    let caseColName = 'sex';
+                    let caseCheckVal = '1';
+                    let caseThenVal = '男';
+                    let caseElseVal = '女';
+                    let caseNewColName = 'sex_text';
+
+                    if (caseMatch) {
+                        hasCaseWhen = true;
+                        caseColName = caseMatch[1];
+                        caseCheckVal = caseMatch[2];
+                        caseThenVal = caseMatch[3];
+                        caseElseVal = caseMatch[4];
+                        caseNewColName = caseMatch[5];
+                        summaryText += `4. 計算欄位 (IF 函數)：等同於 Excel 中的 <b>=IF(${caseColName}=${caseCheckVal}, "${caseThenVal}", "${caseElseVal}")</b>。新增臨時計算欄位 <b>${caseNewColName}</b>。<br/>`;
+                    } else if (selectFieldsStr.toUpperCase().includes('CASE WHEN')) {
+                        throw new Error("CASE WHEN 語法不完整或拼寫有誤！請參考標準範例：\nCASE WHEN sex = 1 THEN '男' ELSE '女' END AS sex_text");
+                    }
+
+                    // 決定最終要顯示在報表上的欄位清單
+                    if (selectFieldsStr === '*') {
+                        if (baseTable.length > 0) {
+                            parsedCols = Object.keys(baseTable[0]);
+                        } else {
+                            parsedCols = ['field1', 'name', 'sex', 'city_id'];
+                        }
+                    } else {
+                        // 解析自訂欄位清單 (如: table1.field1, table1.name, table2.city_name)
+                        let cleanFieldsStr = selectFieldsStr;
+                        if (hasCaseWhen) {
+                            // 移除整個 CASE 區塊，避免干擾逗號分割邏輯
+                            cleanFieldsStr = selectFieldsStr.replace(/CASE[\s\S]*?END\s+AS\s+\w+/i, '').trim();
+                        }
+                        
+                        const fieldParts = cleanFieldsStr.split(',')
+                            .map(f => f.trim())
+                            .filter(f => f.length > 0)
+                            .map(f => {
+                                // 移除 table1. 或 table2. 前綴首碼以匹配物件屬性
+                                return f.replace('table1.', '').replace('table2.', '');
+                            });
+
+                        parsedCols = [...fieldParts];
+                        if (hasCaseWhen) {
+                            parsedCols.push(caseNewColName);
+                        }
+                    }
+
+                    // 對基底資料集進行欄位過濾與計算投影
+                    parsedData = baseTable.map(row => {
+                        const newRow = {};
+                        
+                        // 計算邏輯
+                        if (hasCaseWhen) {
+                            const actualVal = String(row[caseColName]);
+                            row[caseNewColName] = (actualVal === String(caseCheckVal)) ? caseThenVal : caseElseVal;
+                        }
+
+                        // 取出所需的欄位
+                        parsedCols.forEach(col => {
+                            newRow[col] = row[col] !== undefined ? row[col] : 'N/A';
+                        });
+                        return newRow;
+                    });
+
+                    // 顯示執行成功，渲染結果
+                    statusEl.innerHTML = `<span class="text-emerald-500 font-bold flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i> SQL 執行成功！</span>`;
+                    countEl.innerText = `回傳 ${parsedData.length} 筆結果`;
+                    
+                    // 渲染 HTML 結果表
+                    renderResultTable(parsedCols, parsedData);
+
+                    // 顯示演算法解析
+                    expEl.classList.remove('hidden');
+                    expTextEl.innerHTML = summaryText || "1. 讀取基底資料表。<br/>2. 成功回傳篩選欄位。";
+
+                } catch (error) {
+                    // 錯誤處理介面
+                    statusEl.innerHTML = `<span class="text-rose-500 font-bold flex items-center gap-1"><i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 animate-bounce"></i> 語法解析失敗...</span>`;
+                    countEl.innerText = `回傳 0 筆結果`;
+                    expEl.classList.add('hidden');
+
+                    resultTable.innerHTML = `
+                        <thead class="bg-rose-50 text-rose-800 border-b border-rose-200">
+                            <tr>
+                                <th class="px-4 py-2 text-center text-slate-400 w-12">#</th>
+                                <th class="px-4 py-2">SQL 語法異常錯誤報告</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-rose-50/30">
+                                <td class="px-4 py-6 text-center text-rose-500 font-bold font-mono">⚠️</td>
+                                <td class="px-4 py-6 text-slate-700">
+                                    <p class="font-bold text-rose-700 mb-1">錯誤原因：</p>
+                                    <code class="bg-white px-2 py-1 rounded border border-rose-200 text-rose-600 block text-xs code-font max-w-full overflow-x-auto whitespace-pre-wrap">${error.message}</code>
+                                    
+                                    <div class="mt-4 p-3 bg-white rounded-xl border border-rose-100 text-xs">
+                                        <p class="font-bold text-slate-800 mb-1">💡 教學提示：</p>
+                                        <p class="text-slate-500 leading-relaxed">別擔心！您可以點擊右上方<b>「重置本關語法」</b>按鈕載入正確預設語法，或者參考左側對應關卡的 SQL 語法結構，檢查拼寫、符號或空格！</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    `;
+                }
+                lucide.createIcons();
+            }, 150);
+        }
+
+        // 渲染結果表格
+        function renderResultTable(cols, data) {
+            const tableEl = document.getElementById('result-table');
+            let html = '';
+
+            // 標頭
+            html += `
+                <thead class="bg-indigo-50 text-indigo-900 border-b border-indigo-200">
+                    <tr>
+                        <th class="px-4 py-2 border-r border-slate-200 text-center text-slate-400 w-12">#</th>
+            `;
+            
+            cols.forEach(col => {
+                html += `<th class="px-4 py-2 font-mono">${col} <span class="text-[10px] text-slate-400 font-sans font-normal">(${colNames[col] || '計算欄位'})</span></th>`;
+            });
+
+            html += `
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 font-mono text-[13px]">
+            `;
+
+            // 內容
+            if (data.length === 0) {
+                html += `
+                    <tr class="bg-white">
+                        <td class="px-4 py-8 text-center text-slate-400 font-medium" colspan="${cols.length + 1}">
+                            沒有符合篩選條件的資料列 (Empty Result)
+                        </td>
+                    </tr>
+                `;
+            } else {
+                data.forEach((row, idx) => {
+                    html += `
+                        <tr class="bg-white hover:bg-indigo-50/30 transition">
+                            <td class="px-4 py-1.5 border-r border-slate-200 text-center text-slate-400 select-none">${idx + 1}</td>
+                    `;
+                    
+                    cols.forEach(col => {
+                        let cellVal = row[col];
+                        let fontClass = 'font-mono';
+                        
+                        // 中文字型處理
+                        if (typeof cellVal === 'string' && /[\u4e00-\u9fa5]/.test(cellVal)) {
+                            fontClass = 'font-sans font-medium text-slate-900';
+                        }
+                        
+                        // 特殊標籤樣式
+                        let badgeStyle = '';
+                        if (col === 'sex_text') {
+                            badgeStyle = cellVal === '男' 
+                                ? 'bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold' 
+                                : 'bg-pink-100 text-pink-800 px-1.5 py-0.5 rounded font-bold';
+                        }
+
+                        html += `
+                            <td class="px-4 py-1.5 border-r border-slate-100 last:border-r-0 ${fontClass}">
+                                <span class="${badgeStyle}">${cellVal !== null ? cellVal : '<span class="text-slate-300">NULL</span>'}</span>
+                            </td>
+                        `;
+                    });
+
+                    html += `</tr>`;
+                });
+            }
+
+            html += `</tbody>`;
+            tableEl.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
