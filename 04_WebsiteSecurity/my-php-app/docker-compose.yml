@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # PHP-FPM 服務
+  app:
+    image: php:8.3-fpm
+    container_name: php_app
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - php-network
+
+  # Nginx 網頁伺服器
+  web:
+    image: nginx:latest
+    container_name: nginx_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - php-network
+
+networks:
+  php-network:
+    driver: bridge
