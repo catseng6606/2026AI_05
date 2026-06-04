@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF 跨網站請求偽造 - 互動式教學實驗室</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        .pulse-active {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+        @keyframes packet-fly-lr {
+            0% { left: 10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 90%; opacity: 0; }
+        }
+        .packet-animation {
+            animation: packet-fly-lr 2s forwards ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- 頂部導覽列 -->
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="bg-red-500/20 text-red-400 p-2 rounded-lg border border-red-500/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 2 0 002-2v-6a2 2 2 0 00-2-2H6a2 2 2 0 00-2 2v6a2 2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider text-white">CSRF 跨網站請求偽造</h1>
+                <p class="text-xs text-slate-400">CSRF (Cross-Site Request Forgery) Interactive Sandbox</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span class="text-sm text-slate-400">目前防禦狀態：</span>
+            <span id="defense-badge" class="px-3 py-1 text-xs rounded-full font-semibold border bg-red-500/10 text-red-400 border-red-500/30">
+                無防禦 (無安全防護)
+            </span>
+        </div>
+    </header>
+
+    <!-- 主區塊 -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側：控制台與防禦設定 (4 cols) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- 角色狀態面板 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-xl">
+                <h2 class="text-md font-bold mb-4 text-slate-300 flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>角色與狀態監視器
+                </h2>
+                <div class="space-y-4">
+                    <!-- 使用者 Alice -->
+                    <div class="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-slate-800">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-lg font-bold">A</div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-white">使用者 (Alice)</h3>
+                                <p id="session-status" class="text-xs text-red-400">未登入</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">帳戶餘額</span>
+                            <span id="alice-balance" class="text-sm font-bold text-emerald-400">$100,000</span>
+                        </div>
+                    </div>
+
+                    <!-- 瀏覽器 Cookie 狀態 -->
+                    <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs text-slate-400 flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11 17a1 1 0 00-1-1 2 2 0 110-4 1 1 0 001-1 2 2 0 110-4 1 1 0 001-1 2 2 0 112 2 1 1 0 001 1 2 2 0 110 4 1 1 0 00-1 1 2 2 0 110 4 1 1 0 001 1h1a1 1 0 100-2 1 1 0 110-2 1 1 0 100-2 1 1 0 110-2 1 1 0 100-2 1 1 0 110-2 1 1 0 100-2H9.414l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H11z"/></svg>
+                                瀏覽器 Cookie 庫
+                            </span>
+                            <span id="cookie-indicator" class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">空</span>
+                        </div>
+                        <div id="cookie-value" class="text-xs code-font text-slate-500 italic break-all">
+                            No active cookies.
+                        </div>
+                    </div>
+
+                    <!-- 駭客帳戶 -->
+                    <div class="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-slate-800">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 text-lg font-bold">H</div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-white">駭客 (Hacker)</h3>
+                                <p class="text-xs text-slate-400">惡意釣魚網頁擁有者</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">盜取金額</span>
+                            <span id="hacker-balance" class="text-sm font-bold text-red-400">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 防禦機制設定區 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-xl">
+                <h2 class="text-md font-bold mb-3 text-slate-300 flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>防禦策略實驗
+                </h2>
+                <p class="text-xs text-slate-400 mb-4">切換不同的防護手段，重試攻擊流程，觀察安全防護效果如何運作。</p>
+                
+                <div class="space-y-3">
+                    <label class="flex items-start p-3 bg-slate-900 rounded-lg border border-red-500/30 hover:bg-slate-850 cursor-pointer transition">
+                        <input type="radio" name="defense-strategy" value="none" checked class="mt-1 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 bg-slate-800 border-slate-700">
+                        <div class="ml-3">
+                            <span class="text-sm font-semibold text-red-400 block">無防禦 (Vulnerable)</span>
+                            <span class="text-xs text-slate-400">系統直接接收 GET 參數轉帳，對跨來源請求不做防護。</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start p-3 bg-slate-900 rounded-lg border border-slate-800 hover:border-blue-500/30 cursor-pointer transition">
+                        <input type="radio" name="defense-strategy" value="samesite" class="mt-1 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 bg-slate-800 border-slate-700">
+                        <div class="ml-3">
+                            <span class="text-sm font-semibold text-blue-400 block">SameSite=Strict Cookie</span>
+                            <span class="text-xs text-slate-400">設定 Cookie 屬性。當跨網站（如從駭客網頁）發出請求時，瀏覽器拒絕自動附帶 Cookie。</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start p-3 bg-slate-900 rounded-lg border border-slate-800 hover:border-blue-500/30 cursor-pointer transition">
+                        <input type="radio" name="defense-strategy" value="token" class="mt-1 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 bg-slate-800 border-slate-700">
+                        <div class="ml-3">
+                            <span class="text-sm font-semibold text-blue-400 block">CSRF Token 驗證碼</span>
+                            <span class="text-xs text-slate-400">表單內置一次性隨機 Token，轉帳時後端驗證此 Token。駭客無法獲知。</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 控制台日誌 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-xl flex-1 flex flex-col min-h-[220px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-ping"></span>即時傳輸網路日誌
+                    </h2>
+                    <button onclick="clearLogs()" class="text-[10px] text-slate-500 hover:text-slate-300 transition">清除日誌</button>
+                </div>
+                <div id="terminal-logs" class="bg-slate-900 p-3 rounded-lg border border-slate-800 flex-1 text-xs code-font overflow-y-auto max-h-[240px] space-y-1.5">
+                    <div class="text-slate-500">[系統初始化完成，等待學員點擊...]</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右側：互動場景區 (8 cols) -->
+        <section class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- 視覺化動畫展示區 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-xl">
+                <h2 class="text-md font-bold mb-3 text-slate-300 flex items-center">
+                    <svg class="w-5 h-5 mr-1 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    動態流向視覺化
+                </h2>
+                
+                <div class="relative bg-slate-900/60 rounded-xl border border-slate-800/80 p-6 flex flex-col items-center justify-center min-h-[160px] overflow-hidden">
+                    
+                    <!-- 主體節點 -->
+                    <div class="flex justify-between items-center w-full max-w-lg relative z-10">
+                        <!-- 駭客釣魚網 -->
+                        <div id="node-hacker" class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-xl bg-red-950 border border-red-500/40 flex items-center justify-center text-red-400 shadow-lg shadow-red-900/20">
+                                😈
+                            </div>
+                            <span class="text-[10px] text-red-400 mt-1.5 font-semibold">駭客惡意網站</span>
+                        </div>
+
+                        <!-- Alice 瀏覽器 -->
+                        <div id="node-browser" class="flex flex-col items-center relative">
+                            <div class="w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-600 flex items-center justify-center text-2xl shadow-lg relative">
+                                🌐
+                                <div id="browser-cookie-badge" class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] px-1 rounded-full font-bold hidden">🍪</div>
+                            </div>
+                            <span class="text-[10px] text-slate-300 mt-1.5 font-semibold">Alice 的瀏覽器</span>
+                        </div>
+
+                        <!-- 銀行伺服器 -->
+                        <div id="node-bank" class="flex flex-col items-center">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-900/20">
+                                🏦
+                            </div>
+                            <span class="text-[10px] text-emerald-400 mt-1.5 font-semibold">安全銀行後端</span>
+                        </div>
+                    </div>
+
+                    <!-- 網路封包傳遞動畫線 -->
+                    <div class="absolute inset-0 pointer-events-none">
+                        <!-- 封包軌跡 1: 駭客 -> 瀏覽器 -->
+                        <div class="absolute left-[15%] right-[55%] top-[45%] h-0.5 border-t border-dashed border-red-500/30"></div>
+                        <div id="packet-h-b" class="absolute top-[38%] left-[20%] bg-red-500/20 border border-red-500/50 rounded px-1 text-[9px] text-red-300 hidden"><img> 請求</div>
+
+                        <!-- 封包軌跡 2: 瀏覽器 -> 銀行 -->
+                        <div class="absolute left-[50%] right-[15%] top-[45%] h-0.5 border-t border-dashed border-emerald-500/30"></div>
+                        <div id="packet-b-server" class="absolute top-[38%] left-[55%] bg-indigo-500 text-white rounded px-1.5 py-0.5 text-[9px] flex items-center space-x-1 shadow-lg hidden">
+                            <span>GET /transfer</span>
+                            <span id="packet-cookie-emoji" class="text-xs">🍪</span>
+                        </div>
+                    </div>
+
+                    <!-- 背景浮水文字 -->
+                    <div class="absolute bottom-2 text-[10px] text-slate-600 font-mono tracking-widest">
+                        CSRF ATTACK VECTOR SIMULATOR
+                    </div>
+                </div>
+            </div>
+
+            <!-- 實驗三步驟操作版面 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 shadow-xl flex-1 flex flex-col">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                    <h2 class="text-lg font-bold text-white flex items-center">
+                        <span class="w-5 h-5 bg-indigo-500/10 border border-indigo-500/30 rounded-lg flex items-center justify-center text-xs text-indigo-400 mr-2">Lab</span>
+                        實作步驟引導
+                    </h2>
+                    <div class="flex space-x-1 text-xs">
+                        <button id="btn-step-1" onclick="switchStep(1)" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold shadow-md">1. 登入銀行</button>
+                        <button id="btn-step-2" onclick="switchStep(2)" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 font-medium">2. 誤入陷阱</button>
+                        <button id="btn-step-3" onclick="switchStep(3)" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 font-medium">3. 驗證戰果</button>
+                    </div>
+                </div>
+
+                <!-- 步驟一：安全銀行 - 登入 -->
+                <div id="tab-step-1" class="space-y-4 flex-1">
+                    <div class="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 text-xs text-indigo-300">
+                        <strong>第一步說明：</strong> 為了模擬真實攻擊，請先扮演 Alice 在「安全銀行」進行登入。登入成功後，伺服器會發送一個 Session ID 寫入瀏覽器的 Cookie 中（這代表在銀行中的身分憑證）。
+                    </div>
+
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden max-w-sm mx-auto">
+                        <div class="bg-emerald-950/40 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                            <span class="text-xs text-emerald-400 font-bold tracking-wider">🏦 SECURE BANK PORTAL</span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">測試使用者</label>
+                                <input type="text" readonly value="alice" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-300 select-all cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">預設密碼</label>
+                                <input type="password" readonly value="password123" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-300 select-all cursor-not-allowed">
+                            </div>
+                            <button id="login-button" onclick="handleLogin()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded text-xs transition shadow-md shadow-emerald-500/10">
+                                點擊此處進行模擬登入
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步驟二：駭客陷阱網頁 -->
+                <div id="tab-step-2" class="space-y-4 flex-1 hidden">
+                    <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-xs text-slate-300">
+                        <strong>第二步說明：</strong> Alice 沒有登出銀行。在另一個分頁，她不小心造訪了駭客架設的惡意中獎網站。此網站含有一個<strong>隱形的 `&lt;img&gt;` 標籤</strong>。
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 模擬駭客網頁 UI -->
+                        <div class="bg-slate-900 border border-red-500/30 rounded-xl overflow-hidden shadow-lg">
+                            <div class="bg-red-950/40 px-4 py-2 border-b border-red-500/30 flex items-center justify-between">
+                                <span class="text-xs text-red-400 font-bold tracking-wider">😈 外部駭客釣魚網</span>
+                                <span class="text-[10px] text-red-500 font-mono">hacker-movie.com</span>
+                            </div>
+                            <div class="p-6 text-center space-y-4 bg-gradient-to-b from-red-950/20 to-slate-950">
+                                <h3 class="text-xl font-black text-amber-400 tracking-wider">🎉 恭喜！您被選中為幸運得主</h3>
+                                <p class="text-xs text-slate-300">免費領取 iPhone 18 Pro Max。請不要關閉此頁面，系統正在載入驗證條碼...</p>
+                                
+                                <div class="w-24 h-24 mx-auto border-2 border-dashed border-red-500/40 rounded flex items-center justify-center text-red-400 relative">
+                                    <span class="text-xs">活動載入中</span>
+                                    <div class="absolute inset-0 bg-red-500/5 pulse-active"></div>
+                                </div>
+
+                                <button id="visit-hacker-button" onclick="triggerCSRFAttack()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded text-xs transition shadow-lg shadow-red-900/30">
+                                    模擬 Alice 造訪此惡意網頁
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 駭客背後的惡意程式碼 -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center">
+                                    <span class="w-2 h-2 rounded bg-amber-500 mr-1.5"></span> 隱藏在 HTML 內部的惡意標籤
+                                </h4>
+                                <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-[11px] code-font text-red-300 overflow-x-auto whitespace-pre">
+&lt;!-- 隱藏在得獎頁面的隱形轉帳指令 --&gt;
+&lt;img src="<span class="text-yellow-400">http://bank.com/transfer.php</span>
+         ?to=<span class="text-yellow-400">hacker_account</span>
+         &amp;amount=<span class="text-yellow-400">50000</span>" 
+     style="display: none;" 
+     alt="無辜的圖片標籤"&gt;</div>
+                                <p class="text-[11px] text-slate-400 mt-3 leading-relaxed">
+                                    這行代碼完全不需要點擊！瀏覽器只要解析到這張「假圖片」，就會<strong>自動</strong>對這個 src 網址發送 GET 請求。
+                                </p>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-slate-900 text-xs text-amber-500 flex items-center">
+                                💡 觀察：Alice 的瀏覽器是否會被「借刀殺人」？
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步驟三：戰果與詳細解析 -->
+                <div id="tab-step-3" class="space-y-4 flex-1 hidden">
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-xs text-slate-300">
+                        <strong>第三步說明：</strong> 讓我們看看剛才發生的攻防戰果。您可以透過點擊左側的防禦設定切換至 **CSRF Token** 或 **SameSite**，再次回到步驟一重新模擬，測試它們是如何阻止駭客的。
+                    </div>
+
+                    <div id="attack-result-card" class="border rounded-xl p-6 text-center space-y-4">
+                        <div id="result-icon" class="text-4xl">🔎</div>
+                        <h3 id="result-title" class="text-lg font-bold">尚未進行完整攻擊模擬</h3>
+                        <p id="result-description" class="text-xs text-slate-400 max-w-md mx-auto">
+                            請先按照順序，執行「步驟 1：登入銀行」獲取 Cookie，接著到「步驟 2：誤入陷阱」模擬遭受攻擊，最後來此處驗證防禦成果。
+                        </p>
+                    </div>
+
+                    <!-- 教學補充說明 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400">
+                        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                            <h4 class="font-bold text-slate-200 mb-1">SameSite Cookie 是如何阻止的？</h4>
+                            當設定為 `SameSite=Strict` 時，瀏覽器會嚴格限制：只有在瀏覽器的網址列正是該銀行（SameSite）時，才會發送 Cookie。當從駭客的外部網站發出請求，Cookie 不會被帶上，因此後端會判定為「未登入」而拒絕轉帳。
+                        </div>
+                        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                            <h4 class="font-bold text-slate-200 mb-1">CSRF Token 是如何阻止的？</h4>
+                            CSRF Token 是一個隨機字串，駭客因為無法讀取 Alice 在銀行網頁上的內容（同源政策保護），因此在他的惡意 HTML 程式碼中，根本無法猜出並附帶正確的 Token 值，此時後端比對不符，轉帳請求便告失敗。
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部版權宣告與重設按鈕 -->
+    <footer class="border-t border-slate-800 bg-slate-950 px-6 py-4 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
+        <div>
+            © 2026 資安課堂專用 - 專注於 Web 應用安全與實踐
+        </div>
+        <div class="flex items-center space-x-4">
+            <button onclick="resetLab()" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold rounded-lg border border-slate-800 transition">
+                🔄 重設實驗環境
+            </button>
+        </div>
+    </footer>
+
+    <!-- JavaScript 實驗控制邏輯 -->
+    <script>
+        // 系統狀態
+        let state = {
+            isLoggedIn: false,
+            cookie: null,
+            aliceBalance: 100000,
+            hackerBalance: 0,
+            defense: 'none', // none, samesite, token
+            currentStep: 1,
+            attackExecuted: false,
+            attackSuccess: null
+        };
+
+        // 頁面加載初始化
+        window.onload = function() {
+            initDefenseListeners();
+            updateUI();
+        };
+
+        // 綁定防禦策略選擇器事件
+        function initDefenseListeners() {
+            const radios = document.querySelectorAll('input[name="defense-strategy"]');
+            radios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    state.defense = e.target.value;
+                    addLog(`🛡️ 防禦策略已切換為：${getDefenseName(state.defense)}`);
+                    updateUI();
+                });
+            });
+        }
+
+        // 獲取防禦策略中文名稱
+        function getDefenseName(defenseType) {
+            switch(defenseType) {
+                case 'none': return '無防禦 (Vulnerable)';
+                case 'samesite': return 'SameSite=Strict';
+                case 'token': return 'CSRF Token';
+                default: return '未知';
+            }
+        }
+
+        // 更新防禦狀態標籤與UI展現
+        function updateUI() {
+            const badge = document.getElementById('defense-badge');
+            
+            // 1. 防禦 Badge 樣式調整
+            if (state.defense === 'none') {
+                badge.className = "px-3 py-1 text-xs rounded-full font-semibold border bg-red-500/10 text-red-400 border-red-500/30";
+                badge.textContent = "無防禦 (無安全防護)";
+            } else {
+                badge.className = "px-3 py-1 text-xs rounded-full font-semibold border bg-blue-500/10 text-blue-400 border-blue-500/30";
+                badge.textContent = `防禦中 (${getDefenseName(state.defense)})`;
+            }
+
+            // 2. 登入狀態與 Cookie 庫更新
+            const sessionStatusEl = document.getElementById('session-status');
+            const cookieValueEl = document.getElementById('cookie-value');
+            const cookieIndicator = document.getElementById('cookie-indicator');
+            const cookieBadge = document.getElementById('browser-cookie-badge');
+            const loginButton = document.getElementById('login-button');
+
+            if (state.isLoggedIn) {
+                sessionStatusEl.textContent = "已登入 (Alice)";
+                sessionStatusEl.className = "text-xs text-emerald-400";
+                cookieIndicator.textContent = "ACTIVE";
+                cookieIndicator.className = "text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                cookieBadge.classList.remove('hidden');
+                
+                let samesiteAttr = state.defense === 'samesite' ? '; SameSite=Strict' : '';
+                cookieValueEl.innerHTML = `<span class="text-amber-400">PHPSESSID=alice_session_xyz${samesiteAttr}</span>`;
+                loginButton.disabled = true;
+                loginButton.className = "w-full bg-slate-800 text-slate-500 font-bold py-2 rounded text-xs cursor-not-allowed border border-slate-750";
+                loginButton.textContent = "已成功建立安全連線與 Cookie 憑證";
+            } else {
+                sessionStatusEl.textContent = "未登入";
+                sessionStatusEl.className = "text-xs text-red-400";
+                cookieIndicator.textContent = "EMPTY";
+                cookieIndicator.className = "text-[10px] uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400";
+                cookieValueEl.textContent = "No active cookies.";
+                cookieBadge.classList.add('hidden');
+                
+                loginButton.disabled = false;
+                loginButton.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2 rounded text-xs transition shadow-md shadow-emerald-500/10";
+                loginButton.textContent = "點擊此處進行模擬登入";
+            }
+
+            // 3. 餘額與財務更新
+            document.getElementById('alice-balance').textContent = `$${state.aliceBalance.toLocaleString()}`;
+            document.getElementById('hacker-balance').textContent = `$${state.hackerBalance.toLocaleString()}`;
+
+            // 4. 三步驟導航按鈕樣式更新
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById(`btn-step-${i}`);
+                if (state.currentStep === i) {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold shadow-md";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 font-medium hover:text-slate-200 transition";
+                }
+            }
+
+            // 5. 戰果展示區
+            updateResultTab();
+        }
+
+        // 頁面頁籤切換
+        function switchStep(stepNum) {
+            state.currentStep = stepNum;
+            
+            // 隱藏所有 tabs
+            document.getElementById('tab-step-1').classList.add('hidden');
+            document.getElementById('tab-step-2').classList.add('hidden');
+            document.getElementById('tab-step-3').classList.add('hidden');
+
+            // 顯示指定 tab
+            document.getElementById(`tab-step-${stepNum}`).classList.remove('hidden');
+
+            updateUI();
+        }
+
+        // 模擬登入
+        function handleLogin() {
+            state.isLoggedIn = true;
+            state.cookie = "PHPSESSID=alice_session_xyz";
+            addLog("🔑 [User Action] Alice 登入了安全銀行系統。");
+            addLog(`💾 [Cookie Store] 伺服器回傳 Set-Cookie: ${state.cookie}${state.defense === 'samesite' ? '; SameSite=Strict' : ''}`);
+            
+            // 動態視覺：使瀏覽器節點閃爍一下
+            flashNode('node-browser', 'border-emerald-500');
+            
+            updateUI();
+            
+            // 自動跳轉到第二步引導
+            setTimeout(() => {
+                switchStep(2);
+                addLog("👉 系統：Alice 登入成功，已為您跳轉至「步驟 2：誤入陷阱」！");
+            }, 1000);
+        }
+
+        // 執行 CSRF 攻擊模擬
+        function triggerCSRFAttack() {
+            if (!state.isLoggedIn) {
+                addLog("⚠️ [系統警報] 攻擊未執行：Alice 還沒有登入銀行。Cookie 不存在，此時攻擊無法起效！請先執行步驟 1。");
+                customAlert("請先執行步驟 1 登入銀行！若瀏覽器內沒有 Cookie，CSRF 是無法成功發動的。");
+                return;
+            }
+
+            addLog("🕵️ [User Action] Alice 訪問了惡意中獎網頁 'hacker-movie.com'。");
+            addLog("🌐 [Browser Action] 瀏覽器正在解析惡意 HTML，偵測到隱形標籤: &lt;img src='http://bank.com/transfer.php?to=hacker&amp;amount=50000'&gt;");
+
+            // 動態封包動畫：駭客 -> 瀏覽器
+            const packetHB = document.getElementById('packet-h-b');
+            packetHB.classList.remove('hidden');
+            packetHB.classList.add('packet-animation');
+
+            // 1 秒後，瀏覽器發送請求給銀行 (攜帶或不攜帶 Cookie)
+            setTimeout(() => {
+                packetHB.classList.add('hidden');
+                packetHB.classList.remove('packet-animation');
+
+                const packetBS = document.getElementById('packet-b-server');
+                const packetCookieEmoji = document.getElementById('packet-cookie-emoji');
+                
+                packetBS.classList.remove('hidden');
+                packetBS.classList.add('packet-animation');
+
+                // 根據防禦策略，決定封包上是否有 Cookie 標誌
+                if (state.defense === 'samesite') {
+                    packetCookieEmoji.textContent = "❌ (Blocked)";
+                    addLog("🛡️ [Browser Security] 偵測到跨站請求 (Cross-Site)。由於設定了 SameSite=Strict，瀏覽器拒絕為此請求附加銀行 Cookie！");
+                } else {
+                    packetCookieEmoji.textContent = "🍪";
+                    addLog("🚨 [Browser Action] 瀏覽器自動附加了存在庫中的銀行 Session Cookie 送出！");
+                }
+
+                // 再隔 1.5 秒，伺服器接收請求並判定結果
+                setTimeout(() => {
+                    packetBS.classList.add('hidden');
+                    packetBS.classList.remove('packet-animation');
+
+                    processRequestOnServer();
+                }, 1500);
+
+            }, 1000);
+        }
+
+        // 銀行伺服器處理轉帳請求
+        function processRequestOnServer() {
+            state.attackExecuted = true;
+
+            // 1. 無防禦模式
+            if (state.defense === 'none') {
+                state.aliceBalance -= 50000;
+                state.hackerBalance += 50000;
+                state.attackSuccess = true;
+                addLog("💸 [Server Warning] 銀行後端：收到 Alice 轉帳 $50,000 的請求。驗證 Cookie 成功。轉帳完成！");
+                addLog("💥 [CSRF ALERT] 攻擊大成功！在 Alice 完全不知情下，駭客盜取了 $50,000。");
+                flashNode('node-bank', 'border-red-500');
+            } 
+            // 2. SameSite 防禦
+            else if (state.defense === 'samesite') {
+                state.attackSuccess = false;
+                addLog("⛔ [Server Denied] 銀行後端：收到轉帳請求，但該請求「未附帶 Session Cookie」，判定未登入，拒絕轉帳操作！");
+                flashNode('node-bank', 'border-blue-500');
+            } 
+            // 3. CSRF Token 防禦
+            else if (state.defense === 'token') {
+                state.attackSuccess = false;
+                addLog("🔒 [Server Guard] 銀行後端：收到 Alice 的 Cookie，但請求中「缺乏合法的 csrf_token」參數。判定為非法 CSRF 請求，拒絕交易！");
+                flashNode('node-bank', 'border-blue-500');
+            }
+
+            updateUI();
+
+            // 自動跳轉到結果頁
+            setTimeout(() => {
+                switchStep(3);
+                addLog("👉 系統：攻擊過程模擬完畢，已為您跳轉至「步驟 3：驗證戰果」觀看詳細報告！");
+            }, 1200);
+        }
+
+        // 戰果頁細節渲染
+        function updateResultTab() {
+            const card = document.getElementById('attack-result-card');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-description');
+
+            if (!state.attackExecuted) {
+                card.className = "border border-slate-800 bg-slate-900/40 rounded-xl p-6 text-center space-y-4";
+                icon.textContent = "🔎";
+                title.textContent = "尚未進行完整攻擊模擬";
+                title.className = "text-lg font-bold text-slate-300";
+                desc.textContent = "請先按照順序，執行「步驟 1：登入銀行」獲取 Cookie，接著到「步驟 2：誤入陷阱」模擬遭受攻擊，最後來此處驗證防禦成果。";
+                return;
+            }
+
+            if (state.attackSuccess) {
+                card.className = "border border-red-500/40 bg-red-950/20 rounded-xl p-6 text-center space-y-4";
+                icon.textContent = "💥 攻擊成功！";
+                title.textContent = "CSRF 跨網站請求偽造得手！";
+                title.className = "text-xl font-bold text-red-400";
+                desc.innerHTML = `在目前為<strong>「${getDefenseName(state.defense)}」</strong>的模式下，瀏覽器秉持「只要造訪 bank.com，就一律自動帶上 Cookie」的特性。雖然 Alice 只是在另一個頁面看電影/領獎，但瀏覽器仍替駭客完成了轉帳手續。<br><br><span class="text-white font-semibold">Alice 被莫名轉走：$50,000 元！</span>`;
+            } else {
+                card.className = "border border-emerald-500/40 bg-emerald-950/20 rounded-xl p-6 text-center space-y-4";
+                icon.textContent = "🛡️ 防禦成功！";
+                title.textContent = "成功阻截跨網站偽造請求！";
+                title.className = "text-xl font-bold text-emerald-400";
+                desc.innerHTML = `在<strong>「${getDefenseName(state.defense)}」</strong>防護機制下，雖然駭客成功誘騙 Alice 開啟了惡意網頁，但銀行伺服器成功識別出這是一個偽造的外部請求，拒絕了交易指令。<br><br><span class="text-white font-semibold">Alice 的財產安然無恙！</span>`;
+            }
+        }
+
+        // 終端日誌輸出
+        function addLog(message) {
+            const term = document.getElementById('terminal-logs');
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            let colorClass = 'text-slate-300';
+            if (message.includes('🔑') || message.includes('🛡️')) colorClass = 'text-blue-400';
+            else if (message.includes('🚨') || message.includes('💥')) colorClass = 'text-red-400';
+            else if (message.includes('🔒') || message.includes('⛔')) colorClass = 'text-emerald-400';
+            else if (message.includes('⚠️')) colorClass = 'text-yellow-400';
+
+            const line = document.createElement('div');
+            line.className = `${colorClass}`;
+            line.innerHTML = `<span class="text-slate-500 font-semibold">[${timeStr}]</span> ${message}`;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('terminal-logs').innerHTML = '<div class="text-slate-500">[日誌已清除]</div>';
+        }
+
+        // 閃爍節點效果
+        function flashNode(nodeId, borderClass) {
+            const node = document.getElementById(nodeId);
+            node.classList.add(borderClass);
+            setTimeout(() => {
+                node.classList.remove(borderClass);
+            }, 1000);
+        }
+
+        // 自訂非阻塞式提示框
+        function customAlert(message) {
+            addLog(`⚠️ [系統提示] ${message}`);
+        }
+
+        // 重置沙盒環境
+        function resetLab() {
+            state.isLoggedIn = false;
+            state.cookie = null;
+            state.aliceBalance = 100000;
+            state.hackerBalance = 0;
+            state.attackExecuted = false;
+            state.attackSuccess = null;
+            state.currentStep = 1;
+            
+            // 將 radio 還原為 none
+            document.querySelector('input[name="defense-strategy"][value="none"]').checked = true;
+            state.defense = 'none';
+
+            addLog("🔄 [系統重置] 實驗室環境已重設。Session 與金額已回歸初始狀態。");
+            switchStep(1);
+        }
+    </script>
+</body>
+</html>
