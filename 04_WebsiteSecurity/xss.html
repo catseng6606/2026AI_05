@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS 跨網站指令碼 - 互動教學安全實驗室</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* 自訂滾動條樣式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
+
+    <!-- 頂部導覽列 -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🛡️</span>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                        XSS 跨網站指令碼 - 互動教學安全實驗室
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5">專為網頁安全教學設計的互動式實驗與挑戰平台</p>
+                </div>
+            </div>
+            <!-- 分頁切換頁籤 -->
+            <nav class="flex flex-wrap gap-2">
+                <button onclick="switchTab('intro')" id="tab-intro" class="px-4 py-2 text-sm font-medium rounded-lg transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                    🎯 認識 XSS
+                </button>
+                <button onclick="switchTab('stored')" id="tab-stored" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    💾 儲存型 (Stored)
+                </button>
+                <button onclick="switchTab('reflected')" id="tab-reflected" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    🔍 反射型 (Reflected)
+                </button>
+                <button onclick="switchTab('dom')" id="tab-dom" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    🌳 DOM 型 (DOM-based)
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-amber-500/10 hover:border-amber-500/30">
+                    🏆 實戰挑戰賽
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主內容區 -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+
+        <!-- ==================== TAB: INTRO (認識 XSS) ==================== -->
+        <div id="content-intro" class="tab-content flex flex-col gap-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="max-w-3xl">
+                    <span class="bg-cyan-500/15 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-semibold">Web Security 101</span>
+                    <h2 class="text-3xl font-bold mt-4 mb-4">什麼是 XSS (Cross-Site Scripting)？</h2>
+                    <p class="text-slate-300 leading-relaxed text-base mb-4">
+                        跨網站指令碼（XSS）是一種網頁安全漏洞。當網頁應用程式在未經適當過濾、編碼或驗證的情況下，就將使用者輸入的內容直接輸出到 HTML 頁面中，攻擊者就可以藉此注入**惡意 JavaScript 指令碼**。
+                    </p>
+                    <p class="text-slate-300 leading-relaxed text-base mb-6">
+                        當其他無辜的使用者瀏覽受害網頁時，瀏覽器會誤以為這些惡意指令碼是網站本身的一部分並加以執行。這能讓攻擊者竊取敏感資料（如 Session Cookies）、偽造使用者操作、進行網路釣魚或網頁置換。
+                    </p>
+                </div>
+
+                <!-- 三大類 XSS 概覽卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <!-- 儲存型 -->
+                    <div onclick="switchTab('stored')" class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/40 transition-all cursor-pointer group">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-xl">💾</span>
+                            <h3 class="font-bold text-slate-100 group-hover:text-cyan-400 transition-colors">Stored XSS (儲存型)</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            惡意代碼被永久儲存在伺服器的資料庫或檔案中。每當有使用者請求該資料時，惡意代碼就會被載入並執行。危害範圍最廣！
+                        </p>
+                        <span class="text-xs text-cyan-400 mt-4 inline-block group-hover:underline">進入實驗室 →</span>
+                    </div>
+
+                    <!-- 反射型 -->
+                    <div onclick="switchTab('reflected')" class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/40 transition-all cursor-pointer group">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-xl">🔍</span>
+                            <h3 class="font-bold text-slate-100 group-hover:text-cyan-400 transition-colors">Reflected XSS (反射型)</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            惡意代碼夾帶在 URL 參數中。伺服器接收請求後，未經處理直接將參數「反射」輸出在回應的 HTML 中。通常透過釣魚連結發動。
+                        </p>
+                        <span class="text-xs text-cyan-400 mt-4 inline-block group-hover:underline">進入實驗室 →</span>
+                    </div>
+
+                    <!-- DOM 型 -->
+                    <div onclick="switchTab('dom')" class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 hover:border-cyan-500/40 transition-all cursor-pointer group">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-xl">🌳</span>
+                            <h3 class="font-bold text-slate-100 group-hover:text-cyan-400 transition-colors">DOM-based XSS (DOM型)</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            完全發生在瀏覽器的 JavaScript 處理。代碼從不安全的 Source（如 location.hash）讀出，並未經轉義寫入不安全的 Sink（如 innerHTML）。
+                        </p>
+                        <span class="text-xs text-cyan-400 mt-4 inline-block group-hover:underline">進入實驗室 →</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 常見防禦原則 -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-emerald-400">
+                    🛡️ XSS 防禦的核心心法
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div class="space-y-3">
+                        <div class="flex gap-2.5">
+                            <span class="text-emerald-500">✔</span>
+                            <div>
+                                <strong class="text-slate-200">HTML 實體編碼 (HTML Entity Encoding)</strong>
+                                <p class="text-slate-400 text-xs mt-1">將特殊字元如 <code>&lt;</code> 轉為 <code>&amp;lt;</code>，讓瀏覽器將其視為純文字而非程式碼標籤。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2.5">
+                            <span class="text-emerald-500">✔</span>
+                            <div>
+                                <strong class="text-slate-200">使用安全 API (Use Safe APIs)</strong>
+                                <p class="text-slate-400 text-xs mt-1">在操作 DOM 時，優先使用 <code>textContent</code> 替代 <code>innerHTML</code>，避免動態解析 HTML。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex gap-2.5">
+                            <span class="text-emerald-500">✔</span>
+                            <div>
+                                <strong class="text-slate-200">內容安全政策 (Content Security Policy, CSP)</strong>
+                                <p class="text-slate-400 text-xs mt-1">設定 HTTP 標頭限制瀏覽器僅能執行受信任來源的指令碼，甚至禁止行內指令碼（Inline Scripts）。</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2.5">
+                            <span class="text-emerald-500">✔</span>
+                            <div>
+                                <strong class="text-slate-200">HTTPOnly Cookies</strong>
+                                <p class="text-slate-400 text-xs mt-1">為敏感 Cookie 加上 <code>HttpOnly</code> 屬性，阻止 JavaScript 透過 <code>document.cookie</code> 存取，保護會話安全。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: STORED XSS ==================== -->
+        <div id="content-stored" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 理論與程式碼展示區 -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <!-- 原理介紹 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <span class="bg-red-500/10 text-red-400 text-xs px-2 py-0.5 rounded-full font-semibold">危險等級：高</span>
+                    <h2 class="text-xl font-bold mt-2 mb-3 text-slate-100">💾 Stored XSS 儲存型</h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        攻擊者將惡意代碼（Payload）輸入到受害者會瀏覽的頁面輸入欄（如留言板、使用者檔案、討論區）。這些代碼會被寫入**伺服器端資料庫**。當其他使用者開啟該網頁，瀏覽器向資料庫請求此內容時，惡意代碼便在無預警下自動執行。
+                    </p>
+                </div>
+
+                <!-- 點擊一鍵測試 Payload -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center justify-between">
+                        <span>🧪 常用攻擊 Payload 範例</span>
+                        <span class="text-xs text-slate-500">(點擊快速填入)</span>
+                    </h3>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="fillPayload('stored', `<script>alert('Stored XSS!')<\/script>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 1：傳統 Script 標籤注入</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">&lt;script&gt;alert('Stored XSS!')&lt;/script&gt;</code>
+                        </button>
+                        <button onclick="fillPayload('stored', `<img src=&quot;invalid-img&quot; onerror=&quot;alert('圖片載入失敗，觸發攻擊！')&quot;>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 2：Img 標籤 + Onerror 事件</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">&lt;img src="x" onerror="alert('觸發！')"&gt;</code>
+                        </button>
+                        <button onclick="fillPayload('stored', `<a href=&quot;javascript:alert('超連結 XSS！')&quot; class='text-blue-500 underline'>點此領取免費禮物！</a>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 3：利用 Javascript 協定超連結</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">&lt;a href="javascript:alert('XSS!')"&gt;點此...&lt;/a&gt;</code>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 程式碼剖析 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-sm font-bold text-slate-300 mb-3">🛠️ 原始碼安全對比</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-xs text-rose-400 font-semibold flex items-center gap-1">❌ 易受攻擊程式碼 (Vulnerable)</span>
+                            <pre class="bg-slate-950 p-3 rounded-lg text-[11px] code-font text-slate-300 mt-1 overflow-x-auto"><code>// 直接將輸入轉成 HTML 節點插入 DOM
+container.innerHTML = `&lt;div&gt;${comment.text}&lt;/div&gt;`;</code></pre>
+                        </div>
+                        <div>
+                            <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">✅ 安全防禦程式碼 (Secured)</span>
+                            <pre class="bg-slate-950 p-3 rounded-lg text-[11px] code-font text-slate-300 mt-1 overflow-x-auto"><code>// 1. 使用 textContent 來避免 HTML 解析
+const div = document.createElement('div');
+div.textContent = comment.text;
+
+// 2. 或手動進行 HTML 實體轉義
+function escapeHTML(str) {
+  return str.replace(/[&lt;&gt;&amp;"']/g, m => ({
+    '&lt;': '&amp;lt;', '&gt;': '&amp;gt;', '&amp;': '&amp;amp;',
+    '"': '&amp;quot;', "'": '&amp;#x27;'
+  })[m]);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 實作模擬器區 -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">🔬 模擬瀏覽器沙盒 (儲存型)</h3>
+                    <!-- 模式切換 -->
+                    <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                        <button onclick="toggleDefense('stored', false)" id="btn-stored-vuln" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-red-600 text-white">
+                            ❌ 漏洞模式
+                        </button>
+                        <button onclick="toggleDefense('stored', true)" id="btn-stored-secure" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200">
+                            ✅ 防御模式
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 模擬瀏覽器視窗 -->
+                <div class="bg-white text-slate-800 rounded-2xl shadow-2xl border-4 border-slate-700 flex flex-col overflow-hidden h-[580px]">
+                    <!-- 網頁標題列/網址列 -->
+                    <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-3">
+                        <div class="flex gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span>
+                        </div>
+                        <div class="flex-grow bg-white px-3 py-1 rounded-md text-xs border border-slate-300 flex items-center gap-2 text-slate-500">
+                            <span class="text-emerald-600">🔒 Secure</span>
+                            <span class="text-slate-400">|</span>
+                            <span>https://vulnerable-blog.com/post/42</span>
+                        </div>
+                    </div>
+
+                    <!-- 虛擬網頁主體 -->
+                    <div class="flex-grow p-6 flex flex-col overflow-y-auto bg-slate-50">
+                        <div class="border-b border-slate-200 pb-4 mb-4">
+                            <h1 class="text-xl font-bold text-slate-900">學術交流論壇 - 留言板</h1>
+                            <p class="text-xs text-slate-500 mt-1">歡迎大家留言討論網路安全課程心得！您的留言將保存在資料庫中。</p>
+                        </div>
+
+                        <!-- 留言發表表單 -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6">
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">暱稱：</label>
+                                <input id="stored-username-input" type="text" value="匿名學員" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-500 bg-slate-50 text-slate-800">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">留言內容：</label>
+                                <textarea id="stored-content-input" rows="3" placeholder="請輸入留言（在此處填寫您的 XSS Payload...）" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-500 bg-slate-50 text-slate-800"></textarea>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button onclick="clearStoredComments()" class="px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                                    清空資料庫
+                                </button>
+                                <button onclick="addStoredComment()" class="px-4 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                    送出留言 (儲存並渲染)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 留言展示列表 -->
+                        <div class="flex-grow">
+                            <h3 class="text-xs font-bold text-slate-500 mb-3 border-b border-slate-100 pb-1">💬 所有留言 (已儲存資料)</h3>
+                            <div id="stored-comments-list" class="space-y-3">
+                                <!-- 留言項目動態生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: REFLECTED XSS ==================== -->
+        <div id="content-reflected" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 理論與程式碼展示區 -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <span class="bg-amber-500/10 text-amber-400 text-xs px-2 py-0.5 rounded-full font-semibold">危險等級：中至高</span>
+                    <h2 class="text-xl font-bold mt-2 mb-3 text-slate-100">🔍 Reflected XSS 反射型</h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        當使用者點擊惡意 URL（例如來自惡意郵件或即時通訊的網址），其參數中夾帶的惡意代碼會隨著 HTTP 請求發送到受害網站的伺服器。伺服器未對參數做適當轉義，便直接在回應的 HTML 網頁中將其「反射」輸出回瀏覽器，進而執行程式。
+                    </p>
+                </div>
+
+                <!-- 點擊一鍵測試 Payload -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center justify-between">
+                        <span>🧪 常用攻擊 Payload 範例</span>
+                    </h3>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="fillPayload('reflected', `<script>alert(document.cookie)<\/script>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 1：反射印出 Cookie 敏感資訊</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code>
+                        </button>
+                        <button onclick="fillPayload('reflected', `<iframe src='https://example.com' class='w-full h-32 border-2 border-red-500'></iframe>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 2：利用 Iframe 嵌入惡意第三方網頁</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">&lt;iframe src='...'&gt;&lt;/iframe&gt;</code>
+                        </button>
+                        <button onclick="fillPayload('reflected', `<svg onload=&quot;alert('SVG 的 onload 執行！')&quot;>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 3：SVG 的 onload 自動執行</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">&lt;svg onload="alert('XSS')"&gt;</code>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 程式碼剖析 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-sm font-bold text-slate-300 mb-3">🛠️ 原始碼安全對比</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-xs text-rose-400 font-semibold flex items-center gap-1">❌ 易受攻擊程式碼 (Vulnerable)</span>
+                            <pre class="bg-slate-950 p-3 rounded-lg text-[11px] code-font text-slate-300 mt-1 overflow-x-auto"><code>// 伺服器直接將 URL 的搜尋參數渲染回 HTML 頁面上
+const query = new URLSearchParams(window.location.search).get('q');
+resultContainer.innerHTML = `&lt;h2&gt;您搜尋的是: ${query}&lt;/h2&gt;`;</code></pre>
+                        </div>
+                        <div>
+                            <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">✅ 安全防禦程式碼 (Secured)</span>
+                            <pre class="bg-slate-950 p-3 rounded-lg text-[11px] code-font text-slate-300 mt-1 overflow-x-auto"><code>// 使用 DOM 內建的安全性防禦方法：textContent
+const query = new URLSearchParams(window.location.search).get('q');
+const title = document.createElement('h2');
+title.textContent = `您搜尋的是: ${query}`;
+resultContainer.appendChild(title);</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 實作模擬器區 -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">🔬 模擬瀏覽器沙盒 (反射型)</h3>
+                    <!-- 模式切換 -->
+                    <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                        <button onclick="toggleDefense('reflected', false)" id="btn-reflected-vuln" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-red-600 text-white">
+                            ❌ 漏洞模式
+                        </button>
+                        <button onclick="toggleDefense('reflected', true)" id="btn-reflected-secure" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200">
+                            ✅ 防禦模式
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 模擬瀏覽器視窗 -->
+                <div class="bg-white text-slate-800 rounded-2xl shadow-2xl border-4 border-slate-700 flex flex-col overflow-hidden h-[580px]">
+                    <!-- 網頁標題列/網址列 -->
+                    <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex flex-col gap-2">
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
+                                <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
+                                <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-bold tracking-wider">REFLECTED XSS SIMULATOR</span>
+                        </div>
+                        <!-- 反射型網址輸入列 (模擬攻擊者誘導受害者點擊的網址) -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-500">網址列:</span>
+                            <div class="flex-grow bg-white px-3 py-1.5 rounded-md text-xs border border-slate-300 flex items-center justify-between text-slate-600 font-mono overflow-x-auto whitespace-nowrap">
+                                <span id="reflected-address-bar">https://shop.com/search?keyword=T-Shirt</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 虛擬網頁主體 -->
+                    <div class="flex-grow p-6 flex flex-col overflow-y-auto bg-slate-50">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+                            <span class="text-2xl font-black text-rose-600">🛍️ CyberShop 電商平台</span>
+                            <div class="text-xs text-slate-500">當前線上人數：1,024 人</div>
+                        </div>
+
+                        <!-- 搜尋功能區 -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6">
+                            <label class="block text-xs font-bold text-slate-600 mb-2">🔎 搜尋站內商品：</label>
+                            <div class="flex gap-2">
+                                <input id="reflected-search-input" type="text" placeholder="輸入關鍵字..." class="flex-grow text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-500 bg-slate-50 text-slate-800">
+                                <button onclick="triggerReflectedSearch()" class="px-5 py-2 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors">
+                                    進行搜尋
+                                </button>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-2">提示：送出搜尋後，上方網址列會帶入對應參數，並直接將其內容反射顯示在頁面中。</p>
+                        </div>
+
+                        <!-- 搜尋結果區 -->
+                        <div class="flex-grow">
+                            <div id="reflected-results" class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                                <span class="text-slate-400 text-sm">尚未進行搜尋，請在上方輸入關鍵字。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: DOM-BASED XSS ==================== -->
+        <div id="content-dom" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 理論與程式碼展示區 -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <span class="bg-amber-500/10 text-amber-400 text-xs px-2 py-0.5 rounded-full font-semibold">危險等級：中至高</span>
+                    <h2 class="text-xl font-bold mt-2 mb-3 text-slate-100">🌳 DOM-based XSS DOM型</h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        與傳統 XSS 不同，DOM-based XSS 的漏洞不涉及伺服器端（在後端的 HTTP 回應中看不到惡意字串）。它的發生是因為前端網頁的 JavaScript 在執行時，以不安全的方式（例如 <code>innerHTML</code> 或 <code>document.write</code>）處理了來自瀏覽器的不安全來源（如 <code>location.hash</code> 或 <code>location.search</code>）。
+                    </p>
+                </div>
+
+                <!-- 點擊一鍵測試 Payload -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center justify-between">
+                        <span>🧪 常用攻擊 Payload 範例</span>
+                    </h3>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="fillPayload('dom', `#<img src=x onerror=alert('DOM_XSS!')>`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 1：透過 Hash 傳入圖片觸發式 XSS</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">#&lt;img src=x onerror=alert('DOM_XSS!')&gt;</code>
+                        </button>
+                        <button onclick="fillPayload('dom', `?referrer=javascript:alert('透過來源推薦人觸發！')`)" class="text-left text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900 transition-all group">
+                            <div class="flex justify-between text-rose-400 font-semibold mb-1">
+                                <span>範例 2：將 javascript 協議注入 A 標籤 href</span>
+                                <span class="opacity-0 group-hover:opacity-100 text-cyan-400">複製代碼 →</span>
+                            </div>
+                            <code class="code-font text-slate-400 block break-all">?referrer=javascript:alert('Hacked')</code>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 程式碼剖析 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-sm font-bold text-slate-300 mb-3">🛠️ 原始碼安全對比</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-xs text-rose-400 font-semibold flex items-center gap-1">❌ 易受攻擊程式碼 (Vulnerable)</span>
+                            <pre class="bg-slate-950 p-3 rounded-lg text-[11px] code-font text-slate-300 mt-1 overflow-x-auto"><code>// 不安全：直接將 window.location.hash 接在 HTML 字串中寫入
+const hashContent = decodeURIComponent(window.location.hash.slice(1));
+outputDiv.innerHTML = "你的自訂佈景為: " + hashContent;</code></pre>
+                        </div>
+                        <div>
+                            <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">✅ 安全防禦程式碼 (Secured)</span>
+                            <pre class="bg-slate-950 p-3 rounded-lg text-[11px] code-font text-slate-300 mt-1 overflow-x-auto"><code>// 方案 A：使用 textContent 保障不被解讀為 HTML
+const hashContent = decodeURIComponent(window.location.hash.slice(1));
+outputDiv.textContent = "你的自訂佈景為: " + hashContent;
+
+// 方案 B：進行白名單驗證（例如只允許特定顏色字串）
+const validThemes = ['dark', 'light', 'cyber'];
+if (validThemes.includes(hashContent)) {
+    outputDiv.textContent = "您的佈景為: " + hashContent;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 實作模擬器區 -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">🔬 模擬瀏覽器沙盒 (DOM型)</h3>
+                    <!-- 模式切換 -->
+                    <div class="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                        <button onclick="toggleDefense('dom', false)" id="btn-dom-vuln" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-red-600 text-white">
+                            ❌ 漏洞模式
+                        </button>
+                        <button onclick="toggleDefense('dom', true)" id="btn-dom-secure" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200">
+                            ✅ 防禦模式
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 模擬瀏覽器視窗 -->
+                <div class="bg-white text-slate-800 rounded-2xl shadow-2xl border-4 border-slate-700 flex flex-col overflow-hidden h-[580px]">
+                    <!-- 網頁標題列/網址列 -->
+                    <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex flex-col gap-2">
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span>
+                                <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span>
+                                <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-bold tracking-wider">DOM-BASED XSS SIMULATOR</span>
+                        </div>
+                        <!-- URL 輸入 (包含 Hash) -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-500">網址列:</span>
+                            <div class="flex-grow bg-white px-3 py-1.5 rounded-md text-xs border border-slate-300 flex items-center justify-between text-slate-600 font-mono overflow-x-auto whitespace-nowrap">
+                                <span id="dom-address-bar">https://my-portal.com/#預設首頁</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 虛擬網頁主體 -->
+                    <div class="flex-grow p-6 flex flex-col overflow-y-auto bg-slate-50">
+                        <div class="border-b border-slate-200 pb-4 mb-6">
+                            <h1 class="text-xl font-bold text-slate-800">🌐 個人客製化首頁</h1>
+                            <p class="text-xs text-slate-500 mt-1">前端會直接將 URL 網址中的 Hash 標記渲染到頁面中，讓您能客製主題名稱！</p>
+                        </div>
+
+                        <!-- 操作卡片 -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6">
+                            <label class="block text-xs font-bold text-slate-600 mb-2">⚙️ 修改自訂首頁標籤 (Hash)：</label>
+                            <div class="flex gap-2">
+                                <input id="dom-hash-input" type="text" placeholder="例如: #酷炫暗黑風" class="flex-grow text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-cyan-500 bg-slate-50 text-slate-800">
+                                <button onclick="triggerDOMHashChange()" class="px-5 py-2 text-xs font-semibold bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors">
+                                    寫入網址 Hash
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 效果顯示與 Referrer 欄位 -->
+                        <div class="bg-white p-5 border border-slate-200 rounded-xl shadow-sm space-y-4">
+                            <div>
+                                <h4 class="text-xs text-slate-400 uppercase tracking-wider font-bold">🎯 主題顯示區 (利用 InnerHTML 輸出)</h4>
+                                <div id="dom-output-area" class="mt-2 text-lg font-bold text-indigo-600 p-2 border-l-4 border-indigo-500 bg-indigo-50/50 rounded-r">
+                                    預設首頁
+                                </div>
+                            </div>
+
+                            <hr class="border-slate-100">
+
+                            <div>
+                                <h4 class="text-xs text-slate-400 uppercase tracking-wider font-bold">🔗 推薦連結功能 (利用 A 標籤 href 輸出)</h4>
+                                <p class="text-xs text-slate-500 mt-1">若 URL 帶有 <code>?referrer=URL</code> 參數，會在此建立一個返回推薦人頁面的按鈕：</p>
+                                <div id="dom-referrer-area" class="mt-3">
+                                    <span class="text-xs text-slate-400">目前沒有推薦人。您可以在上方點擊「範例 2」嘗試攻擊。</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: QUIZ (實戰挑戰) ==================== -->
+        <div id="content-quiz" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 關卡清單與說明 -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <span class="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-0.5 rounded-full font-semibold">驗收學習成效</span>
+                    <h2 class="text-xl font-bold mt-2 mb-2 text-slate-100">🏆 XSS 實戰挑戰賽</h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        這裡設計了模擬真實防禦繞過的趣味關卡。請試著找出系統漏洞，並構造出能觸發彈出視窗的攻擊 Payload 吧！
+                    </p>
+                </div>
+
+                <!-- 關卡列表 -->
+                <div class="space-y-3">
+                    <!-- 第一關 -->
+                    <div onclick="selectQuiz(1)" id="quiz-btn-1" class="bg-slate-900 border-2 border-cyan-500 rounded-xl p-4 cursor-pointer hover:border-cyan-400 transition-all">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-semibold text-cyan-400">關卡 01 (基本)</span>
+                            <span id="quiz-status-1" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded">未完成</span>
+                        </div>
+                        <h4 class="font-bold text-slate-100">🚫 繞過關鍵字過濾</h4>
+                        <p class="text-xs text-slate-400 mt-1">網站偵測並刪除了所有的「&lt;script&gt;」字眼，你能繞過它執行 XSS 嗎？</p>
+                    </div>
+
+                    <!-- 第二關 -->
+                    <div onclick="selectQuiz(2)" id="quiz-btn-2" class="bg-slate-900 border border-slate-800 rounded-xl p-4 cursor-pointer hover:border-amber-500/40 transition-all">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-semibold text-amber-400">關卡 02 (進階)</span>
+                            <span id="quiz-status-2" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded">未完成</span>
+                        </div>
+                        <h4 class="font-bold text-slate-100">🍪 敏感 Cookie 盜取</h4>
+                        <p class="text-xs text-slate-400 mt-1">模擬管理員造訪。請嘗試構造一個能讀取 <code>document.cookie</code> 並顯示在警示框的指令碼。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 關卡實作區 -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-slate-100 mb-2 flex items-center gap-2">
+                        🎯 當前關卡目標：<span id="quiz-title">關卡 01 繞過關鍵字過濾</span>
+                    </h3>
+                    <p id="quiz-desc" class="text-xs text-slate-400 leading-relaxed mb-4">
+                        系統寫有簡單的過濾規則：<code>input.replace(/&lt;script&gt;/gi, '')</code>。也就是說，系統只要發現 <code>&lt;script&gt;</code> 就會自動將其替換為空白。請利用您的安全知識繞過此限制，彈出警告視窗。
+                    </p>
+
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-500 font-bold">伺服器端過濾程式：</span>
+                            <span class="text-xs text-red-400 font-mono">Vulnerable Mode</span>
+                        </div>
+                        <code id="quiz-filter-code" class="code-font text-xs text-slate-300 block bg-slate-900 p-2.5 rounded overflow-x-auto">
+                            function sanitize(input) { return input.replace(/&lt;script&gt;/gi, ''); }
+                        </code>
+                    </div>
+
+                    <!-- 測試輸入 -->
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1">輸入您的 Bypass Payload：</label>
+                            <input id="quiz-input" type="text" placeholder="嘗試輸入 <sCrIpT> 或是其他 Tag 的惡意載荷..." class="w-full text-xs px-3 py-2 border border-slate-700 rounded-lg focus:outline-none focus:border-cyan-500 bg-slate-950 text-slate-100">
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <button onclick="hintQuiz()" class="px-3 py-1.5 text-xs text-amber-400 border border-amber-500/20 hover:bg-amber-500/10 rounded-lg transition-colors">
+                                💡 取得暗示
+                            </button>
+                            <button onclick="submitQuiz()" class="px-5 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+                                🚀 模擬執行並測試
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 關卡控制台輸出 -->
+                <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
+                    <span class="text-xs text-slate-500 font-bold block mb-2 uppercase tracking-wider">🖥️ 系統執行結果回饋</span>
+                    <div id="quiz-console-output" class="code-font text-xs text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800/80 min-h-[50px] flex items-center">
+                        等待送出 Payload...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="border-t border-slate-800 bg-slate-950/60 py-6 text-center text-xs text-slate-500 mt-auto">
+        XSS 跨網站指令碼互動教學實驗室 © 2026 
+    </footer>
+
+    <!-- ==================== 自訂科幻風 XSS 觸發成功對話框 (替代瀏覽器禁止使用的 alert) ==================== -->
+    <div id="xss-alert-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-[100] p-4">
+        <div class="bg-slate-900 border-2 border-rose-500 rounded-2xl max-w-lg w-full overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.25)] animate-bounce-short">
+            <div class="bg-gradient-to-r from-rose-600 to-red-700 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-white font-bold tracking-wide">
+                    <span>💥</span>
+                    <h3>XSS 漏洞觸發成功！</h3>
+                </div>
+                <button onclick="closeXSSAlert()" class="text-white hover:text-rose-200 transition-colors text-lg">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-rose-950/40 border border-rose-900 p-4 rounded-lg">
+                    <span class="text-xs text-rose-400 font-bold block mb-1">💻 成功執行的腳本指令 (Payload)：</span>
+                    <code id="xss-modal-payload" class="code-font text-xs text-slate-100 block break-all"></code>
+                </div>
+
+                <div class="space-y-2 text-sm text-slate-300">
+                    <p class="font-semibold text-slate-200">😱 這代表什麼？</p>
+                    <p class="text-xs leading-relaxed">
+                        在現實中，攻擊者此時已經將此段代碼「注入」並在受害者的瀏覽器端運行。惡意指令碼可以輕易存取受害者的網頁資料。
+                    </p>
+                    <p class="font-semibold text-slate-200">🛡️ 如何修補此漏洞？</p>
+                    <ul class="list-disc pl-5 text-xs space-y-1 text-slate-400">
+                        <li>在資料輸出到 HTML 以前，必須先過濾危險標籤。</li>
+                        <li>對於前端渲染，優先使用安全 API（如 <code>textContent</code> 替代 <code>innerHTML</code>）。</li>
+                        <li>建立妥善的內容安全政策 (CSP)，限制第三方不明代碼執行。</li>
+                    </ul>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button onclick="closeXSSAlert()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-5 py-2 rounded-lg transition-colors shadow">
+                        了解並關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JavaScript 核心邏輯 ==================== -->
+    <script>
+        // 全域狀態管理
+        let currentTab = 'intro';
+        let securityStatus = {
+            stored: false,
+            reflected: false,
+            dom: false
+        };
+
+        // 模擬 Stored XSS 的資料庫資料
+        let storedCommentsDatabase = [
+            { id: 1, user: "小明", content: "這堂 XSS 教學課程真的太實用了！推一個 👍" },
+            { id: 2, user: "網安愛好者", content: "好讚的平台，一目了然！" }
+        ];
+
+        // 當前挑戰賽關卡
+        let currentQuizIndex = 1;
+        let quizCompleted = { 1: false, 2: false };
+
+        // 頁面載入初始化
+        window.onload = function() {
+            renderStoredComments();
+            // 初始化模擬 DOM hash
+            window.location.hash = "預設首頁";
+            updateDOMView();
+        }
+
+        // 切換頁籤
+        function switchTab(tabId) {
+            // 隱藏所有分頁內容
+            document.querySelectorAll('.tab-content').forEach(element => {
+                element.classList.add('hidden');
+            });
+            // 取消所有導覽列按鈕高亮
+            document.querySelectorAll('nav button').forEach(button => {
+                button.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+            });
+
+            // 顯示指定分頁
+            const targetContent = document.getElementById(`content-${tabId}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+
+            // 高亮當前按鈕
+            const targetButton = document.getElementById(`tab-${tabId}`);
+            if (targetButton) {
+                if (tabId === 'quiz') {
+                    targetButton.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-amber-500/20 text-amber-400 border border-amber-500/40";
+                } else {
+                    targetButton.className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
+                }
+            }
+
+            currentTab = tabId;
+        }
+
+        // 一鍵填入 Payload
+        function fillPayload(tabId, payload) {
+            let inputField;
+            if (tabId === 'stored') {
+                inputField = document.getElementById('stored-content-input');
+            } else if (tabId === 'reflected') {
+                inputField = document.getElementById('reflected-search-input');
+            } else if (tabId === 'dom') {
+                inputField = document.getElementById('dom-hash-input');
+            }
+            
+            if (inputField) {
+                inputField.value = payload;
+                // 添加輸入欄高亮閃動效果
+                inputField.classList.add('border-cyan-400', 'ring-2', 'ring-cyan-400/20');
+                setTimeout(() => {
+                    inputField.classList.remove('border-cyan-400', 'ring-2', 'ring-cyan-400/20');
+                }, 1000);
+            }
+        }
+
+        // 切換防禦/漏洞模式
+        function toggleDefense(type, secure) {
+            securityStatus[type] = secure;
+            
+            const btnVuln = document.getElementById(`btn-${type}-vuln`);
+            const btnSecure = document.getElementById(`btn-${type}-secure`);
+
+            if (secure) {
+                btnVuln.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200";
+                btnSecure.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-emerald-600 text-white";
+            } else {
+                btnVuln.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-red-600 text-white";
+                btnSecure.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-200";
+            }
+
+            // 更新對應頁面渲染
+            if (type === 'stored') {
+                renderStoredComments();
+            } else if (type === 'reflected') {
+                // 如果已經有搜尋過，重新跑一次搜尋
+                const currentSearch = document.getElementById('reflected-search-input').value;
+                if (currentSearch) triggerReflectedSearch();
+            } else if (type === 'dom') {
+                updateDOMView();
+            }
+        }
+
+        // ==================== 模擬引擎：偵測與攔截 XSS 代碼 ====================
+        // 在不使用 real eval 造成安全風險的情況下，精確模擬 XSS 行為
+        function detectAndSimulateXSS(inputString) {
+            if (!inputString) return false;
+
+            // 1. 偵測傳統 <script> 標籤
+            const scriptRegex = /<script[\s\S]*?>([\s\S]*?)<\/script>/gi;
+            const scriptMatch = scriptRegex.exec(inputString);
+            if (scriptMatch) {
+                triggerXSSAlert(scriptMatch[0]);
+                return true;
+            }
+
+            // 2. 偵測帶有 onerror / onload / onclick 等事件屬性的任意 HTML 標籤
+            const eventRegex = /on\w+\s*=\s*(['"])(.*?)\1/gi;
+            const eventMatch = eventRegex.exec(inputString);
+            if (eventMatch && (inputString.includes('<img') || inputString.includes('<svg') || inputString.includes('<body') || inputString.includes('<iframe'))) {
+                triggerXSSAlert(inputString);
+                return true;
+            }
+
+            // 3. 偵測 href="javascript:..."
+            const jsHrefRegex = /href\s*=\s*(['"])\s*javascript:(.*?)\1/gi;
+            const jsHrefMatch = jsHrefRegex.exec(inputString);
+            if (jsHrefMatch) {
+                // 模擬當使用者點擊了超連結時執行
+                return { isClickableXSS: true, payload: jsHrefMatch[0] };
+            }
+
+            // 4. iframe 的 src 攻擊（特殊情況）
+            if (inputString.includes('<iframe') && inputString.includes('src')) {
+                // 本身 iframe 沒執行 JS 不算 XSS，若帶有 onload 或屬性事件則算
+                if (/onload\s*=/gi.test(inputString)) {
+                    triggerXSSAlert(inputString);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // 觸發自訂 XSS 彈窗
+        function triggerXSSAlert(payload) {
+            document.getElementById('xss-modal-payload').innerText = payload;
+            document.getElementById('xss-alert-modal').classList.remove('hidden');
+        }
+
+        // 關閉自訂 XSS 彈窗
+        function closeXSSAlert() {
+            document.getElementById('xss-alert-modal').classList.add('hidden');
+        }
+
+        // HTML 轉義函數
+        function escapeHTML(str) {
+            return str.replace(/[<>&"']/g, m => ({
+                '<': '&lt;',
+                '>': '&gt;',
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&#x27;'
+            })[m]);
+        }
+
+        // ==================== 💾 STORED XSS 邏輯 ====================
+        function renderStoredComments() {
+            const listContainer = document.getElementById('stored-comments-list');
+            listContainer.innerHTML = '';
+
+            storedCommentsDatabase.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = "bg-white p-3.5 rounded-lg border border-slate-200/80 shadow-sm flex flex-col gap-1";
+
+                const userSpan = document.createElement('span');
+                userSpan.className = "text-xs font-black text-slate-800 flex items-center gap-1.5";
+                userSpan.innerHTML = `👤 ${escapeHTML(comment.user)}`;
+
+                const contentSpan = document.createElement('div');
+                contentSpan.className = "text-xs text-slate-600 mt-1 break-all";
+
+                if (securityStatus.stored) {
+                    // 安全防禦模式：進行實體轉義
+                    contentSpan.innerHTML = escapeHTML(comment.content);
+                } else {
+                    // 漏洞模式：不安全地注入 HTML
+                    contentSpan.innerHTML = comment.content;
+                    
+                    // 檢查此留言是否帶有 XSS（當載入此儲存內容時觸發漏洞）
+                    setTimeout(() => {
+                        const xssResult = detectAndSimulateXSS(comment.content);
+                        if (xssResult && xssResult.isClickableXSS) {
+                            // 若是超連結點擊型 XSS
+                            const clickableLink = contentSpan.querySelector('a');
+                            if (clickableLink) {
+                                clickableLink.onclick = function(e) {
+                                    e.preventDefault();
+                                    triggerXSSAlert(xssResult.payload);
+                                };
+                            }
+                        }
+                    }, 50);
+                }
+
+                commentDiv.appendChild(userSpan);
+                commentDiv.appendChild(contentSpan);
+                listContainer.appendChild(commentDiv);
+            });
+        }
+
+        function addStoredComment() {
+            const usernameInput = document.getElementById('stored-username-input');
+            const contentInput = document.getElementById('stored-content-input');
+
+            if (!contentInput.value.trim()) return;
+
+            const newComment = {
+                id: Date.now(),
+                user: usernameInput.value || '匿名用戶',
+                content: contentInput.value
+            };
+
+            // 儲存至虛擬「資料庫」
+            storedCommentsDatabase.push(newComment);
+            
+            // 重新渲染留言板
+            renderStoredComments();
+            
+            // 清空輸入框
+            contentInput.value = '';
+        }
+
+        function clearStoredComments() {
+            storedCommentsDatabase = [];
+            renderStoredComments();
+        }
+
+        // ==================== 🔍 REFLECTED XSS 邏輯 ====================
+        function triggerReflectedSearch() {
+            const searchInput = document.getElementById('reflected-search-input');
+            const keyword = searchInput.value;
+            const resultsContainer = document.getElementById('reflected-results');
+            const addressBar = document.getElementById('reflected-address-bar');
+
+            if (!keyword) return;
+
+            // 1. 更新模擬瀏覽器網址列
+            addressBar.innerText = `https://shop.com/search?keyword=${encodeURIComponent(keyword)}`;
+
+            // 2. 渲染搜尋結果
+            resultsContainer.innerHTML = '';
+            resultsContainer.className = "bg-white border border-slate-200 rounded-xl p-5 shadow-sm text-left flex flex-col gap-3";
+
+            const feedbackHeading = document.createElement('div');
+            feedbackHeading.className = "text-sm text-slate-800";
+
+            if (securityStatus.reflected) {
+                // 安全防禦模式：安全地展示使用者搜尋之字串
+                const textNode = document.createTextNode(`您搜尋「${keyword}」的結果：`);
+                feedbackHeading.appendChild(textNode);
+            } else {
+                // 漏洞模式：不安全地輸出 HTML
+                feedbackHeading.innerHTML = `您搜尋「<span class="font-semibold text-rose-600">${keyword}</span>」的結果：`;
+                
+                // 檢查是否觸發 XSS 模擬
+                setTimeout(() => {
+                    detectAndSimulateXSS(keyword);
+                }, 50);
+            }
+
+            resultsContainer.appendChild(feedbackHeading);
+
+            // 模擬找不到商品的提示
+            const placeholderText = document.createElement('p');
+            placeholderText.className = "text-xs text-slate-500 mt-2 italic";
+            placeholderText.innerText = "抱歉！沒有找到與此關鍵字相關的特惠商品。請更換關鍵字再試一次。";
+            resultsContainer.appendChild(placeholderText);
+        }
+
+        // ==================== 🌳 DOM-BASED XSS 邏輯 ====================
+        function triggerDOMHashChange() {
+            const hashInput = document.getElementById('dom-hash-input').value;
+            if (!hashInput) return;
+
+            // 模擬改變 Hash 並載入
+            window.location.hash = hashInput.startsWith('#') ? hashInput : `#${hashInput}`;
+            updateDOMView();
+        }
+
+        function updateDOMView() {
+            const addressBar = document.getElementById('dom-address-bar');
+            const outputArea = document.getElementById('dom-output-area');
+            const referrerArea = document.getElementById('dom-referrer-area');
+
+            // 1. 取得當前 Hash (扣除第一碼 '#')
+            const currentHash = decodeURIComponent(window.location.hash.slice(1)) || '預設首頁';
+            addressBar.innerText = `https://my-portal.com/#${encodeURIComponent(currentHash)}`;
+
+            // 2. 渲染主輸出區
+            if (securityStatus.dom) {
+                outputArea.textContent = currentHash;
+            } else {
+                outputArea.innerHTML = currentHash;
+                setTimeout(() => {
+                    detectAndSimulateXSS(currentHash);
+                }, 50);
+            }
+
+            // 3. 處理 Referrer DOM 漏洞（模擬推薦網址）
+            // 如果當前 Hash 欄位內有帶 referrer 參數格式，例如 ?referrer=javascript:alert('XSS')
+            const referrerInput = document.getElementById('dom-hash-input').value;
+            if (referrerInput.includes('?referrer=')) {
+                const refUrl = referrerInput.split('?referrer=')[1];
+                referrerArea.innerHTML = '';
+                
+                const btn = document.createElement('a');
+                btn.className = "px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-block cursor-pointer";
+                btn.innerText = "↩ 回到上一頁 (推薦來源)";
+
+                if (securityStatus.dom) {
+                    // 安全模式：對屬性值進行協定驗證，防止 javascript: 協定注入
+                    if (refUrl.startsWith('http://') || refUrl.startsWith('https://')) {
+                        btn.setAttribute('href', refUrl);
+                    } else {
+                        btn.onclick = function() { console.log('不安全的 URL 協定已被攔截！'); };
+                    }
+                } else {
+                    // 漏洞模式：直接寫入 a 的 href
+                    btn.setAttribute('href', refUrl);
+                    // 檢查 href XSS
+                    if (refUrl.startsWith('javascript:')) {
+                        btn.onclick = function(e) {
+                            e.preventDefault();
+                            triggerXSSAlert(refUrl);
+                        };
+                    }
+                }
+                referrerArea.appendChild(btn);
+            } else {
+                referrerArea.innerHTML = `<span class="text-xs text-slate-400">目前沒有推薦人資訊。</span>`;
+            }
+        }
+
+
+        // ==================== 🏆 QUIZ (挑戰賽) 邏輯 ====================
+        function selectQuiz(index) {
+            currentQuizIndex = index;
+            document.getElementById('quiz-input').value = '';
+
+            const btn1 = document.getElementById('quiz-btn-1');
+            const btn2 = document.getElementById('quiz-btn-2');
+            const title = document.getElementById('quiz-title');
+            const desc = document.getElementById('quiz-desc');
+            const filterCode = document.getElementById('quiz-filter-code');
+
+            // 重設按鈕樣式
+            btn1.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 cursor-pointer hover:border-cyan-500/40 transition-all";
+            btn2.className = "bg-slate-900 border border-slate-800 rounded-xl p-4 cursor-pointer hover:border-cyan-500/40 transition-all";
+
+            if (index === 1) {
+                btn1.className = "bg-slate-900 border-2 border-cyan-500 rounded-xl p-4 cursor-pointer hover:border-cyan-400 transition-all";
+                title.innerText = "關卡 01 繞過關鍵字過濾";
+                desc.innerText = "系統寫有簡單的過濾規則：input.replace(/<script>/gi, '')。也就是說，系統只要發現 <script> 就會自動將其替換為空白。請利用您的安全知識繞過此限制，彈出警告視窗。";
+                filterCode.innerText = "function sanitize(input) { return input.replace(/<script>/gi, ''); }";
+            } else if (index === 2) {
+                btn2.className = "bg-slate-900 border-2 border-amber-500 rounded-xl p-4 cursor-pointer hover:border-amber-400 transition-all";
+                title.innerText = "關卡 02 敏感 Cookie 盜取";
+                desc.innerText = "系統這次使用了更先進的防火牆，過濾了幾乎所有的常見指令與事件，但漏掉了一些角落。網頁上有一枚模擬的管理員專屬 Cookie (值為 admin_session_secret_key)。請構造一個包含「document.cookie」或是「cookie」的標籤 Payload 來讀取它。";
+                filterCode.innerText = "document.cookie = 'session_token=admin_session_secret_key'; \n// 提示：你需要利用事件屬性（例如 onload, onerror）或是 js-protocol 將其印出";
+            }
+
+            document.getElementById('quiz-console-output').innerText = "等待送出 Payload...";
+            document.getElementById('quiz-console-output').className = "code-font text-xs text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800/80 min-h-[50px] flex items-center";
+        }
+
+        function hintQuiz() {
+            const consoleOutput = document.getElementById('quiz-console-output');
+            consoleOutput.className = "code-font text-xs text-amber-300 bg-amber-950/20 p-3 rounded border border-amber-500/30 min-h-[50px]";
+
+            if (currentQuizIndex === 1) {
+                consoleOutput.innerHTML = `💡 <strong>關卡 1 提示：</strong><br>
+                1. 試著在 &lt;script&gt; 標籤中插入另一個 &lt;script&gt;（雙重嵌套），例如 <code>&lt;scr&lt;script&gt;ipt&gt;</code>，當中間被消掉後，外圍是否剛好重組成新的 script 標籤？<br>
+                2. 或者使用不依賴 &lt;script&gt; 關鍵字的 HTML 標籤，例如 <code>&lt;img src=x onerror=...&gt;</code>。`;
+            } else if (currentQuizIndex === 2) {
+                consoleOutput.innerHTML = `💡 <strong>關卡 2 提示：</strong><br>
+                嘗試使用：<code>&lt;img src=1 onerror=&quot;alert(document.cookie)&quot;&gt;</code> 或是將其置入 <code>&lt;svg onload=&quot;alert(document.cookie)&quot;&gt;</code>，這能直接在當前頁面提取出機密的 Session Cookie！`;
+            }
+        }
+
+        function submitQuiz() {
+            const input = document.getElementById('quiz-input').value.trim();
+            const consoleOutput = document.getElementById('quiz-console-output');
+
+            if (!input) {
+                consoleOutput.innerText = "⚠️ 請輸入 Payload 之後再送出！";
+                consoleOutput.className = "code-font text-xs text-rose-400 bg-rose-950/20 p-3 rounded border border-rose-500/30 min-h-[50px]";
+                return;
+            }
+
+            if (currentQuizIndex === 1) {
+                // 關卡 1 處理：刪除一次 <script> (非遞迴)
+                const sanitized = input.replace(/<script>/gi, '');
+                
+                // 判斷經過替換後，是否仍能生成有效的 XSS Payload 執行
+                const hasValidScript = /<script[\s\S]*?>([\s\S]*?)<\/script>/gi.test(sanitized);
+                const hasImgOnerror = /<img\s+[^>]*onerror=["']?(.*?)["']?/gi.test(sanitized);
+                const hasSvgOnload = /<svg\s+[^>]*onload=["']?(.*?)["']?/gi.test(sanitized);
+
+                if (hasValidScript || hasImgOnerror || hasSvgOnload) {
+                    // 挑戰成功！
+                    consoleOutput.innerHTML = `🎉 <strong>過濾器繞過成功！</strong><br>
+                    過濾後結果: <code class="text-emerald-400 break-all">${escapeHTML(sanitized)}</code><br>
+                    <strong>成功觸發 XSS 攻擊！</strong>`;
+                    consoleOutput.className = "code-font text-xs text-emerald-300 bg-emerald-950/20 p-3 rounded border border-emerald-500/30 min-h-[50px]";
+                    
+                    document.getElementById('quiz-status-1').innerText = "✅ 已通關";
+                    document.getElementById('quiz-status-1').className = "text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded";
+                    quizCompleted[1] = true;
+                    
+                    triggerXSSAlert(sanitized);
+                } else {
+                    consoleOutput.innerHTML = `❌ <strong>繞過失敗</strong><br>
+                    過濾後結果：<code class="text-rose-400 break-all">${escapeHTML(sanitized)}</code><br>
+                    此內容未能在瀏覽器端觸發代碼執行。再接再厲！`;
+                    consoleOutput.className = "code-font text-xs text-rose-400 bg-rose-950/20 p-3 rounded border border-rose-500/30 min-h-[50px]";
+                }
+            } else if (currentQuizIndex === 2) {
+                // 關卡 2 處理：必須成功讀取 Cookie
+                const containsCookie = input.toLowerCase().includes('document.cookie') || input.toLowerCase().includes('cookie');
+                const hasImgOnerror = /<img\s+[^>]*onerror=["']?(.*?)["']?/gi.test(input);
+                const hasSvgOnload = /<svg\s+[^>]*onload=["']?(.*?)["']?/gi.test(input);
+                const hasScript = /<script[\s\S]*?>([\s\S]*?)<\/script>/gi.test(input);
+
+                if (containsCookie && (hasImgOnerror || hasSvgOnload || hasScript)) {
+                    consoleOutput.innerHTML = `🎉 <strong>資料竊取成功！</strong><br>
+                    成功讀取並印出高機密 Session Token：<br>
+                    <code class="text-amber-400 font-bold">admin_session_secret_key_9527</code><br>
+                    這代表攻擊者可藉此直接登入管理員帳號！`;
+                    consoleOutput.className = "code-font text-xs text-emerald-300 bg-emerald-950/20 p-3 rounded border border-emerald-500/30 min-h-[50px]";
+
+                    document.getElementById('quiz-status-2').innerText = "✅ 已通關";
+                    document.getElementById('quiz-status-2').className = "text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded";
+                    quizCompleted[2] = true;
+
+                    triggerXSSAlert(`Cookie: admin_session_secret_key_9527`);
+                } else {
+                    consoleOutput.innerHTML = `❌ <strong>未能讀取 Cookie</strong><br>
+                    請確認您的代碼是否包含 <code>document.cookie</code> 並正確利用 HTML 標籤屬性 (如 onload, onerror) 或 Script 區塊在瀏覽器端載入執行。`;
+                    consoleOutput.className = "code-font text-xs text-rose-400 bg-rose-950/20 p-3 rounded border border-rose-500/30 min-h-[50px]";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
