@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XSS Labs Interactive</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #64748b;
+      --line: #dbe3ef;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --code: #0f172a;
+      --side: #111827;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif; }
+    a { color: inherit; }
+    .alert-top { position: sticky; top: 0; z-index: 10; background: #7f1d1d; color: #fff; padding: 12px 20px; font-weight: 700; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.16); }
+    .layout { min-height: calc(100vh - 48px); display: grid; grid-template-columns: 270px 1fr; }
+    .sidebar { background: var(--side); color: #cbd5e1; padding: 18px; position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto; }
+    .brand { color: #fff; font-size: 22px; font-weight: 900; margin: 4px 0 18px; letter-spacing: .04em; }
+    .nav-button { width: 100%; border: 1px solid transparent; background: transparent; color: #cbd5e1; text-align: left; border-radius: 10px; padding: 11px 12px; margin: 3px 0; cursor: pointer; font-size: 15px; }
+    .nav-button:hover { background: #1f2937; color: #fff; }
+    .nav-button.active { background: #2563eb; color: #fff; box-shadow: 0 8px 20px rgba(37,99,235,.28); }
+    .main { padding: 26px; max-width: 1280px; width: 100%; }
+    .hero, .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 30px rgba(15,23,42,.06); }
+    .hero { padding: 28px; margin-bottom: 18px; }
+    .hero h1, .card h2, .card h3 { margin-top: 0; }
+    .muted { color: var(--muted); line-height: 1.75; }
+    .card { padding: 22px; margin-bottom: 18px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+    .flow-item { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 16px; text-align: center; font-weight: 800; color: #1e40af; position: relative; }
+    .flow-item:not(:last-child)::after { content: "→"; position: absolute; right: -14px; top: 50%; transform: translateY(-50%); color: #64748b; }
+    .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 10px; font-size: 13px; font-weight: 800; background: #e0f2fe; color: #075985; margin: 2px 5px 2px 0; }
+    .payload-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .btn { border: 0; border-radius: 10px; padding: 10px 14px; cursor: pointer; font-weight: 800; transition: transform .08s ease, filter .15s ease; }
+    .btn:hover { filter: brightness(.96); }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-soft { background: #e2e8f0; color: #334155; }
+    textarea, input[type="text"] { width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 14px; font: inherit; background: #fff; color: var(--ink); }
+    textarea { min-height: 86px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+    .button-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .result-box { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; min-height: 260px; }
+    .result-head { padding: 10px 13px; font-weight: 900; border-bottom: 1px solid var(--line); }
+    .result-head.danger { background: #fef2f2; color: #991b1b; }
+    .result-head.success { background: #f0fdf4; color: #166534; }
+    .result-body { min-height: 210px; padding: 12px; }
+    iframe { width: 100%; height: 210px; border: 0; background: #fff; border-radius: 10px; }
+    .safe-preview { min-height: 210px; border-radius: 10px; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; white-space: pre-wrap; overflow: auto; }
+    pre { margin: 0; padding: 16px; overflow-x: auto; border-radius: 14px; background: var(--code); color: #e5e7eb; line-height: 1.55; font-size: 13px; }
+    .code-title { font-weight: 900; margin: 0 0 8px; }
+    .badge-danger { color: #991b1b; background: #fee2e2; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 900; }
+    .badge-success { color: #166534; background: #dcfce7; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 900; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; }
+    th, td { border: 1px solid var(--line); padding: 12px; text-align: left; vertical-align: top; }
+    th { background: #eff6ff; color: #1e3a8a; }
+    .note { border-left: 5px solid var(--warning); background: #fffbeb; padding: 14px; border-radius: 10px; color: #78350f; }
+
+    @media (max-width: 920px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .main { padding: 16px; }
+      .grid-2, .flow { grid-template-columns: 1fr; }
+      .flow-item:not(:last-child)::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="alert-top">本頁僅限本機教學與合法授權環境使用，禁止對未授權網站測試。</div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">XSS Labs</div>
+      <button class="nav-button active" data-page="home">首頁</button>
+      <div id="levelNav"></div>
+      <button class="nav-button" data-page="summary">防護總結</button>
+    </aside>
+
+    <main id="content" class="main"></main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'xss_labs_interactive_last_page';
+
+    const levels = [
+      {
+        id: 1,
+        name: 'Level 1：直接輸出，無過濾',
+        scenario: '使用者輸入直接放到 HTML body。漏洞版把輸入交給 innerHTML，瀏覽器會把它當成 HTML 解析。',
+        inputPoint: 'HTML body 內容區',
+        payloads: ['<b>測試</b>', '<img src=x onerror=alert(\'XSS\')>'],
+        vulnerableCode: `const output = document.querySelector('#result');
+output.innerHTML = userInput;`,
+        fixedCode: `const output = document.querySelector('#result');
+output.textContent = userInput;`,
+        principle: 'innerHTML 是危險 sink。只要資料來源 source 來自使用者，且輸出位置 context 是 HTML body，就可能被瀏覽器當成標籤或事件處理器。',
+        fix: '在只需要顯示文字時使用 textContent，不要使用 innerHTML。',
+        vulnerable: value => `<div class="demo-title">留言內容</div><div>${value}</div>`,
+        fixed: value => textOnlyBlock('留言內容', value)
+      },
+      {
+        id: 2,
+        name: 'Level 2：HTML 內容有編碼，但 input value 沒處理',
+        scenario: '搜尋結果文字看似安全，但 input value 屬性用字串拼接，造成屬性可被提早閉合。',
+        inputPoint: '<input value="使用者輸入">',
+        payloads: ['"><img src=x onerror=alert(\'XSS\')>'],
+        vulnerableCode: `resultText.textContent = userInput;
+container.innerHTML = '<input value="' + userInput + '">';`,
+        fixedCode: `const input = document.createElement('input');
+input.value = userInput;
+container.appendChild(input);`,
+        principle: '同一筆資料在不同 context 有不同風險。HTML 內容被當文字不代表屬性也安全。',
+        fix: '不要用字串拼接 HTML attribute，改用 DOM API 或 property assignment。',
+        vulnerable: value => `<p>搜尋：${escapeHtml(value)}</p><input value="${value}">`,
+        fixed: value => inputOnlyBlock('安全搜尋欄位', value, 'text')
+      },
+      {
+        id: 3,
+        name: 'Level 3：單引號屬性問題',
+        scenario: "使用者輸入放在單引號屬性：<input value='使用者輸入'>。若編碼沒有處理單引號，仍可能突破屬性。",
+        inputPoint: "<input value='使用者輸入'>",
+        payloads: ['\' onclick=\'alert("XSS")'],
+        vulnerableCode: `container.innerHTML = "<input value='" + partiallyEscaped + "'>";`,
+        fixedCode: `const input = document.createElement('input');
+input.value = userInput;`,
+        principle: '只處理雙引號但沒處理單引號，在單引號屬性 context 中仍然危險。',
+        fix: '使用 DOM API 設定 value，避免自行拼接引號。',
+        vulnerable: value => `<p>點擊輸入框觀察事件屬性效果：</p><input value='${escapeHtmlCompat(value)}'>`,
+        fixed: value => inputOnlyBlock('DOM API 設定 value', value, 'text')
+      },
+      {
+        id: 4,
+        name: 'Level 4：只過濾 < 與 > 仍不安全',
+        scenario: '程式移除 < 與 >，但使用者輸入仍放在雙引號屬性中。',
+        inputPoint: '<input value="使用者輸入">',
+        payloads: ['" onmouseover="alert(\'XSS\')'],
+        vulnerableCode: `const filtered = userInput.replaceAll('<', '').replaceAll('>', '');
+container.innerHTML = '<input value="' + filtered + '">';`,
+        fixedCode: `const input = document.createElement('input');
+input.value = userInput;`,
+        principle: '不用新增標籤，也可以藉由事件屬性觸發。黑名單移除角括號不能保護 attribute context。',
+        fix: '改用 DOM API 設定 value，讓輸入只成為屬性值而不是 HTML 原始碼。',
+        vulnerable: value => `<p>滑過輸入框觀察事件屬性效果：</p><input value="${value.replace(/[<>]/g, '')}">`,
+        fixed: value => inputOnlyBlock('已安全設定 value', value, 'text')
+      },
+      {
+        id: 5,
+        name: 'Level 5：黑名單過濾 script / on，但 href 還可造成問題',
+        scenario: '程式把 script 與 on 做黑名單取代，但沒有考慮 URL href context。',
+        inputPoint: 'HTML 片段與 href 屬性',
+        payloads: ['"><a href="javascript:alert(\'XSS\')">點我</a>'],
+        vulnerableCode: `let filtered = userInput.replaceAll('script', 'scr_ipt')
+                        .replaceAll('on', 'o_n');
+container.innerHTML = '<input value="' + filtered + '">';`,
+        fixedCode: `const url = new URL(value);
+if (url.protocol === 'http:' || url.protocol === 'https:') {
+  link.href = url.href;
+}`,
+        principle: '黑名單容易漏掉不同 context。即使擋掉事件屬性，也可能在 href 產生風險。',
+        fix: 'URL 欄位只允許 http 與 https，並避免把整段輸入當 HTML 拼接。',
+        vulnerable: value => `<input value="${value.replace(/script/g, 'scr_ipt').replace(/on/g, 'o_n')}">`,
+        fixed: value => safeUrlBlock(value)
+      },
+      {
+        id: 6,
+        name: 'Level 6：大小寫繞過',
+        scenario: '程式只過濾小寫關鍵字，但 HTML attribute 名稱大小寫不敏感。',
+        inputPoint: 'HTML attribute 與 href',
+        payloads: ['"><a HREF="javascript:alert(\'XSS\')">點我</a>'],
+        vulnerableCode: `const filtered = userInput.replaceAll('href', 'hr_ef');
+container.innerHTML = '<input value="' + filtered + '">';`,
+        fixedCode: `const url = new URL(value);
+const allowed = ['http:', 'https:'];
+if (allowed.includes(url.protocol)) link.href = url.href;`,
+        principle: 'HTML attribute 大小寫通常不敏感，只過濾小寫字串會留下缺口。',
+        fix: '不要用關鍵字替換，改用 URL parser 與 scheme allowlist。',
+        vulnerable: value => `<input value="${value.replace(/href/g, 'hr_ef')}">`,
+        fixed: value => safeUrlBlock(value)
+      },
+      {
+        id: 7,
+        name: 'Level 7：雙寫繞過',
+        scenario: '程式直接移除危險字串。移除中間字串後，剩餘內容可能重新組成危險字。',
+        inputPoint: '字串過濾後再輸出到 HTML',
+        payloads: ['概念示範：關鍵字被移除後，左右片段可能重新接回危險字'],
+        vulnerableCode: `const onceFiltered = userInput.replace('danger', '');
+container.innerHTML = onceFiltered;`,
+        fixedCode: `output.textContent = userInput;
+// 或使用 DOM API 建立明確元素`,
+        principle: '一次性字串刪除不是安全修補。這裡只做概念展示，不提供真站繞過字典。',
+        fix: '使用輸出編碼與 DOM API，不依賴黑名單刪除。',
+        vulnerable: value => `<p><b>一次性移除示範：</b></p><p>原始：${escapeHtml(value)}</p><p>移除 demo 後：${escapeHtml(value.replace('demo', ''))}</p><p style="color:#b45309">重點：字串刪除可能造成非預期重組。</p>`,
+        fixed: value => textOnlyBlock('安全文字輸出', value)
+      },
+      {
+        id: 8,
+        name: 'Level 8：href 屬性與 HTML Entity',
+        scenario: '資料放在 href。瀏覽器解析屬性時會處理 HTML Entity。',
+        inputPoint: '<a href="使用者輸入">',
+        payloads: ['javascrip&#x74;:alert(\'XSS\')'],
+        vulnerableCode: `linkHtml = '<a href="' + userInput + '">點我</a>';
+container.innerHTML = linkHtml;`,
+        fixedCode: `const decoded = decodeHtmlEntities(value);
+const url = new URL(decoded);
+if (url.protocol === 'http:' || url.protocol === 'https:') link.href = url.href;`,
+        principle: '瀏覽器可能先把 HTML Entity 解碼，再把 href 當 URL 解析。',
+        fix: '使用 URL 物件檢查 protocol，只允許 http: 與 https:。',
+        vulnerable: value => `<a href="${value}">點我</a>`,
+        fixed: value => safeUrlBlock(value)
+      },
+      {
+        id: 9,
+        name: 'Level 9：錯誤的 http:// 字串檢查',
+        scenario: '程式只檢查輸入是否包含 http://，而不是檢查 URL protocol。',
+        inputPoint: 'href URL 欄位',
+        payloads: ['javascrip&#x74;:alert(\'XSS\')//http://example.com'],
+        vulnerableCode: `if (value.includes('http://')) {
+  container.innerHTML = '<a href="' + value + '">點我</a>';
+}`,
+        fixedCode: `const url = new URL(value);
+if (url.protocol === 'http:' || url.protocol === 'https:') {
+  link.href = url.href;
+}`,
+        principle: 'includes("http://") 不是 URL 安全驗證。字串包含合法片段，不代表整個 URL 的 scheme 合法。',
+        fix: '用 URL parser 解析後檢查 url.protocol。',
+        vulnerable: value => value.includes('http://') ? `<a href="${value}">點我</a>` : '<p>漏洞版檢查：未包含 http://，不輸出連結。</p>',
+        fixed: value => safeUrlBlock(value)
+      },
+      {
+        id: 10,
+        name: 'Level 10：hidden input 屬性突破',
+        scenario: '使用者輸入放入 hidden input 的 value。hidden input 不等於安全，前端欄位都可被使用者控制。',
+        inputPoint: '<input type="hidden" value="使用者輸入">',
+        payloads: ['" type="text" onfocus="alert(\'XSS\')" autofocus="'],
+        vulnerableCode: `container.innerHTML = '<input type="hidden" value="' + userInput + '">';`,
+        fixedCode: `const hiddenInput = document.createElement('input');
+hiddenInput.type = 'hidden';
+hiddenInput.value = userInput;
+// 後端仍需驗證資料`,
+        principle: 'hidden 只是顯示狀態，不是信任邊界。使用者仍可控制前端送出的資料。',
+        fix: '使用 hiddenInput.value = userInput。後端仍需驗證資料。',
+        vulnerable: value => `<p>若欄位被改成 text 並 autofocus，可能觸發事件：</p><input type="hidden" value="${value}">`,
+        fixed: value => inputOnlyBlock('hiddenInput.value 安全設定完成', value, 'hidden')
+      }
+    ];
+
+    // 將文字做 HTML 編碼，避免被瀏覽器當成標籤解析。
+    function escapeHtml(value) {
+      return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // 模擬部分 htmlspecialchars 設定：處理雙引號但不處理單引號。
+    function escapeHtmlCompat(value) {
+      return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 解碼 HTML Entity，讓 URL 驗證以瀏覽器實際看到的字串為準。
+    function decodeHtmlEntities(value) {
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = String(value);
+      return textarea.value;
+    }
+
+    // 建立只把輸入當文字顯示的安全示範區塊。
+    function textOnlyBlock(title, value) {
+      return `<strong>${escapeHtml(title)}</strong>\n${escapeHtml(value)}`;
+    }
+
+    // 建立安全 input 示範的描述文字；實際 DOM 由 renderSafePreview 補上。
+    function inputOnlyBlock(title, value, type) {
+      return JSON.stringify({ kind: 'input', title, value, type });
+    }
+
+    // 使用 URL parser 與 protocol allowlist 產生安全 URL 示範。
+    function safeUrlBlock(value) {
+      const decoded = decodeHtmlEntities(value);
+      try {
+        const url = new URL(decoded, window.location.href);
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          return JSON.stringify({ kind: 'link', title: '允許的安全連結', href: url.href });
+        }
+      } catch (error) {}
+      return JSON.stringify({ kind: 'blocked', title: '已阻擋不安全或不合法 URL', value: decoded });
+    }
+
+    // 包裝漏洞版 iframe，覆寫 alert 讓示範停留在本機教學頁。
+    function frameHtml(innerHtml) {
+      return `<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><style>
+        body{font-family:system-ui,"Microsoft JhengHei",sans-serif;padding:14px;color:#1f2937;background:#fff;}
+        .demo-title{font-weight:800;margin-bottom:8px;color:#1d4ed8;}
+        input{padding:8px 10px;border:1px solid #94a3b8;border-radius:8px;max-width:100%;}
+        a{color:#2563eb;font-weight:800;}
+        #xss-alert{display:none;margin-bottom:10px;padding:10px;border-radius:10px;background:#fee2e2;color:#991b1b;font-weight:900;}
+      </style><script>
+        window.alert=function(message){var box=document.getElementById('xss-alert');box.style.display='block';box.textContent='alert(' + JSON.stringify(String(message)) + ') 已在本機 sandbox 觸發';};
+      <\/script></head><body><div id="xss-alert"></div>${innerHtml}</body></html>`;
+    }
+
+    // 渲染修正版結果區；特殊物件會用 DOM property 建立安全元素。
+    function renderSafePreview(container, safeContent) {
+      container.innerHTML = '';
+      try {
+        const parsed = JSON.parse(safeContent);
+        if (parsed.kind === 'input') {
+          const label = document.createElement('p');
+          label.textContent = parsed.title;
+          const input = document.createElement('input');
+          input.type = parsed.type;
+          input.value = parsed.value;
+          if (parsed.type === 'hidden') {
+            const hint = document.createElement('p');
+            hint.textContent = 'hidden 欄位已建立；值只透過 property 設定，不拼接 HTML。';
+            container.append(label, hint, input);
+          } else {
+            container.append(label, input);
+          }
+          return;
+        }
+        if (parsed.kind === 'link') {
+          const label = document.createElement('p');
+          label.textContent = parsed.title;
+          const link = document.createElement('a');
+          link.href = parsed.href;
+          link.textContent = parsed.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          container.append(label, link);
+          return;
+        }
+        if (parsed.kind === 'blocked') {
+          const label = document.createElement('p');
+          label.textContent = parsed.title;
+          const code = document.createElement('code');
+          code.textContent = parsed.value;
+          container.append(label, code);
+          return;
+        }
+      } catch (error) {}
+      container.textContent = safeContent;
+    }
+
+    // 依據目前選擇的頁面更新左側導覽樣式。
+    function setActiveNav(page) {
+      document.querySelectorAll('.nav-button').forEach(button => {
+        button.classList.toggle('active', button.dataset.page === page);
+      });
+      localStorage.setItem(STORAGE_KEY, page);
+    }
+
+    // 建立左側 Level 1 到 Level 10 導覽按鈕。
+    function buildLevelNav() {
+      const nav = document.getElementById('levelNav');
+      nav.innerHTML = levels.map(level => `<button class="nav-button" data-page="level-${level.id}">Level ${level.id}</button>`).join('');
+    }
+
+    // 顯示首頁內容。
+    function renderHome() {
+      setActiveNav('home');
+      document.getElementById('content').innerHTML = `
+        <section class="hero">
+          <h1>互動式 XSS Labs 教學模擬器</h1>
+          <p class="muted">XSS（Cross-Site Scripting，跨站腳本）是指應用程式把不可信任資料輸出到網頁時，沒有依照輸出位置正確處理，導致瀏覽器把資料當成 HTML 或 JavaScript 執行。</p>
+          <div class="flow">
+            <div class="flow-item">使用者輸入</div>
+            <div class="flow-item">未正確處理</div>
+            <div class="flow-item">被當成 HTML/JS</div>
+            <div class="flow-item">瀏覽器執行</div>
+          </div>
+        </section>
+        <section class="card">
+          <h2>學習三個重點</h2>
+          <p><span class="pill">1. source：資料來源</span> 使用者輸入、URL 參數、表單欄位等不可信任資料。</p>
+          <p><span class="pill">2. sink：危險輸出點</span> innerHTML、字串拼接 HTML、href、inline event handler 等。</p>
+          <p><span class="pill">3. context：輸出位置</span> HTML body、HTML attribute、URL、JavaScript 內文各有不同安全規則。</p>
+          <div class="note">本頁所有示範都限制在本機 sandbox 與本頁結果區中，payload 僅用 alert('XSS')、樣式變化或文字變化做教學。</div>
+        </section>`;
+    }
+
+    // 顯示指定關卡的教學與互動區塊。
+    function renderLevel(levelId) {
+      const level = levels.find(item => item.id === levelId);
+      setActiveNav(`level-${level.id}`);
+      document.getElementById('content').innerHTML = `
+        <section class="hero">
+          <h1>${escapeHtml(level.name)}</h1>
+          <p class="muted"><strong>原始情境：</strong>${escapeHtml(level.scenario)}</p>
+          <p class="muted"><strong>可控輸入點：</strong>${escapeHtml(level.inputPoint)}</p>
+        </section>
+
+        <section class="card">
+          <h2>互動測試</h2>
+          <div class="payload-list">${level.payloads.map(payload => `<button class="btn btn-soft payload-btn" data-payload="${escapeHtml(payload)}">${escapeHtml(payload)}</button>`).join('')}</div>
+          <label for="userInput"><strong>使用者輸入</strong></label>
+          <textarea id="userInput" spellcheck="false">${escapeHtml(level.payloads[0])}</textarea>
+          <div class="button-row">
+            <button id="runVulnerable" class="btn btn-danger">執行漏洞版</button>
+            <button id="runFixed" class="btn btn-success">執行修正版</button>
+          </div>
+        </section>
+
+        <section class="grid-2">
+          <div class="result-box">
+            <div class="result-head danger">漏洞版：瀏覽器會解析輸入</div>
+            <div class="result-body"><iframe id="vulnerableFrame" sandbox="allow-scripts allow-popups"></iframe></div>
+          </div>
+          <div class="result-box">
+            <div class="result-head success">修正版：瀏覽器只當文字</div>
+            <div class="result-body"><div id="fixedResult" class="safe-preview">尚未執行修正版。</div></div>
+          </div>
+        </section>
+
+        <section class="grid-2">
+          <div class="card"><p class="code-title">漏洞版程式碼 <span class="badge-danger">vulnerable</span></p><pre>${escapeHtml(level.vulnerableCode)}</pre></div>
+          <div class="card"><p class="code-title">修正版程式碼 <span class="badge-success">fixed</span></p><pre>${escapeHtml(level.fixedCode)}</pre></div>
+        </section>
+
+        <section class="grid-2">
+          <div class="card"><h3>原理說明</h3><p class="muted">${escapeHtml(level.principle)}</p></div>
+          <div class="card"><h3>修補重點</h3><p class="muted">${escapeHtml(level.fix)}</p></div>
+        </section>`;
+
+      bindLevelEvents(level);
+    }
+
+    // 綁定關卡互動按鈕：填入 payload、執行漏洞版、執行修正版。
+    function bindLevelEvents(level) {
+      document.querySelectorAll('.payload-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          document.getElementById('userInput').value = button.dataset.payload;
+        });
+      });
+      document.getElementById('runVulnerable').addEventListener('click', () => {
+        const value = document.getElementById('userInput').value;
+        document.getElementById('vulnerableFrame').srcdoc = frameHtml(level.vulnerable(value));
+      });
+      document.getElementById('runFixed').addEventListener('click', () => {
+        const value = document.getElementById('userInput').value;
+        renderSafePreview(document.getElementById('fixedResult'), level.fixed(value));
+      });
+    }
+
+    // 顯示防護總結表格。
+    function renderSummary() {
+      setActiveNav('summary');
+      document.getElementById('content').innerHTML = `
+        <section class="hero">
+          <h1>防護總結</h1>
+          <p class="muted">XSS 修補重點不是記 payload，而是確認資料來源、危險 sink 與輸出 context，然後使用對應的安全輸出方式。</p>
+        </section>
+        <section class="card">
+          <table>
+            <thead><tr><th>輸出位置</th><th>危險寫法</th><th>建議修補方式</th></tr></thead>
+            <tbody>
+              <tr><td>HTML body</td><td>innerHTML</td><td>textContent</td></tr>
+              <tr><td>HTML attribute</td><td>字串拼接</td><td>setAttribute 或 property assignment</td></tr>
+              <tr><td>URL href</td><td>直接拼接</td><td>URL parser + scheme allowlist</td></tr>
+              <tr><td>JavaScript</td><td>直接塞入 script</td><td>避免 inline JS</td></tr>
+              <tr><td>hidden input</td><td>信任前端</td><td>後端驗證</td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="card">
+          <h2>補充觀念</h2>
+          <p class="muted">CSP 是第二層防護，不是主要修補。正確修補仍應從輸出編碼、DOM API、URL allowlist 與移除 inline JavaScript 做起。</p>
+          <p class="muted">HttpOnly / SameSite cookie 可降低部分後果，但不能修掉 XSS 本身。只要頁面仍會執行不可信任輸入，漏洞仍存在。</p>
+        </section>`;
+    }
+
+    // 依 data-page 分派要顯示的內容。
+    function navigate(page) {
+      if (page === 'home') renderHome();
+      else if (page === 'summary') renderSummary();
+      else if (page.startsWith('level-')) renderLevel(Number(page.replace('level-', '')));
+      else renderHome();
+    }
+
+    // 初始化頁面：建立導覽、綁定事件、還原上次頁面。
+    function init() {
+      buildLevelNav();
+      document.querySelector('.sidebar').addEventListener('click', event => {
+        const button = event.target.closest('.nav-button');
+        if (button) navigate(button.dataset.page);
+      });
+      navigate(localStorage.getItem(STORAGE_KEY) || 'home');
+    }
+
+    init();
+  </script>
+</body>
+</html>

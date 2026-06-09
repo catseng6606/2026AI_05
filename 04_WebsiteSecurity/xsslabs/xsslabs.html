@@ -1,83 +1,175 @@
-import React, { useState, useEffect } from 'react';
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XSS LABS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans TC', 'Microsoft JhengHei', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 font-sans">
+  <div class="min-h-screen flex flex-col">
+    <header class="border-b border-slate-800 bg-slate-950 px-4 md:px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-md">
+      <div class="flex items-center gap-3">
+        <div class="bg-emerald-600 p-2 rounded-lg text-white shadow-md shadow-emerald-900/30" data-icon="shield"></div>
+        <div>
+          <h1 class="text-xl font-black tracking-wider text-white">XSS LABS</h1>
+          <p class="text-xs text-slate-400">互動式安全實戰學習平台</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800 text-xs">
+          <span class="text-slate-400">整體學習進度:</span>
+          <span id="progressText" class="font-bold text-emerald-400">0 / 10 關</span>
+          <div class="w-20 bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="progressBar" class="bg-emerald-500 h-full transition-all duration-500" style="width:0%"></div>
+          </div>
+        </div>
+        <button id="resetProgress" class="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-400 transition-colors border border-slate-800 px-3 py-1.5 rounded-md hover:border-rose-900">
+          <span data-icon="refresh"></span>
+          重置進度
+        </button>
+      </div>
+    </header>
 
-// === 核心安全與輔助工具 ===
-function htmlspecialchars(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-    // 預設不轉義單引號，以此高保真模擬 PHP 預設的 ENT_COMPAT 漏洞
-}
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      <aside class="w-full lg:w-72 bg-slate-950 border-r border-slate-800 flex flex-col">
+        <div class="p-4 border-b border-slate-800 bg-slate-950/50">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">關卡列表</span>
+        </div>
+        <div id="levelList" class="flex-1 overflow-y-auto p-2 space-y-1 max-h-48 lg:max-h-none"></div>
+      </aside>
 
-// === 自訂 SVG 圖標組 (確保獨立渲染不依賴外部 Icon 庫) ===
-const Icons = {
-  Terminal: () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  ),
-  Shield: ({ className = "w-5 h-5" }) => (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-    </svg>
-  ),
-  Lock: () => (
-    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  ),
-  Unlock: () => (
-    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-    </svg>
-  ),
-  Refresh: () => (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 12H16" />
-    </svg>
-  ),
-  Code: () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-    </svg>
-  ),
-  Sparkles: () => (
-    <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-    </svg>
-  ),
-  LightBulb: () => (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-    </svg>
-  )
-};
+      <main class="flex-1 flex flex-col p-4 md:p-6 space-y-6 overflow-y-auto bg-slate-900">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-2">
+            <span id="levelTitle" class="px-2 py-0.5 bg-emerald-950 text-emerald-400 text-xs font-bold rounded-full border border-emerald-800"></span>
+            <h2 id="levelSubtitle" class="text-xl md:text-2xl font-bold text-white"></h2>
+          </div>
+          <button id="toggleHint" class="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors bg-amber-950/30 border border-amber-900/50 px-3 py-1.5 rounded-md self-start md:self-auto">
+            <span data-icon="bulb"></span>
+            <span id="hintButtonText">獲取提示</span>
+          </button>
+        </div>
 
-// === 關卡數據定義 (Level 1 ~ 10) ===
-const LEVELS = [
-  {
-    id: 1,
-    title: "Level 1",
-    subtitle: "無任何過濾的起步",
-    params: { name: "test" },
-    phpCode: `<?php 
+        <div id="hintBox" class="hidden bg-amber-950/20 border-l-4 border-amber-500 p-4 rounded-r-lg text-amber-200 text-sm space-y-1">
+          <span class="font-bold block">課堂通關指引：</span>
+          <p id="hintText"></p>
+        </div>
+
+        <div class="border border-slate-700 rounded-xl overflow-hidden bg-slate-950 shadow-2xl flex flex-col">
+          <div class="bg-slate-900 px-4 py-2 flex items-center gap-3 border-b border-slate-800">
+            <div class="flex gap-1.5 shrink-0">
+              <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+            </div>
+            <form id="urlForm" class="flex-1 flex items-center bg-slate-950 rounded-lg px-3 py-1 border border-slate-800 text-slate-300 text-xs font-mono min-w-0">
+              <span class="text-slate-600 select-none mr-1">URL:</span>
+              <input id="urlInput" type="text" class="bg-transparent w-full focus:outline-none text-slate-200 min-w-0">
+              <button type="submit" class="text-slate-500 hover:text-white ml-2" data-icon="code"></button>
+            </form>
+          </div>
+          <div class="bg-white h-72 relative">
+            <iframe id="sandboxFrame" title="XSS Sandbox" sandbox="allow-scripts" class="w-full h-full border-none"></iframe>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 rounded-xl border border-slate-800 p-4">
+          <div class="flex items-center gap-2 mb-3 text-slate-300 font-bold text-sm">
+            <span data-icon="code"></span>
+            <span>實時 HTML 渲染結構檢視</span>
+            <span class="hidden md:inline text-xs text-slate-500 font-normal">(觀察 Payload 於 HTML 中的變化)</span>
+          </div>
+          <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 overflow-x-auto text-xs font-mono text-emerald-400 max-h-48">
+            <pre id="htmlView"></pre>
+          </div>
+        </div>
+      </main>
+
+      <section class="w-full lg:w-96 bg-slate-950 border-t lg:border-t-0 lg:border-l border-slate-800 flex flex-col">
+        <div class="flex border-b border-slate-800 text-xs font-bold text-slate-400 bg-slate-950">
+          <button class="tabBtn flex-1 py-3 text-center border-b-2 transition-colors" data-tab="mission">任務說明</button>
+          <button class="tabBtn flex-1 py-3 text-center border-b-2 transition-colors" data-tab="code">PHP 原始碼</button>
+          <button class="tabBtn flex-1 py-3 text-center border-b-2 transition-colors" data-tab="defense">安全防禦</button>
+        </div>
+        <div class="flex-1 p-6 overflow-y-auto space-y-4">
+          <div id="missionPanel" class="tabPanel space-y-4">
+            <div class="space-y-2">
+              <h3 class="text-md font-bold text-white flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>本關挑戰任務</h3>
+              <p id="missionText" class="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-lg border border-slate-800"></p>
+            </div>
+            <div class="space-y-2">
+              <h3 class="text-md font-bold text-white flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span>核心安全觀念</h3>
+              <div id="conceptText" class="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-lg border border-slate-800 whitespace-pre-line"></div>
+            </div>
+          </div>
+          <div id="codePanel" class="tabPanel hidden space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-md font-bold text-white">PHP 漏洞源碼</h3>
+              <span class="text-xs text-rose-400 bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-900">Vulnerable</span>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-lg border border-slate-800 font-mono text-xs overflow-x-auto text-slate-200 leading-relaxed"><pre id="phpCodeText"></pre></div>
+          </div>
+          <div id="defensePanel" class="tabPanel hidden space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-md font-bold text-white">安全修補方案</h3>
+              <span class="text-xs text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-900">Secure</span>
+            </div>
+            <div id="defenseText" class="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-lg border border-slate-800 whitespace-pre-line"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="successModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-950 border border-emerald-500 rounded-2xl max-w-md w-full p-6 text-center space-y-6 shadow-2xl shadow-emerald-900/20">
+      <div class="w-16 h-16 bg-emerald-950 text-emerald-400 border border-emerald-500 rounded-full flex items-center justify-center mx-auto text-3xl font-bold shadow-lg shadow-emerald-950/50">✓</div>
+      <div class="space-y-2">
+        <h3 class="text-2xl font-black text-white">挑戰成功！</h3>
+        <p class="text-slate-400 text-sm font-normal">您已成功在瀏覽器中引發 XSS 彈窗，返回值：</p>
+        <div class="bg-slate-900 border border-slate-800 py-2 px-4 rounded-lg text-emerald-400 font-mono font-bold text-sm inline-block">alert(<span id="successMsg"></span>)</div>
+      </div>
+      <div class="bg-slate-900/50 p-4 rounded-xl text-left border border-slate-800 space-y-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">安全修補思維：</span>
+        <p class="text-xs text-slate-300 leading-relaxed">簡單的黑名單極易遭到各種大小寫、雙寫或實體編碼繞過。最理想的做法依然是利用 HTML 實體轉義、嚴謹的引號閉合處理，以及限制連結協議為 http 或 https。</p>
+      </div>
+      <div class="flex gap-3">
+        <button id="stayLevel" class="flex-1 py-3 rounded-lg text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 font-bold transition-all text-sm">留在本關探索</button>
+        <button id="nextLevel" class="flex-1 py-3 rounded-lg text-white bg-emerald-600 hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-900/40 font-bold transition-all text-sm">前往下一關 →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const icons = {
+      shield: '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>',
+      lock: '<svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>',
+      unlock: '<svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>',
+      refresh: '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 12H16" /></svg>',
+      code: '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>',
+      bulb: '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>'
+    };
+
+    const LEVELS = [
+      { id: 1, title: 'Level 1', subtitle: '無任何過濾的起步', params: { name: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = $_GET["name"];
 echo "<h2 align=center>欢迎用户".$str."</h2>";
-?>`,
-    mission: "這是最基礎的反射型 XSS。後端直接將 GET 傳入的 name 參數拼接到頁面上，完全沒有進行任何過濾與編碼。請嘗試注入一個簡單的腳本標籤來觸發彈窗。",
-    concept: "【反射型 XSS 基礎成因】\n當 Web 應用程式在未對使用者輸入進行編碼、轉義的情況下，直接將輸入反射回 HTML 回應中，瀏覽器會將該輸入視為可執行的代碼。此處 $str 直接拼接到 <h2> 中，注入 <script> 標籤即可被直接執行。",
-    defense: "【HTML 實體編碼 (Entity Encoding)】\n在 HTML 標籤內文（Text Context）輸出使用者輸入時，應使用 htmlspecialchars() 來轉義 HTML 特殊字元。\n\n安全修補方案：\necho \"<h2 align=center>欢迎用户\".htmlspecialchars($str, ENT_QUOTES, 'UTF-8').\"</h2>\";",
-    hint: "輸入基本的 JavaScript 標籤：<script>alert(1)</script> 即可通關。"
-  },
-  {
-    id: 2,
-    title: "Level 2",
-    subtitle: "閉合屬性標籤",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '這是最基礎的反射型 XSS。後端直接將 GET 傳入的 name 參數拼接到頁面上，完全沒有進行任何過濾與編碼。請嘗試注入一個簡單的腳本標籤來觸發彈窗。', concept: '【反射型 XSS 基礎成因】\n當 Web 應用程式在未對使用者輸入進行編碼、轉義的情況下，直接將輸入反射回 HTML 回應中，瀏覽器會將該輸入視為可執行的代碼。此處 $str 直接拼接到 <h2> 中，注入 <script> 標籤即可被直接執行。', defense: '【HTML 實體編碼 (Entity Encoding)】\n在 HTML 標籤內文（Text Context）輸出使用者輸入時，應使用 htmlspecialchars() 來轉義 HTML 特殊字元。\n\n安全修補方案：\necho "<h2 align=center>欢迎用户".htmlspecialchars($str, ENT_QUOTES, \'UTF-8\')."</h2>";', hint: '輸入基本的 JavaScript 標籤：<script>alert(1)<\/script> 即可通關。' },
+      { id: 2, title: 'Level 2', subtitle: '閉合屬性標籤', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = $_GET["keyword"];
 echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.</h2>".'<center>
@@ -86,38 +178,18 @@ echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.
 <input type=submit name=submit value="搜索"/>
 </form>
 </center>';
-?>`,
-    mission: "後端對搜尋提示 <h2> 處進行了 htmlspecialchars() 編碼，但卻直接將 $str 輸出在 <input> 標籤的 value 屬性中。請試著打破這條屬性限制！",
-    concept: "【標籤屬性閉合 (Breaking Attributes)】\n雖然 <h2> 的地方安全了，但 <input value=\"...\"> 內部的字串是直接拼接的。攻擊者可以輸入雙引號 \" 提早結束 value 屬性，並使用 > 來關閉 <input> 標籤，然後重新開啟惡意的 <script> 標籤。",
-    defense: "【屬性編碼】\n凡是置於 HTML 屬性內（Attribute Context）的變數，也必須進行完整的 HTML 編碼，特別是引號的部分。\n\n安全修補方案：\necho '<input name=keyword value=\"'.htmlspecialchars($str, ENT_QUOTES, 'UTF-8').'\">';",
-    hint: "使用雙引號與角括號來切斷標籤：\"><script>alert(1)</script>，或者利用事件：\" onclick=\"alert(1)"
-  },
-  {
-    id: 3,
-    title: "Level 3",
-    subtitle: "單引號閉合與事件驅動",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '後端對搜尋提示 <h2> 處進行了 htmlspecialchars() 編碼，但卻直接將 $str 輸出在 <input> 標籤的 value 屬性中。請試著打破這條屬性限制！', concept: '【標籤屬性閉合 (Breaking Attributes)】\n雖然 <h2> 的地方安全了，但 <input value="..."> 內部的字串是直接拼接的。攻擊者可以輸入雙引號 " 提早結束 value 屬性，並使用 > 來關閉 <input> 標籤，然後重新開啟惡意的 <script> 標籤。', defense: '【屬性編碼】\n凡是置於 HTML 屬性內（Attribute Context）的變數，也必須進行完整的 HTML 編碼，特別是引號的部分。\n\n安全修補方案：\necho \'<input name=keyword value="\'.htmlspecialchars($str, ENT_QUOTES, \'UTF-8\').\'">\';', hint: '使用雙引號與角括號來切斷標籤："><script>alert(1)<\/script>，或者利用事件：" onclick="alert(1)' },
+      { id: 3, title: 'Level 3', subtitle: '單引號閉合與事件驅動', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = $_GET["keyword"];
 echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.</h2>"."<center>
 <form action=level3.php method=GET>
-<input name=keyword value='".htmlspecialchars($str)."'>	
+<input name=keyword value='".htmlspecialchars($str)."'>
 <input type=submit name=submit value=搜索 />
 </form>
 </center>";
-?>`,
-    mission: "後端在 <input> 標籤的輸出也套用了 htmlspecialchars()，且屬性值是由單引號 ' 包裹。然而，預設的 htmlspecialchars() 能防得住單引號嗎？",
-    concept: "【預設編碼旗標漏洞】\n在 PHP 中，如果不帶引號參數調用 htmlspecialchars($str)，預設只會轉義雙引號（相當於 ENT_COMPAT 旗標），而單引號不會被轉義！由於 input 的屬性是由單引號 ' 包裹，我們依然可以用單引號閉合屬性，再塞入 HTML 事件。",
-    defense: "【嚴格的編碼標準】\n在 PHP 中使用 htmlspecialchars 時，必須明確傳入 ENT_QUOTES 參數，以便同時轉義單、雙引號（&quot; 和 &#039;）。\n\n安全修補方案：\necho \"<input name=keyword value='\".htmlspecialchars($str, ENT_QUOTES, 'UTF-8').\"'>\";",
-    hint: "利用單引號閉合屬性並添加事件處理器，無須使用 < 或 >：' onclick='alert(1)（點擊輸入框觸發）或 ' onfocus='alert(1)' autofocus='（自動觸發）"
-  },
-  {
-    id: 4,
-    title: "Level 4",
-    subtitle: "過濾角括號與事件注入",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: "後端在 <input> 標籤的輸出也套用了 htmlspecialchars()，且屬性值是由單引號 ' 包裹。然而，預設的 htmlspecialchars() 能防得住單引號嗎？", concept: "【預設編碼旗標漏洞】\n在 PHP 中，如果不帶引號參數調用 htmlspecialchars($str)，預設只會轉義雙引號（相當於 ENT_COMPAT 旗標），而單引號不會被轉義！由於 input 的屬性是由單引號 ' 包裹，我們依然可以用單引號閉合屬性，再塞入 HTML 事件。", defense: '【嚴格的編碼標準】\n在 PHP 中使用 htmlspecialchars 時，必須明確傳入 ENT_QUOTES 參數，以便同時轉義單、雙引號（&quot; 和 &#039;）。\n\n安全修補方案：\necho "<input name=keyword value=\'".htmlspecialchars($str, ENT_QUOTES, \'UTF-8\')."\'>";', hint: "利用單引號閉合屬性並添加事件處理器，無須使用 < 或 >：' onclick='alert(1)（點擊輸入框觸發）或 ' onfocus='alert(1)' autofocus='（自動觸發）" },
+      { id: 4, title: 'Level 4', subtitle: '過濾角括號與事件注入', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = $_GET["keyword"];
 $str2=str_replace(">","",$str);
@@ -128,18 +200,8 @@ echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.
 <input type=submit name=submit value=搜索 />
 </form>
 </center>';
-?>`,
-    mission: "後端使用 str_replace 將 < 和 > 完全移除。這意味著我們無法再構建任何自訂 HTML 標籤。但我們真的需要標籤才能執行 JS 嗎？",
-    concept: "【無標籤 XSS (Tagless XSS)】\n雖然無法使用 <script> 或新標籤，但我們是在 <input> 屬性內部。只要用雙引號 \" 閉合 value，就能自由加入各類 HTML 互動事件（Event Handlers），完全不需要引入任何角括號。",
-    defense: "【停止依靠黑名單】\n移除 < 與 > 屬於典型的「黑名單過濾」，容易顧此失彼。正確防範依然是在輸出處實施完整的 htmlspecialchars() 編碼，使其無法閉合屬性引號。\n\n安全修補方案：\n<input name=keyword value=\"'.htmlspecialchars($str, ENT_QUOTES, 'UTF-8').'\">",
-    hint: "用雙引號閉合屬性，並使用事件觸發：\" onclick=\"alert(1) 或 \" onfocus=\"alert(1)\" autofocus=\""
-  },
-  {
-    id: 5,
-    title: "Level 5",
-    subtitle: "黑名單限制：偽協議繞過",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '後端使用 str_replace 將 < 和 > 完全移除。這意味著我們無法再構建任何自訂 HTML 標籤。但我們真的需要標籤才能執行 JS 嗎？', concept: '【無標籤 XSS (Tagless XSS)】\n雖然無法使用 <script> 或新標籤，但我們是在 <input> 屬性內部。只要用雙引號 " 閉合 value，就能自由加入各類 HTML 互動事件（Event Handlers），完全不需要引入任何角括號。', defense: '【停止依靠黑名單】\n移除 < 與 > 屬於典型的「黑名單過濾」，容易顧此失彼。正確防範依然是在輸出處實施完整的 htmlspecialchars() 編碼，使其無法閉合屬性引號。\n\n安全修補方案：\n<input name=keyword value="\'.htmlspecialchars($str, ENT_QUOTES, \'UTF-8\').\'">', hint: '用雙引號閉合屬性，並使用事件觸發：" onclick="alert(1) 或 " onfocus="alert(1)" autofocus="' },
+      { id: 5, title: 'Level 5', subtitle: '黑名單限制：偽協議繞過', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = strtolower($_GET["keyword"]);
 $str2=str_replace("<script","<scr_ipt",$str);
@@ -150,18 +212,8 @@ echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.
 <input type=submit name=submit value=搜索 />
 </form>
 </center>';
-?>`,
-    mission: "後端將輸入轉為小寫後，防禦機制升級：將 <script 替換為 <scr_ipt，同時將 on 替換成 o_n（破壞了所有事件）。我們還能從哪裡執行 JS 呢？",
-    concept: "【利用 javascript: 偽協議 (Pseudo-protocol)】\n因為我們沒過濾 <、>、\"，我們可以閉合 input 並新建一個自訂標籤。後端主要封鎖了 <script 與 on 開頭的事件，但我們可以使用 <a> 標籤的 href 屬性，調用 javascript: 偽協議執行代碼！",
-    defense: "【全面安全編碼與通訊協定校驗】\n黑名單過濾無法全面，應對所有屬性、文字輸出實施 HTML 安全編碼。若涉及超連結輸出，還須對網址的通訊協定（Protocol）實施白名單檢查（僅允許 http/https）。\n\n安全修補方案：\n<input name=keyword value=\"'.htmlspecialchars($str, ENT_QUOTES, 'UTF-8').'\">",
-    hint: "閉合 input 並注入超連結：\"> <a href=\"javascript:alert(1)\">點我通關</a>"
-  },
-  {
-    id: 6,
-    title: "Level 6",
-    subtitle: "大小寫混淆繞過",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '後端將輸入轉為小寫後，防禦機制升級：將 <script 替換為 <scr_ipt，同時將 on 替換成 o_n（破壞了所有事件）。我們還能從哪裡執行 JS 呢？', concept: '【利用 javascript: 偽協議 (Pseudo-protocol)】\n因為我們沒過濾 <、>、"，我們可以閉合 input 並新建一個自訂標籤。後端主要封鎖了 <script 與 on 開頭的事件，但我們可以使用 <a> 標籤的 href 屬性，調用 javascript: 偽協議執行代碼！', defense: '【全面安全編碼與通訊協定校驗】\n黑名單過濾無法全面，應對所有屬性、文字輸出實施 HTML 安全編碼。若涉及超連結輸出，還須對網址的通訊協定（Protocol）實施白名單檢查（僅允許 http/https）。\n\n安全修補方案：\n<input name=keyword value="\'.htmlspecialchars($str, ENT_QUOTES, \'UTF-8\').\'">', hint: '閉合 input 並注入超連結："> <a href="javascript:alert(1)">點我通關</a>' },
+      { id: 6, title: 'Level 6', subtitle: '大小寫混淆繞過', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = $_GET["keyword"];
 $str2=str_replace("<script","<scr_ipt",$str);
@@ -175,18 +227,8 @@ echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.
 <input type=submit name=submit value=搜索 />
 </form>
 </center>';
-?>`,
-    mission: "後端一口氣將 script、on、src、data、href 全部替換，封鎖了上一關的管道。但仔細觀察後端程式碼，它是否漏掉了什麼步驟？",
-    concept: "【大小寫敏感性缺陷 (Case Sensitivity Bypass)】\n後端的 str_replace 是精確比對的（Case-sensitive），但網頁瀏覽器在解析 HTML 標籤、事件與協定時，是不區分大小寫的！由於後端在進行取代前，沒有使用 strtolower 把字串轉為全小寫，所以大寫或混淆大小寫的關鍵字會被直接放行。",
-    defense: "【避免區分大小寫的黑名單】\n雖然可以使用 str_ireplace 進行不區分大小寫的替換，但黑名單依然是不安全的防禦思維。請一律使用安全的編碼函數。\n\n安全修補方案：\necho '<input name=keyword value=\"'.htmlspecialchars($str, ENT_QUOTES, 'UTF-8').'\">';",
-    hint: "嘗試將關鍵字中的字元大寫以繞過過濾：\" Onclick=\"alert(1) 或 \"> <a Href=\"Javascript:alert(1)\">點我</a>"
-  },
-  {
-    id: 7,
-    title: "Level 7",
-    subtitle: "雙寫關鍵字繞過",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '後端一口氣將 script、on、src、data、href 全部替換，封鎖了上一關的管道。但仔細觀察後端程式碼，它是否漏掉了什麼步驟？', concept: '【大小寫敏感性缺陷 (Case Sensitivity Bypass)】\n後端的 str_replace 是精確比對的（Case-sensitive），但網頁瀏覽器在解析 HTML 標籤、事件與協定時，是不區分大小寫的！由於後端在進行取代前，沒有使用 strtolower 把字串轉為全小寫，所以大寫或混淆大小寫的關鍵字會被直接放行。', defense: '【避免區分大小寫的黑名單】\n雖然可以使用 str_ireplace 進行不區分大小寫的替換，但黑名單依然是不安全的防禦思維。請一律使用安全的編碼函數。\n\n安全修補方案：\necho \'<input name=keyword value="\'.htmlspecialchars($str, ENT_QUOTES, \'UTF-8\').\'">\';', hint: '嘗試將關鍵字中的字元大寫以繞過過濾：" Onclick="alert(1) 或 "> <a Href="Javascript:alert(1)">點我</a>' },
+      { id: 7, title: 'Level 7', subtitle: '雙寫關鍵字繞過', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = strtolower($_GET["keyword"]);
 $str2=str_replace("script","",$str);
@@ -200,18 +242,8 @@ echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.
 <input type=submit name=submit value=搜索 />
 </form>
 </center>';
-?>`,
-    mission: "這一關後端加上了 strtolower，且不再是加底線，而是直接將關鍵字 script、on、href 等「刪除」為空字串。這能杜絕攻擊嗎？",
-    concept: "【遞迴過濾缺陷 / 雙寫繞過 (Double-Write Bypass)】\n當後端採用 str_replace(\"bad\", \"\", $input) 且只執行一次時，攻擊者可以把關鍵字拆開並「嵌套」在中間。例如：輸入 scscriptript，當中間的 script 被抹除後，左右兩邊殘留的 sc 和 ript 就會重新組裝成 script！",
-    defense: "【停止不安全之刪除過濾】\n利用字串刪除來做安全過濾是極度危險的。請拋棄這類邏輯，使用 HTML 實體轉義即可徹底封死這條路。\n\n安全修補方案：\necho '<input name=keyword value=\"'.htmlspecialchars($str, ENT_QUOTES, 'UTF-8').'\">';",
-    hint: "利用嵌套關鍵字注入：\"> <scscriptript>alert(1)</scscriptript>，或利用 oonn 被刪除 on 後拼成 on 的特性：\" oonnclick=\"alert(1)"
-  },
-  {
-    id: 8,
-    title: "Level 8",
-    subtitle: "HTML 實體編碼繞過",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '這一關後端加上了 strtolower，且不再是加底線，而是直接將關鍵字 script、on、href 等「刪除」為空字串。這能杜絕攻擊嗎？', concept: '【遞迴過濾缺陷 / 雙寫繞過 (Double-Write Bypass)】\n當後端採用 str_replace("bad", "", $input) 且只執行一次時，攻擊者可以把關鍵字拆開並「嵌套」在中間。例如：輸入 scscriptript，當中間的 script 被抹除後，左右兩邊殘留的 sc 和 ript 就會重新組裝成 script！', defense: '【停止不安全之刪除過濾】\n利用字串刪除來做安全過濾是極度危險的。請拋棄這類邏輯，使用 HTML 實體轉義即可徹底封死這條路。\n\n安全修補方案：\necho \'<input name=keyword value="\'.htmlspecialchars($str, ENT_QUOTES, \'UTF-8\').\'">\';', hint: '利用嵌套關鍵字注入："> <scscriptript>alert(1)</scscriptript>，或利用 oonn 被刪除 on 後拼成 on 的特性：" oonnclick="alert(1)' },
+      { id: 8, title: 'Level 8', subtitle: 'HTML 實體編碼繞過', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = strtolower($_GET["keyword"]);
 $str2=str_replace("script","scr_ipt",$str);
@@ -220,26 +252,10 @@ $str4=str_replace("src","sr_c",$str3);
 $str5=str_replace("data","da_ta",$str4);
 $str6=str_replace("href","hr_ef",$str5);
 $str7=str_replace('"','&quot',$str6);
-
-echo '<center>
-<form action=level8.php method=GET>
-<input name=keyword value="'.htmlspecialchars($str).'">
-<input type=submit name=submit value=添加友情链接 />
-</form>
-</center>';
+echo '<center><form action=level8.php method=GET><input name=keyword value="'.htmlspecialchars($str).'"><input type=submit name=submit value=添加友情链接 /></form></center>';
 echo '<center><BR><a href="'.$str7.'">友情链接</a></center>';
-?>`,
-    mission: "本關的輸出點轉移到了下方「友情連結」的 <a href=\"...\"> 中。後端把雙引號 \" 轉義成 &quot，且將 script 替換為 scr_ipt。我們無法閉合屬性，要如何執行 JavaScript 呢？",
-    concept: "【HTML 實體解碼優先性】\n網頁瀏覽器在解析 HTML 屬性內（例如 href 內）的網址時，會先自動對其中的 HTML 實體編碼進行解碼，然後才去執行其解析。這意謂著如果我們把 javascript: 裡的字元轉換成 HTML 十進位實體編碼，如 j 轉成 &#106;，後端的字串比對看不到 javascript 關鍵字，但瀏覽器渲染連結並點擊時，會先解碼成 javascript: 並執行！",
-    defense: "【URL 協定安全白名單】\n在動態輸出網址時，必須檢驗其協定。應確保變數只以 http:// 或 https:// 開頭，禁止塞入 javascript: 等偽協定。\n\n安全修補方案：\n利用正則表達式確認連結是否以正規協議開頭才允許渲染。",
-    hint: "將 javascript:alert(1) 中的關鍵字轉換為 HTML 實體編碼。例如：&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;:alert(1)，然後點擊生成出來的「友情連結」連結。"
-  },
-  {
-    id: 9,
-    title: "Level 9",
-    subtitle: "強檢測與註解繞過",
-    params: { keyword: "test" },
-    phpCode: `<?php 
+?>`, mission: '本關的輸出點轉移到了下方「友情連結」的 <a href="..."> 中。後端把雙引號 " 轉義成 &quot，且將 script 替換為 scr_ipt。我們無法閉合屬性，要如何執行 JavaScript 呢？', concept: '【HTML 實體解碼優先性】\n網頁瀏覽器在解析 HTML 屬性內（例如 href 內）的網址時，會先自動對其中的 HTML 實體編碼進行解碼，然後才去執行其解析。這意謂著如果我們把 javascript: 裡的字元轉換成 HTML 十進位實體編碼，後端的字串比對看不到 javascript 關鍵字，但瀏覽器渲染連結並點擊時，會先解碼成 javascript: 並執行！', defense: '【URL 協定安全白名單】\n在動態輸出網址時，必須檢驗其協定。應確保變數只以 http:// 或 https:// 開頭，禁止塞入 javascript: 等偽協定。\n\n安全修補方案：\n利用正則表達式確認連結是否以正規協議開頭才允許渲染。', hint: '將 javascript:alert(1) 中的關鍵字轉換為 HTML 實體編碼。例如：&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;:alert(1)，然後點擊生成出來的「友情連結」連結。' },
+      { id: 9, title: 'Level 9', subtitle: '強檢測與註解繞過', params: { keyword: 'test' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = strtolower($_GET["keyword"]);
 $str2=str_replace("script","scr_ipt",$str);
@@ -248,30 +264,18 @@ $str4=str_replace("src","sr_c",$str3);
 $str5=str_replace("data","da_ta",$str4);
 $str6=str_replace("href","hr_ef",$str5);
 $str7=str_replace('"','&quot',$str6);
-
 if(false===strpos($str7,'http://')) {
   echo '<center><BR><a href="您的链接不合法？有没有！">友情链接</a></center>';
 } else {
   echo '<center><BR><a href="'.$str7.'">友情链接</a></center>';
 }
-?>`,
-    mission: "相較於 Level 8，這一關多了一個檢查：輸入內容中必須包含 http:// 協議，否則視為不合法連結。如何在執行 JS 的同時塞入這個無效的協議呢？",
-    concept: "【利用代碼註解繞過字串比對】\n既然代碼裡必須含有 http://，我們可以把它作為 JavaScript 代碼中的單行註解（//http://）附在後面。這樣一來，後端比對成功放行，而瀏覽器解碼執行 JavaScript 時，http:// 就只是個註解，不會影響前面的惡意腳本執行！",
-    defense: "【白名單硬性頭部比對】\n不應單純使用 strpos 檢查，而應使用正則表達式或 URL 解析器確認字串是否「僅開頭」為 http 或 https 協議。\n\n安全修補方案：\n使用 filter_var($str, FILTER_VALIDATE_URL) 確保 URL 結構安全合法。",
-    hint: "在 Level 8 實體編碼的 Payload 後方加上雙斜線與協議註解：&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;:alert(1)//http://"
-  },
-  {
-    id: 10,
-    title: "Level 10",
-    subtitle: "隱藏屬性覆寫",
-    params: { keyword: "test", t_sort: "click" },
-    phpCode: `<?php 
+?>`, mission: '相較於 Level 8，這一關多了一個檢查：輸入內容中必須包含 http:// 協議，否則視為不合法連結。如何在執行 JS 的同時塞入這個無效的協議呢？', concept: '【利用代碼註解繞過字串比對】\n既然代碼裡必須含有 http://，我們可以把它作為 JavaScript 代碼中的單行註解（//http://）附在後面。這樣一來，後端比對成功放行，而瀏覽器解碼執行 JavaScript 時，http:// 就只是個註解，不會影響前面的惡意腳本執行！', defense: '【白名單硬性頭部比對】\n不應單純使用 strpos 檢查，而應使用正則表達式或 URL 解析器確認字串是否「僅開頭」為 http 或 https 協議。\n\n安全修補方案：\n使用 filter_var($str, FILTER_VALIDATE_URL) 確保 URL 結構安全合法。', hint: '在 Level 8 實體編碼的 Payload 後方加上雙斜線與協議註解：&#106;&#97;&#118;&#97;&#115;&#99;&#114;&#105;&#112;&#116;:alert(1)//http://' },
+      { id: 10, title: 'Level 10', subtitle: '隱藏屬性覆寫', params: { keyword: 'test', t_sort: 'click' }, phpCode: `<?php 
 ini_set("display_errors", 0);
 $str = $_GET["keyword"];
 $str11 = $_GET["t_sort"];
 $str22=str_replace(">","",$str11);
 $str33=str_replace("<","",$str22);
-
 echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.</h2>".'<center>
 <form id=search>
 <input name="t_link" value="" type="hidden">
@@ -279,704 +283,263 @@ echo "<h2 align=center>没有找到和".htmlspecialchars($str)."相关的结果.
 <input name="t_sort" value="'.$str33.'" type="hidden">
 </form>
 </center>';
-?>`,
-    mission: "頁面上表面只有一個輸入框，但背後卻隱藏著數個 type=\"hidden\" 的參數。我們傳入的 t_sort 參數會進入其中一個隱藏欄位，且去除了 < 和 >。你能把它找出來並觸發彈窗嗎？",
-    concept: "【隱藏欄位屬性覆寫 (Hidden Form Overwriting)】\n即便 <input> 的 type 屬性是 hidden，我們只要用雙引號 \" 閉合原來的 value 屬性，並在其後塞入一個全新的屬性：type=\"text\"！瀏覽器在解析重複屬性時，會優先解析先出現的。這樣隱藏框就會現形！再配合 autofocus onfocus=\"alert(1)\" 即可自動聚焦觸發 XSS。",
-    defense: "【隱藏參數亦需安全保護】\n隱藏欄位（Hidden fields）也是 HTML 的一部分，同樣是客戶端可操控的數據，必須接受完全一致的安全轉義與過濾。\n\n安全修補方案：\n在隱藏輸入框的 value 處同樣實施 htmlspecialchars(..., ENT_QUOTES) 安全防護。",
-    hint: "使用參數 t_sort 來覆寫屬性使其現形並自動聚焦：?keyword=test&t_sort=\" type=\"text\" onfocus=\"alert(1)\" autofocus=\" （請在模擬網址列尾端加入並按 Enter）"
-  }
-];
+?>`, mission: '頁面上表面只有一個輸入框，但背後卻隱藏著數個 type="hidden" 的參數。我們傳入的 t_sort 參數會進入其中一個隱藏欄位，且去除了 < 和 >。你能把它找出來並觸發彈窗嗎？', concept: '【隱藏欄位屬性覆寫 (Hidden Form Overwriting)】\n即便 <input> 的 type 屬性是 hidden，我們只要用雙引號 " 閉合原來的 value 屬性，並在其後塞入一個全新的屬性：type="text"！瀏覽器在解析重複屬性時，會優先解析先出現的。這樣隱藏框就會現形！再配合 autofocus onfocus="alert(1)" 即可自動聚焦觸發 XSS。', defense: '【隱藏參數亦需安全保護】\n隱藏欄位（Hidden fields）也是 HTML 的一部分，同樣是客戶端可操控的數據，必須接受完全一致的安全轉義與過濾。\n\n安全修補方案：\n在隱藏輸入框的 value 處同樣實施 htmlspecialchars(..., ENT_QUOTES) 安全防護。', hint: '使用參數 t_sort 來覆寫屬性使其現形並自動聚焦：?keyword=test&t_sort=" type="text" onfocus="alert(1)" autofocus=" （請在模擬網址列尾端加入並按 Enter）' }
+    ];
 
-export default function App() {
-  const [currentLevelId, setCurrentLevelId] = useState(1);
-  const [solvedLevels, setSolvedLevels] = useState([]);
-  const [activeTab, setActiveTab] = useState('mission'); // 'mission' | 'code' | 'defense'
-  const [showHint, setShowHint] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
-  
-  // 模擬網址與查詢參數狀態
-  const [simulatedUrl, setSimulatedUrl] = useState("");
-  const [urlParams, setUrlParams] = useState({});
-  const [iframeSrcDoc, setIframeSrcDoc] = useState("");
+    let currentLevelId = 1;
+    let activeTab = 'mission';
+    let solvedLevels = [];
+    let urlParams = {};
+    let simulatedUrl = '';
 
-  const currentLevel = LEVELS.find(l => l.id === currentLevelId);
-
-  // 初始化進度
-  useEffect(() => {
-    const saved = localStorage.getItem('xss_labs_solved');
-    if (saved) {
-      try {
-        setSolvedLevels(JSON.parse(saved));
-      } catch (e) {}
+    function htmlspecialchars(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-  }, []);
 
-  // 當切換關卡時，初始化網址列
-  useEffect(() => {
-    if (currentLevel) {
-      setUrlParams({ ...currentLevel.params });
-      setShowHint(false);
+    function currentLevel() {
+      return LEVELS.find(level => level.id === currentLevelId);
     }
-  }, [currentLevelId]);
 
-  // 當參數改變時，動態更新模擬網址列與重新渲染 iframe
-  useEffect(() => {
-    if (!currentLevel) return;
-    
-    // 生成網址列字串
-    const query = Object.entries(urlParams)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join("&");
-    setSimulatedUrl(`http://xss-labs.local/${currentLevel.id}.php?${query}`);
-
-    // 生成模擬 PHP 渲染後的 HTML 內容
-    const pageHtml = generateSimulatedHtml(currentLevel.id, urlParams);
-    setIframeSrcDoc(pageHtml);
-  }, [urlParams, currentLevelId]);
-
-  // 監聽 iframe 傳遞過來的成功警報 (XSS alert 觸發)
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data && event.data.type === 'XSS_SUCCESS') {
-        const triggerMsg = event.data.msg || "1";
-        setSuccessMsg(triggerMsg);
-        setShowSuccessModal(true);
-        if (!solvedLevels.includes(currentLevelId)) {
-          const newSolved = [...solvedLevels, currentLevelId];
-          setSolvedLevels(newSolved);
-          localStorage.setItem('xss_labs_solved', JSON.stringify(newSolved));
-        }
-      }
-      if (event.data && event.data.type === 'XSS_FORM_SUBMIT') {
-        // 當模擬網頁內的表單提交時，更新外層 React 的參數狀態
-        setUrlParams(prev => ({ ...prev, ...event.data.params }));
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [currentLevelId, solvedLevels]);
-
-  // 處理手動修改網址列的 Enter 提交事件
-  const handleUrlSubmit = (e) => {
-    e.preventDefault();
-    try {
-      // 嘗試解析 query string
-      const searchStr = simulatedUrl.includes('?') ? simulatedUrl.split('?')[1] : simulatedUrl;
-      const urlSearch = new URLSearchParams(searchStr);
-      const newParams = {};
-      urlSearch.forEach((value, key) => {
-        newParams[key] = value;
-      });
-      setUrlParams(newParams);
-    } catch (err) {
-      console.error("URL 解析失敗:", err);
+    function encodeQuery(params) {
+      return Object.keys(params).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
     }
-  };
 
-  const handleNextLevel = () => {
-    setShowSuccessModal(false);
-    if (currentLevelId < LEVELS.length) {
-      setCurrentLevelId(prev => prev + 1);
-      setActiveTab('mission');
+    function parseUrlInput(value) {
+      const searchStr = value.includes('?') ? value.split('?').slice(1).join('?') : value;
+      const parsed = new URLSearchParams(searchStr);
+      const result = {};
+      parsed.forEach((val, key) => { result[key] = val; });
+      return result;
     }
-  };
 
-  const resetProgress = () => {
-    if (window.confirm("確定要重置所有關卡的學習進度嗎？")) {
-      setSolvedLevels([]);
-      localStorage.removeItem('xss_labs_solved');
-      setCurrentLevelId(1);
-    }
-  };
-
-  // === 關鍵：根據當前關卡的 PHP 邏輯渲染 HTML ===
-  const generateSimulatedHtml = (levelId, params) => {
-    const injectAlertInterceptor = `
-      <script>
-        // 覆寫 alert 與 confirm 以發送成功通關訊號
-        window.alert = function(msg) {
-          window.parent.postMessage({ type: 'XSS_SUCCESS', msg: msg }, '*');
-        };
-        window.confirm = function(msg) {
-          window.parent.postMessage({ type: 'XSS_SUCCESS', msg: msg }, '*');
-          return true;
-        };
-        
-        // 攔截表單提交，模擬真實傳送並反饋給外層網址列
-        document.addEventListener('DOMContentLoaded', () => {
-          const form = document.querySelector('form');
+    function generateSimulatedHtml(levelId, params) {
+      const injectAlertInterceptor = `<script>
+        window.alert = function(msg) { window.parent.postMessage({ type: 'XSS_SUCCESS', msg: msg }, '*'); };
+        window.confirm = function(msg) { window.parent.postMessage({ type: 'XSS_SUCCESS', msg: msg }, '*'); return true; };
+        document.addEventListener('DOMContentLoaded', function() {
+          var form = document.querySelector('form');
           if (form) {
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', function(e) {
               e.preventDefault();
-              const formData = new FormData(form);
-              const resultParams = {};
-              for (let [key, val] of formData.entries()) {
-                resultParams[key] = val;
-              }
-              resultParams['submit'] = 'submit';
+              var formData = new FormData(form);
+              var resultParams = {};
+              formData.forEach(function(val, key) { resultParams[key] = val; });
+              resultParams.submit = 'submit';
               window.parent.postMessage({ type: 'XSS_FORM_SUBMIT', params: resultParams }, '*');
             });
           }
         });
-      </script>
-    `;
-
-    const baseHeader = `
-      <style>
+      <\/script>`;
+      const baseHeader = `<style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #fcfcfd; color: #1f2937; padding: 24px; margin: 0; }
         h1 { color: #1e3a8a; font-size: 24px; margin-bottom: 16px; text-align: center; font-weight: 800; }
         h2 { color: #4b5563; font-size: 18px; margin-bottom: 24px; text-align: center; font-weight: 500; }
         h3 { font-size: 14px; color: #9ca3af; text-align: center; margin-top: 24px; }
         center { display: block; margin-top: 16px; margin-bottom: 16px; }
-        input[type="text"], input[type="search"], input:not([type="submit"]):not([type="hidden"]) {
-          padding: 8px 16px; border: 2px solid #d1d5db; border-radius: 6px; outline: none; width: 280px; transition: border-color 0.2s;
-        }
+        input[type="text"], input[type="search"], input:not([type="submit"]):not([type="hidden"]) { padding: 8px 16px; border: 2px solid #d1d5db; border-radius: 6px; outline: none; width: 280px; transition: border-color 0.2s; }
         input[type="text"]:focus { border-color: #3b82f6; }
-        input[type="submit"] {
-          padding: 8px 18px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-left: 8px; transition: background-color 0.2s;
-        }
+        input[type="submit"] { padding: 8px 18px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-left: 8px; transition: background-color 0.2s; }
         input[type="submit"]:hover { background-color: #2563eb; }
         a { color: #2563eb; text-decoration: none; font-weight: 600; border-bottom: 2px dashed #2563eb; padding-bottom: 2px; }
         a:hover { color: #1d4ed8; border-bottom-style: solid; }
         .box-container { max-width: 500px; margin: 0 auto; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f3f4f6; }
-      </style>
-    `;
+      </style>`;
 
-    switch(levelId) {
-      case 1: {
-        const name = params.name || '';
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 1</h1>
-              <h2>欢迎用户 ${name}</h2>
-              <center><div style="width:70px; height:70px; border-radius:50%; background:#dbeafe; display:flex; align-items:center; justify-content:center; margin:0 auto; font-size:32px;">👤</div></center>
-              <h3>payload的长度: ${name.length}</h3>
-            </div>
-          </body></html>`;
+      switch (levelId) {
+        case 1: {
+          const name = params.name || '';
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 1</h1><h2>欢迎用户 ${name}</h2><center><div style="width:70px;height:70px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:32px;">👤</div></center><h3>payload的长度: ${name.length}</h3></div></body></html>`;
+        }
+        case 2: {
+          const kw = params.keyword || '';
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 2</h1><h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2><center><form action="level2.php" method="GET"><input name="keyword" value="${kw}"><input type="submit" name="submit" value="搜索"/></form></center><h3>payload的长度: ${kw.length}</h3></div></body></html>`;
+        }
+        case 3: {
+          const kw = params.keyword || '';
+          const escaped = htmlspecialchars(kw);
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 3</h1><h2>没有找到和 ${escaped} 相关的结果.</h2><center><form action="level3.php" method="GET"><input name="keyword" value='${escaped}'><input type="submit" name="submit" value="搜索"/></form></center><h3>payload的长度: ${kw.length}</h3></div></body></html>`;
+        }
+        case 4: {
+          const kw = params.keyword || '';
+          const filtered = kw.replace(/>/g, '').replace(/</g, '');
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 4</h1><h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2><center><form action="level4.php" method="GET"><input name="keyword" value="${filtered}"><input type="submit" name="submit" value="搜索"/></form></center><h3>payload的长度: ${filtered.length}</h3></div></body></html>`;
+        }
+        case 5: {
+          const raw = params.keyword || '';
+          const kw = raw.toLowerCase();
+          const str3 = kw.replace(/<script/g, '<scr_ipt').replace(/on/g, 'o_n');
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 5</h1><h2>没有找到和 ${htmlspecialchars(raw)} 相关的结果.</h2><center><form action="level5.php" method="GET"><input name="keyword" value="${str3}"><input type="submit" name="submit" value="搜索"/></form></center><h3>payload的长度: ${str3.length}</h3></div></body></html>`;
+        }
+        case 6: {
+          const kw = params.keyword || '';
+          const str6 = kw.replace(/<script/g, '<scr_ipt').replace(/on/g, 'o_n').replace(/src/g, 'sr_c').replace(/data/g, 'da_ta').replace(/href/g, 'hr_ef');
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 6</h1><h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2><center><form action="level6.php" method="GET"><input name="keyword" value="${str6}"><input type="submit" name="submit" value="搜索"/></form></center><h3>payload的长度: ${str6.length}</h3></div></body></html>`;
+        }
+        case 7: {
+          const raw = params.keyword || '';
+          const str6 = raw.toLowerCase().replace(/script/g, '').replace(/on/g, '').replace(/src/g, '').replace(/data/g, '').replace(/href/g, '');
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 7</h1><h2>没有找到和 ${htmlspecialchars(raw)} 相关的结果.</h2><center><form action="level7.php" method="GET"><input name="keyword" value="${str6}"><input type="submit" name="submit" value="搜索"/></form></center><h3>payload的长度: ${str6.length}</h3></div></body></html>`;
+        }
+        case 8: {
+          const raw = params.keyword || '';
+          const str7 = raw.toLowerCase().replace(/script/g, 'scr_ipt').replace(/on/g, 'o_n').replace(/src/g, 'sr_c').replace(/data/g, 'da_ta').replace(/href/g, 'hr_ef').replace(/"/g, '&quot');
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 8</h1><center><form action="level8.php" method="GET"><input name="keyword" value="${htmlspecialchars(raw)}"><input type="submit" name="submit" value="添加友情链接"/></form></center><center><br/><a href="${str7}">友情链接</a></center><h3>payload的长度: ${str7.length}</h3></div></body></html>`;
+        }
+        case 9: {
+          const raw = params.keyword || '';
+          const str7 = raw.toLowerCase().replace(/script/g, 'scr_ipt').replace(/on/g, 'o_n').replace(/src/g, 'sr_c').replace(/data/g, 'da_ta').replace(/href/g, 'hr_ef').replace(/"/g, '&quot');
+          const linkHtml = str7.includes('http://') ? `<center><br/><a href="${str7}">友情链接</a></center>` : '<center><br/><a href="您的链接不合法？有没有！">友情链接</a></center>';
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 9</h1><center><form action="level9.php" method="GET"><input name="keyword" value="${htmlspecialchars(raw)}"><input type="submit" name="submit" value="添加友情链接"/></form></center>${linkHtml}<h3>payload的长度: ${str7.length}</h3></div></body></html>`;
+        }
+        case 10: {
+          const kw = params.keyword || '';
+          const tSort = params.t_sort || '';
+          const str33 = tSort.replace(/>/g, '').replace(/</g, '');
+          return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head><body><div class="box-container"><h1>欢迎来到 Level 10</h1><h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2><center><form id="search"><input name="t_link" value="" type="hidden"><input name="t_history" value="" type="hidden"><input name="t_sort" value="${str33}" type="hidden"></form></center><h3>payload的长度: ${kw.length}</h3></div></body></html>`;
+        }
+        default:
+          return '';
       }
-      case 2: {
-        const kw = params.keyword || '';
-        const escapedH2 = htmlspecialchars(kw);
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 2</h1>
-              <h2>没有找到和 ${escapedH2} 相关的结果.</h2>
-              <center>
-                <form action="level2.php" method="GET">
-                  <input name="keyword" value="${kw}">
-                  <input type="submit" name="submit" value="搜索"/>
-                </form>
-              </center>
-              <h3>payload的长度: ${kw.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 3: {
-        const kw = params.keyword || '';
-        const escaped = htmlspecialchars(kw); // 模擬 PHP 預設不轉義單引號
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 3</h1>
-              <h2>没有找到和 ${escaped} 相关的结果.</h2>
-              <center>
-                <form action="level3.php" method="GET">
-                  <input name="keyword" value='${escaped}'>
-                  <input type="submit" name="submit" value="搜索"/>
-                </form>
-              </center>
-              <h3>payload的长度: ${kw.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 4: {
-        const kw = params.keyword || '';
-        const filtered = kw.replace(/>/g, "").replace(/</g, "");
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 4</h1>
-              <h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2>
-              <center>
-                <form action="level4.php" method="GET">
-                  <input name="keyword" value="${filtered}">
-                  <input type="submit" name="submit" value="搜索"/>
-                </form>
-              </center>
-              <h3>payload的长度: ${filtered.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 5: {
-        const kw = (params.keyword || '').toLowerCase();
-        const str2 = kw.replace(/<script/g, "<scr_ipt");
-        const str3 = str2.replace(/on/g, "o_n");
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 5</h1>
-              <h2>没有找到和 ${htmlspecialchars(params.keyword || '')} 相关的结果.</h2>
-              <center>
-                <form action="level5.php" method="GET">
-                  <input name="keyword" value="${str3}">
-                  <input type="submit" name="submit" value="搜索"/>
-                </form>
-              </center>
-              <h3>payload的长度: ${str3.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 6: {
-        const kw = params.keyword || '';
-        const str2 = kw.replace(/<script/g, "<scr_ipt");
-        const str3 = str2.replace(/on/g, "o_n");
-        const str4 = str3.replace(/src/g, "sr_c");
-        const str5 = str4.replace(/data/g, "da_ta");
-        const str6 = str5.replace(/href/g, "hr_ef");
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 6</h1>
-              <h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2>
-              <center>
-                <form action="level6.php" method="GET">
-                  <input name="keyword" value="${str6}">
-                  <input type="submit" name="submit" value="搜索"/>
-                </form>
-              </center>
-              <h3>payload的长度: ${str6.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 7: {
-        const kw = (params.keyword || '').toLowerCase();
-        const str2 = kw.replace(/script/g, "");
-        const str3 = str2.replace(/on/g, "");
-        const str4 = str3.replace(/src/g, "");
-        const str5 = str4.replace(/data/g, "");
-        const str6 = str5.replace(/href/g, "");
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 7</h1>
-              <h2>没有找到和 ${htmlspecialchars(params.keyword || '')} 相关的结果.</h2>
-              <center>
-                <form action="level7.php" method="GET">
-                  <input name="keyword" value="${str6}">
-                  <input type="submit" name="submit" value="搜索"/>
-                </form>
-              </center>
-              <h3>payload的长度: ${str6.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 8: {
-        const kw = (params.keyword || '').toLowerCase();
-        const str2 = kw.replace(/script/g, "scr_ipt");
-        const str3 = str2.replace(/on/g, "o_n");
-        const str4 = str3.replace(/src/g, "sr_c");
-        const str5 = str4.replace(/data/g, "da_ta");
-        const str6 = str5.replace(/href/g, "hr_ef");
-        const str7 = str6.replace(/"/g, "&quot"); // 注意沒有分號，高保真還原關卡缺陷
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 8</h1>
-              <center>
-                <form action="level8.php" method="GET">
-                  <input name="keyword" value="${htmlspecialchars(params.keyword || '')}">
-                  <input type="submit" name="submit" value="添加友情链接"/>
-                </form>
-              </center>
-              <center><br/><a href="${str7}">友情链接</a></center>
-              <h3>payload的长度: ${str7.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 9: {
-        const kw = (params.keyword || '').toLowerCase();
-        const str2 = kw.replace(/script/g, "scr_ipt");
-        const str3 = str2.replace(/on/g, "o_n");
-        const str4 = str3.replace(/src/g, "sr_c");
-        const str5 = str4.replace(/data/g, "da_ta");
-        const str6 = str5.replace(/href/g, "hr_ef");
-        const str7 = str6.replace(/"/g, "&quot");
-        
-        const hasHttp = str7.includes("http://");
-        const linkHtml = hasHttp 
-          ? `<center><br/><a href="${str7}">友情链接</a></center>`
-          : `<center><br/><a href="您的链接不合法？有没有！">友情链接</a></center>`;
-
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 9</h1>
-              <center>
-                <form action="level9.php" method="GET">
-                  <input name="keyword" value="${htmlspecialchars(params.keyword || '')}">
-                  <input type="submit" name="submit" value="添加友情链接"/>
-                </form>
-              </center>
-              ${linkHtml}
-              <h3>payload的长度: ${str7.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      case 10: {
-        const kw = params.keyword || '';
-        const t_sort = params.t_sort || '';
-        const str22 = t_sort.replace(/>/g, "");
-        const str33 = str22.replace(/</g, "");
-        return `
-          <!DOCTYPE html><html><head><meta charset="utf-8">${baseHeader}${injectAlertInterceptor}</head>
-          <body>
-            <div class="box-container">
-              <h1>欢迎来到 Level 10</h1>
-              <h2>没有找到和 ${htmlspecialchars(kw)} 相关的结果.</h2>
-              <center>
-                <form id="search">
-                  <input name="t_link" value="" type="hidden">
-                  <input name="t_history" value="" type="hidden">
-                  <input name="t_sort" value="${str33}" type="hidden">
-                </form>
-              </center>
-              <h3>payload的长度: ${kw.length}</h3>
-            </div>
-          </body></html>`;
-      }
-      default:
-        return ``;
     }
-  };
 
-  return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
-      
-      {/* === 頂部導覽列 === */}
-      <header className="border-b border-slate-800 bg-slate-950 px-6 py-4 flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="bg-emerald-600 p-2 rounded-lg text-white shadow-md shadow-emerald-900/30">
-            <Icons.Shield className="w-6 h-6" />
+    function saveSolved() {
+      localStorage.setItem('xss_labs_solved', JSON.stringify(solvedLevels));
+    }
+
+    function renderIcons() {
+      $('[data-icon]').each(function() {
+        const icon = $(this).data('icon');
+        $(this).html(icons[icon] || '');
+      });
+    }
+
+    function renderProgress() {
+      $('#progressText').text(`${solvedLevels.length} / ${LEVELS.length} 關`);
+      $('#progressBar').css('width', `${(solvedLevels.length / LEVELS.length) * 100}%`);
+    }
+
+    function renderLevelList() {
+      const list = LEVELS.map(level => {
+        const active = level.id === currentLevelId;
+        const solved = solvedLevels.includes(level.id);
+        return `<button class="levelBtn w-full flex items-center justify-between p-3 rounded-lg transition-all text-left ${active ? 'bg-slate-800 text-white border-l-4 border-emerald-500 shadow-inner' : 'hover:bg-slate-900 text-slate-300'}" data-level="${level.id}">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="text-xs font-mono font-bold px-1.5 py-0.5 rounded ${active ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}">${level.id}</span>
+            <div class="min-w-0"><h4 class="text-sm font-semibold">${level.title}</h4><p class="text-xs text-slate-500 font-normal truncate">${level.subtitle}</p></div>
           </div>
-          <div>
-            <h1 className="text-xl font-black tracking-wider text-white">XSS LABS</h1>
-            <p className="text-xs text-slate-400">互動式安全實戰學習平台</p>
-          </div>
-        </div>
+          <div>${solved ? icons.unlock : icons.lock}</div>
+        </button>`;
+      }).join('');
+      $('#levelList').html(list);
+    }
 
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800 text-xs">
-            <span className="text-slate-400">整體學習進度:</span>
-            <span className="font-bold text-emerald-400">{solvedLevels.length} / {LEVELS.length} 關</span>
-            <div className="w-20 bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div 
-                className="bg-emerald-500 h-full transition-all duration-500" 
-                style={{ width: `${(solvedLevels.length / LEVELS.length) * 100}%` }}
-              />
-            </div>
-          </div>
-          
-          <button 
-            onClick={resetProgress}
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-400 transition-colors border border-slate-800 px-3 py-1.5 rounded-md hover:border-rose-900"
-          >
-            <Icons.Refresh />
-            重置進度
-          </button>
-        </div>
-      </header>
+    function renderTabs() {
+      $('.tabBtn').removeClass('border-emerald-500 text-emerald-400 bg-slate-900/50').addClass('border-transparent hover:text-slate-200');
+      $(`.tabBtn[data-tab="${activeTab}"]`).addClass('border-emerald-500 text-emerald-400 bg-slate-900/50').removeClass('border-transparent hover:text-slate-200');
+      $('.tabPanel').addClass('hidden');
+      $(`#${activeTab}Panel`).removeClass('hidden');
+    }
 
-      {/* === 主體區塊 === */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        
-        {/* === 左側欄：關卡導覽 === */}
-        <aside className="w-full lg:w-72 bg-slate-950 border-r border-slate-800 flex flex-col">
-          <div className="p-4 border-b border-slate-800 bg-slate-950/50">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">關卡列表</span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-48 lg:max-h-none">
-            {LEVELS.map((lvl) => {
-              const isSolved = solvedLevels.includes(lvl.id);
-              const isActive = currentLevelId === lvl.id;
-              return (
-                <button
-                  key={lvl.id}
-                  onClick={() => setCurrentLevelId(lvl.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-all text-left ${
-                    isActive 
-                      ? "bg-slate-800 text-white border-l-4 border-emerald-500 shadow-inner" 
-                      : "hover:bg-slate-900 text-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                      isActive ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-400"
-                    }`}>
-                      {lvl.id}
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-semibold">{lvl.title}</h4>
-                      <p className="text-xs text-slate-500 font-normal">{lvl.subtitle}</p>
-                    </div>
-                  </div>
-                  <div>
-                    {isSolved ? (
-                      <Icons.Unlock />
-                    ) : (
-                      <Icons.Lock />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
+    function renderCurrentLevel() {
+      const level = currentLevel();
+      simulatedUrl = `http://xss-labs.local/${level.id}.php?${encodeQuery(urlParams)}`;
+      const html = generateSimulatedHtml(level.id, urlParams);
 
-        {/* === 中間：模擬瀏覽器與即時 DOM 檢視 === */}
-        <main className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto bg-slate-900">
-          
-          {/* 關卡資訊與提示 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-emerald-950 text-emerald-400 text-xs font-bold rounded-full border border-emerald-800">
-                  {currentLevel.title}
-                </span>
-                <h2 className="text-2xl font-bold text-white">{currentLevel.subtitle}</h2>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => setShowHint(!showHint)}
-              className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors bg-amber-950/30 border border-amber-900/50 px-3 py-1.5 rounded-md"
-            >
-              <Icons.LightBulb />
-              {showHint ? "隱藏提示" : "獲取提示"}
-            </button>
-          </div>
+      $('#levelTitle').text(level.title);
+      $('#levelSubtitle').text(level.subtitle);
+      $('#urlInput').val(simulatedUrl);
+      $('#sandboxFrame').attr('srcdoc', html);
+      $('#htmlView').text(html);
+      $('#hintText').text(level.hint);
+      $('#missionText').text(level.mission);
+      $('#conceptText').text(level.concept);
+      $('#phpCodeText').text(level.phpCode);
+      $('#defenseText').text(level.defense);
+      $('#hintBox').addClass('hidden');
+      $('#hintButtonText').text('獲取提示');
+      $('#nextLevel').text(currentLevelId < LEVELS.length ? '前往下一關 →' : '十大關卡全通關！');
 
-          {/* 提示區塊 */}
-          {showHint && (
-            <div className="bg-amber-950/20 border-l-4 border-amber-500 p-4 rounded-r-lg text-amber-200 text-sm space-y-1 animate-fadeIn">
-              <span className="font-bold block">💡 課堂通關指引：</span>
-              <p>{currentLevel.hint}</p>
-            </div>
-          )}
+      renderLevelList();
+      renderProgress();
+      renderTabs();
+      renderIcons();
+    }
 
-          {/* === 模擬瀏覽器視窗 (Sandbox Shell) === */}
-          <div className="border border-slate-700 rounded-xl overflow-hidden bg-slate-950 shadow-2xl flex flex-col">
-            
-            {/* 瀏覽器頂部工具列 */}
-            <div className="bg-slate-900 px-4 py-2 flex items-center gap-3 border-b border-slate-800">
-              <div className="flex gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
-                <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-              </div>
-              
-              {/* 網址輸入與點擊提交 */}
-              <form onSubmit={handleUrlSubmit} className="flex-1 flex items-center bg-slate-950 rounded-lg px-3 py-1 border border-slate-800 text-slate-300 text-xs font-mono">
-                <span className="text-slate-600 select-none mr-1">URL:</span>
-                <input 
-                  type="text" 
-                  value={simulatedUrl} 
-                  onChange={(e) => setSimulatedUrl(e.target.value)}
-                  className="bg-transparent w-full focus:outline-none text-slate-200"
-                />
-                <button type="submit" className="text-slate-500 hover:text-white ml-2">
-                  <Icons.Code />
-                </button>
-              </form>
-            </div>
+    function switchLevel(levelId) {
+      currentLevelId = levelId;
+      urlParams = { ...currentLevel().params };
+      activeTab = 'mission';
+      renderCurrentLevel();
+    }
 
-            {/* 模擬網頁渲染 Iframe */}
-            <div className="bg-white h-72 relative">
-              <iframe 
-                srcDoc={iframeSrcDoc} 
-                title="XSS Sandbox"
-                sandbox="allow-scripts"
-                className="w-full h-full border-none"
-              />
-            </div>
-          </div>
+    $(function() {
+      try {
+        solvedLevels = JSON.parse(localStorage.getItem('xss_labs_solved') || '[]');
+      } catch (e) {
+        solvedLevels = [];
+      }
 
-          {/* === 下方：即時原始碼對比 DOM Inspector === */}
-          <div className="bg-slate-950 rounded-xl border border-slate-800 p-4">
-            <div className="flex items-center gap-2 mb-3 text-slate-300 font-bold text-sm">
-              <Icons.Code />
-              <span>實時 HTML 渲染結構檢視</span>
-              <span className="text-xs text-slate-500 font-normal">(觀察 Payload 於 HTML 中的變化)</span>
-            </div>
-            <div className="bg-slate-900 p-3 rounded-lg border border-slate-800 overflow-x-auto text-xs font-mono text-emerald-400 max-h-48">
-              <pre>{iframeSrcDoc}</pre>
-            </div>
-          </div>
+      renderIcons();
+      switchLevel(1);
 
-        </main>
+      $(document).on('click', '.levelBtn', function() {
+        switchLevel(Number($(this).data('level')));
+      });
 
-        {/* === 右側欄：教學指導與修補區 === */}
-        <section className="w-full lg:w-96 bg-slate-950 border-t lg:border-t-0 lg:border-l border-slate-800 flex flex-col">
-          
-          {/* Tab 切換器 */}
-          <div className="flex border-b border-slate-800 text-xs font-bold text-slate-400 bg-slate-950">
-            <button 
-              onClick={() => setActiveTab('mission')}
-              className={`flex-1 py-3 text-center border-b-2 transition-colors ${
-                activeTab === 'mission' ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' : 'border-transparent hover:text-slate-200'
-              }`}
-            >
-              🎯 任務說明
-            </button>
-            <button 
-              onClick={() => setActiveTab('code')}
-              className={`flex-1 py-3 text-center border-b-2 transition-colors ${
-                activeTab === 'code' ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' : 'border-transparent hover:text-slate-200'
-              }`}
-            >
-              📄 PHP 原始碼
-            </button>
-            <button 
-              onClick={() => setActiveTab('defense')}
-              className={`flex-1 py-3 text-center border-b-2 transition-colors ${
-                activeTab === 'defense' ? 'border-emerald-500 text-emerald-400 bg-slate-900/50' : 'border-transparent hover:text-slate-200'
-              }`}
-            >
-              🛡️ 安全防禦
-            </button>
-          </div>
+      $('.tabBtn').on('click', function() {
+        activeTab = $(this).data('tab');
+        renderTabs();
+      });
 
-          {/* 右側文字內容區 */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-4">
-            
-            {activeTab === 'mission' && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-md font-bold text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    本關挑戰任務
-                  </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-lg border border-slate-800">
-                    {currentLevel.mission}
-                  </p>
-                </div>
+      $('#toggleHint').on('click', function() {
+        $('#hintBox').toggleClass('hidden');
+        $('#hintButtonText').text($('#hintBox').hasClass('hidden') ? '獲取提示' : '隱藏提示');
+      });
 
-                <div className="space-y-2">
-                  <h3 className="text-md font-bold text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                    核心安全觀念
-                  </h3>
-                  <div className="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-lg border border-slate-800 whitespace-pre-line">
-                    {currentLevel.concept}
-                  </div>
-                </div>
-              </div>
-            )}
+      $('#urlForm').on('submit', function(e) {
+        e.preventDefault();
+        urlParams = parseUrlInput($('#urlInput').val());
+        renderCurrentLevel();
+      });
 
-            {activeTab === 'code' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-md font-bold text-white">PHP 漏洞源碼</h3>
-                  <span className="text-xs text-rose-400 bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-900">Vulnerable</span>
-                </div>
-                <div className="bg-slate-900 p-4 rounded-lg border border-slate-800 font-mono text-xs overflow-x-auto text-slate-200 leading-relaxed">
-                  <pre>{currentLevel.phpCode}</pre>
-                </div>
-              </div>
-            )}
+      $('#resetProgress').on('click', function() {
+        if (window.confirm('確定要重置所有關卡的學習進度嗎？')) {
+          solvedLevels = [];
+          localStorage.removeItem('xss_labs_solved');
+          switchLevel(1);
+        }
+      });
 
-            {activeTab === 'defense' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-md font-bold text-white">安全修補方案</h3>
-                  <span className="text-xs text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-900">Secure</span>
-                </div>
-                <div className="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-4 rounded-lg border border-slate-800 whitespace-pre-line">
-                  {currentLevel.defense}
-                </div>
-              </div>
-            )}
+      $('#stayLevel').on('click', function() {
+        $('#successModal').addClass('hidden');
+      });
 
-          </div>
+      $('#nextLevel').on('click', function() {
+        $('#successModal').addClass('hidden');
+        if (currentLevelId < LEVELS.length) {
+          switchLevel(currentLevelId + 1);
+        }
+      });
 
-        </section>
-
-      </div>
-
-      {/* === 通關成功 Modal === */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-slate-950 border border-emerald-500 rounded-2xl max-w-md w-full p-6 text-center space-y-6 shadow-2xl shadow-emerald-900/20">
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-                <span className="text-4xl animate-bounce">✨</span>
-              </div>
-              <div className="w-16 h-16 bg-emerald-950 text-emerald-400 border border-emerald-500 rounded-full flex items-center justify-center mx-auto text-3xl font-bold shadow-lg shadow-emerald-950/50">
-                ✓
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-white flex items-center justify-center gap-1">
-                <Icons.Sparkles />
-                挑戰成功！
-                <Icons.Sparkles />
-              </h3>
-              <p className="text-slate-400 text-sm font-normal">
-                您已成功在瀏覽器中引發 XSS 彈窗，返回值：
-              </p>
-              <div className="bg-slate-900 border border-slate-800 py-2 px-4 rounded-lg text-emerald-400 font-mono font-bold text-sm inline-block">
-                alert({successMsg})
-              </div>
-            </div>
-
-            <div className="bg-slate-900/50 p-4 rounded-xl text-left border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">安全修補思維：</span>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                簡單的黑名單極易遭到各種大小寫、雙寫或實體編碼繞過。最理想的做法依然是利用 HTML 實體轉義、嚴謹的引號閉合處理，以及限制連結協議為 http 或 https。
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="flex-1 py-3 rounded-lg text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 font-bold transition-all text-sm"
-              >
-                留在本關探索
-              </button>
-              
-              {currentLevelId < LEVELS.length ? (
-                <button
-                  onClick={handleNextLevel}
-                  className="flex-1 py-3 rounded-lg text-white bg-emerald-600 hover:bg-emerald-500 hover:shadow-lg hover:shadow-emerald-900/40 font-bold transition-all text-sm flex items-center justify-center gap-1.5"
-                >
-                  前往下一關
-                  <span>→</span>
-                </button>
-              ) : (
-                <div className="flex-1 py-3 rounded-lg text-emerald-400 bg-emerald-950 border border-emerald-900 font-black text-sm">
-                  🎉 十大關卡全通關！
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'XSS_SUCCESS') {
+          const msg = event.data.msg || '1';
+          $('#successMsg').text(msg);
+          $('#successModal').removeClass('hidden');
+          if (!solvedLevels.includes(currentLevelId)) {
+            solvedLevels.push(currentLevelId);
+            saveSolved();
+            renderProgress();
+            renderLevelList();
+          }
+        }
+        if (event.data && event.data.type === 'XSS_FORM_SUBMIT') {
+          urlParams = { ...urlParams, ...event.data.params };
+          renderCurrentLevel();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
