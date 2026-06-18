@@ -25,6 +25,9 @@ Thumbs.db
 # Custom
 投影片/
 
+# Docker volumes
+06_SQLi/mysql_data/
+
 # Python
 __pycache__/
 *.py[cod]
