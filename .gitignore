@@ -25,6 +25,9 @@ Thumbs.db
 # Custom
 投影片/
 
+# Large files
+05_SQL/1mb.db
+
 # Docker volumes
 06_SQLi/mysql_data/
 
