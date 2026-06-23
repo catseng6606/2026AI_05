@@ -1,431 +1,827 @@
-
 MODE LOW_TOKEN
-請一次建立完整 Docker Lab。只輸出必要說明；不要長篇解釋；完成後只列檔案清單與啟動/測試指令。若修改檔案，採 only diff 思維，不重複貼整份內容。不要問問題，依規格直接產生。
 
-目標：
-建立 PHP 8.2 + MySQL 8.4 + Adminer + sqlmap 教學環境，用於 SQL Injection、PDO Prepared Statement、Stored Procedure、MySQL 最小權限、sqlmap 驗證教學。
+請一次建立完整 Docker Lab。只輸出必要說明；不要長篇解釋。完成後只列檔案清單與啟動/測試指令。若修改檔案，採 only diff 思維，不重複貼整份內容。不要問問題，依規格直接產生。
 
-重要修正（必須滿足）：
-1. 不得假設任何「預設可登入網站帳號」。網站登入帳號必須先由使用者建立後才能登入。
-2. 必須提供 src/setup.php 作為初始化頁面與初始化腳本，負責建立資料庫結構、權限與 SP，不可只依賴 docker-entrypoint-initdb.d。
+# SQL Injection Lab
 
-檔案結構：
-```
+## 目標
+
+建立 PHP 8.2 + Apache + MySQL 8.4 + Adminer + sqlmap 教學環境，用於示範：
+
+1. SQL Injection 攻擊
+2. PDO Prepared Statement 防護
+3. Stored Procedure 封裝資料操作
+4. MySQL 最小權限
+5. SP DEFINER / SQL SECURITY DEFINER
+6. sqlmap 驗證
+7. Stored Procedure 不是自動安全，SP 內動態 SQL 仍可能 SQL Injection
+
+---
+
+## 核心規則
+
+1. Docker 啟動後，透過 `setup.php` 完成 database、table、users、stored procedures、grants 初始化。
+2. `setup.php` 必須可重複執行，不可因 database、table、user、SP 已存在而失敗。
+3. `setup.php` 使用 root 連線初始化。
+4. 正式 Lab 頁面不得使用 root。
+5. 不要用 root 當 Stored Procedure DEFINER。
+6. `sp_owner` 只作為 Stored Procedure DEFINER，不給 PHP Lab 頁面使用。
+7. SQL Injection unsafe lab 使用 `webtable`。
+8. Prepared Statement safe lab 使用 `webtable`。
+9. Stored Procedure safe lab 使用 `websp`。
+10. `websp` 不可直接 CRUD table，只能 EXECUTE 明確授權的 Stored Procedures。
+11. `websp` 必須逐一授權 SP，不可使用 `GRANT EXECUTE ON sqli_lab.*`。
+12. `webtable` 可直接 CRUD `users` table，但不可 CALL SP。
+13. 必須提供 `permission-check.php` 驗證權限模型。
+14. 必須提供 `sp-unsafe.php` 示範 SP 內動態 SQL 仍可能 SQL Injection。
+15. 所有程式與 README 必須明確標示：本 Lab 僅限本機教學，禁止掃描未授權網站。
+
+---
+
+## 檔案結構
+
+```text
 .
 ├── .env
 ├── Dockerfile
 ├── docker-compose.yml
 ├── README.md
+├── public/
+│   ├── index.php
+│   ├── setup.php
+│   ├── config.php
+│   ├── unsafe.php
+│   ├── post-unsafe.php
+│   ├── safe-pdo.php
+│   ├── callsp.php
+│   ├── sp-unsafe.php
+│   └── permission-check.php
 ├── mysql/
-│   ├── 01_user_crud_sp.sql
-│   ├── 02_websp.sql
-│   └── 03_sample_data.sql
-├── requests/
-│   ├── unsafe-post.req
-│   ├── safe-post.req
-│   └── callsp-post.req
+│   ├── 01_schema.sql
+│   ├── 02_sample_data.sql
+│   ├── 03_procedures.sql
+│   └── 04_grants.sql
 ├── scripts/
 │   ├── sqlmap-unsafe.sh
-│   ├── sqlmap-safe.sh
+│   ├── sqlmap-post-unsafe.sh
+│   ├── sqlmap-safe-pdo.sh
 │   ├── sqlmap-callsp.sh
 │   ├── sqlmap-sp-unsafe.sh
-│   ├── sqlmap-post-unsafe.sh
 │   └── test-websp-permission.sh
-└── src/
-    ├── setup.php
-    ├── index.php
-    ├── db.php
-    ├── unsafe.php
-    ├── unsafe-post.php
-    ├── safe.php
-    ├── safe-post.php
-    ├── callsp.php
-    ├── sp-unsafe.php
-    └── style.css
+└── requests/
+    ├── unsafe.txt
+    ├── post-unsafe.txt
+    ├── safe-pdo.txt
+    ├── callsp.txt
+    └── sp-unsafe.txt
 ```
-.env：
 
+---
+
+## Docker 規格
+
+使用：
+
+* PHP 8.2 Apache
+* MySQL 8.4
+* Adminer latest
+* sqlmap 可用 container 或 scripts 方式執行
+
+`docker-compose.yml`：
+
+* PHP 對外：`http://localhost:8080`
+* Adminer 對外：`http://localhost:8081`
+* MySQL 僅 Docker network 內部使用，不對外暴露 host port
+* PHP service 可連到 mysql service
+* Adminer server 使用 `mysql`
+
+---
+
+## .env
+
+請建立：
+
+```env
 MYSQL_ROOT_PASSWORD=rootpass
 MYSQL_DATABASE=sqli_lab
-MYSQL_APP_USER=labuser
-MYSQL_APP_PASSWORD=labpass
-MYSQL_SP_OWNER=sp_owner
-MYSQL_SP_OWNER_PASSWORD=sp_owner_pass
-MYSQL_WEBSP_USER=websp
-MYSQL_WEBSP_PASSWORD=websp_pass
-MYSQL_WEBTABLE_USER=webtable_user
-MYSQL_WEBTABLE_PASSWORD=webtable_pass
+
 DB_HOST=mysql
 DB_NAME=sqli_lab
-DB_USER=websp
-DB_PASS=websp_pass
-PHP_PORT=8080
-ADMINER_PORT=8081
 
-docker-compose.yml：
-- php
-  - build: .
-  - ports: ${PHP_PORT}:80
-  - volumes: ./src:/var/www/html
-  - environment: DB_HOST, DB_NAME, DB_USER, DB_PASS
-  - depends_on: mysql
-- mysql
-  - image: mysql:8.4
-  - command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  - environment 使用 .env
-  - volumes:
-    - mysql_data:/var/lib/mysql
-    - ./mysql:/docker-entrypoint-initdb.d
-- adminer
-  - image: adminer
-  - ports: ${ADMINER_PORT}:8080
-  - depends_on: mysql
-- volumes: mysql_data
+SP_OWNER_USER=sp_owner
+SP_OWNER_PASSWORD=sp_owner_pass
 
-Dockerfile：
-FROM php:8.2-apache
-安裝 pdo_mysql、mysqli
-可啟用 apache rewrite
-不要 CDN
+WEBTABLE_USER=webtable
+WEBTABLE_PASSWORD=webtable_pass
 
-src/db.php：
-- PDO
-- env: DB_HOST, DB_NAME, DB_USER, DB_PASS
-- charset=utf8mb4
-- ERRMODE_EXCEPTION
-- FETCH_ASSOC
-- ATTR_EMULATE_PREPARES=false
+WEBSP_USER=websp
+WEBSP_PASSWORD=websp_pass
+```
 
-src/setup.php：
-- 作用：一鍵初始化與首次管理員帳號建立。
-- 初始化內容至少包含：
-  - 建立 users table（若不存在）。
-  - 建立/更新 sp_owner、websp、webtable_user 帳號與必要權限。
-  - 建立/更新所有教學 SP（含安全與故意不安全 SP）。
-  - 匯入假資料（可重入，避免重複插入）。
-  - 建立首位可登入網站帳號（例如 admin 帳號），密碼需使用 password_hash 儲存。
-- 安全限制：
-  - setup 只能在未初始化時執行；初始化完成後應鎖定（例如寫入 lock 檔或 setup flag）。
-  - 若已初始化，再次訪問 setup.php 應顯示「已鎖定」與如何重置教學環境。
-  - setup 流程不得把明文密碼寫進畫面或日誌。
-- 成功初始化後，首頁要顯示「先完成 setup 建立帳號，再進行登入測試」。
+---
 
-登入規則（網站帳號）：
-- 不得提供硬編碼預設帳號密碼。
-- README 必須明確寫出：若未先執行 setup.php 建立帳號，登入一定失敗，這是預期行為。
+## Database
 
-src/index.php：
-教學首頁，列連結：
-- unsafe.php?id=1
-- unsafe-post.php
-- safe.php?id=1
-- safe-post.php
-- callsp.php?action=list
-- callsp.php?action=get&id=1
-- sp-unsafe.php?keyword=a
-- Adminer: http://localhost:8081
-- sqlmap 指令摘要
-- 免責聲明：僅限本機 Docker Lab，禁止未授權測試
+Database：
 
-src/unsafe.php：
-GET id，故意 SQL 字串串接：
+```text
+sqli_lab
+```
 
-$id = $_GET['id'] ?? '1';
-$sql = "SELECT id, username, email, role, created_at FROM users WHERE id = $id";
-$stmt = $pdo->query($sql);
+Table：
 
-頁面顯示 SQL、結果、危險提示。
-
-src/unsafe-post.php：
-POST keyword，故意 LIKE 字串串接：
-
-$keyword = $_POST['keyword'] ?? '';
-$sql = "SELECT id, username, email, role FROM users WHERE username LIKE '%$keyword%'";
-
-提供 HTML form。
-讓 sqlmap 可用 request 檔測 POST SQLi。
-
-src/safe.php：
-GET id，PDO Prepared Statement：
-
-$id = (int)($_GET['id'] ?? 1);
-$stmt = $pdo->prepare("SELECT id, username, email, role, created_at FROM users WHERE id = :id");
-$stmt->execute([':id' => $id]);
-
-src/safe-post.php：
-POST keyword，PDO Prepared Statement：
-
-$stmt = $pdo->prepare("SELECT id, username, email, role FROM users WHERE username LIKE :keyword");
-$stmt->execute([':keyword' => '%' . $keyword . '%']);
-
-src/callsp.php：
-使用 PDO prepared statement 呼叫 SP。
-支援：
-- action=list => CALL sp_user_list()
-- action=get&id=1 => CALL sp_user_get(:id)
-- action=create&username=x&email=x@example.test&role=student => CALL sp_user_create(...)
-- action=update&id=1&username=x&email=x@example.test&role=student => CALL sp_user_update(...)
-- action=delete&id=1 => CALL sp_user_delete(:id)
-
-不得字串串接參數。
-
-src/sp-unsafe.php：
-示範「SP 不等於安全」。
-呼叫故意不安全 SP：
-
-CALL sp_user_search_unsafe(:keyword)
-
-頁面說明：
-- PHP 呼叫雖然用 prepared statement
-- 但 SP 內部用 CONCAT 組動態 SQL
-- 所以仍可能 SQLi
-
-mysql/01_user_crud_sp.sql：
-先 USE sqli_lab;
-
-建立 users table：
-
+```sql
 CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(50) NOT NULL,
-  email VARCHAR(100) NOT NULL,
-  role VARCHAR(20) NOT NULL DEFAULT 'student',
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password_plain VARCHAR(100) NOT NULL,
+    role VARCHAR(30) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+```
 
-若同時用於網站登入，需增加密碼欄位（例如 password_hash VARCHAR(255)），不得儲存明文密碼。
+注意：
 
-建立 sp_owner：
+`password_plain` 是故意保留的風險欄位，用於教學「密碼明文」問題。README 必須明確說明正式環境禁止儲存明文密碼，應使用安全雜湊。
 
-CREATE USER IF NOT EXISTS 'sp_owner'@'%' IDENTIFIED BY 'sp_owner_pass';
-GRANT SELECT, INSERT, UPDATE, DELETE ON sqli_lab.users TO 'sp_owner'@'%';
+---
 
-建立 SP，全部使用：
+## Sample Data
 
-CREATE DEFINER = 'sp_owner'@'%'
-PROCEDURE ...
+至少建立：
+
+```text
+admin
+alice
+bob
+teacher
+student
+```
+
+每筆資料包含：
+
+* username
+* email
+* password_plain
+* role
+
+---
+
+## 帳號與權限模型
+
+### 1. root
+
+用途：
+
+* 初始化 database
+* 建立 table
+* 建立 users
+* 建立 Stored Procedures
+* 授權
+
+限制：
+
+* 只能用於 `setup.php`
+* 其他 Lab 頁面不得使用 root
+
+---
+
+### 2. sp_owner
+
+用途：
+
+* Stored Procedure DEFINER
+
+權限：
+
+* 對 `sqli_lab.users` 有：
+
+  * SELECT
+  * INSERT
+  * UPDATE
+  * DELETE
+* 有必要的 routine 建立與修改權限
+
+限制：
+
+* 不給 PHP Lab 頁面使用
+* 不可作為 Web 連線帳號
+* 不可用 root 取代
+
+---
+
+### 3. webtable
+
+用途：
+
+* 傳統 Web 直連 table 範例
+* SQL Injection unsafe 範例
+* PDO Prepared Statement safe 範例
+
+權限：
+
+* 對 `sqli_lab.users` 有：
+
+  * SELECT
+  * INSERT
+  * UPDATE
+  * DELETE
+
+限制：
+
+* 不授予 EXECUTE Stored Procedure 權限
+
+預期：
+
+```text
+webtable SELECT users                    → OK
+webtable INSERT users                    → OK
+webtable UPDATE users                    → OK
+webtable DELETE users                    → OK
+webtable CALL sp_get_user_by_id          → FAIL
+webtable CALL sp_search_users            → FAIL
+webtable CALL sp_create_user             → FAIL
+webtable CALL sp_search_users_unsafe     → FAIL
+```
+
+---
+
+### 4. websp
+
+用途：
+
+* Stored Procedure 封裝範例
+* 最小權限範例
+
+權限：
+
+* 不可直接 SELECT / INSERT / UPDATE / DELETE `users`
+* 只能 EXECUTE 明確授權的 Stored Procedures
+
+限制：
+
+* 不可使用：
+
+```sql
+GRANT EXECUTE ON sqli_lab.* TO 'websp'@'%';
+```
+
+必須逐一授權：
+
+```sql
+GRANT EXECUTE ON PROCEDURE sqli_lab.sp_get_user_by_id TO 'websp'@'%';
+GRANT EXECUTE ON PROCEDURE sqli_lab.sp_search_users TO 'websp'@'%';
+GRANT EXECUTE ON PROCEDURE sqli_lab.sp_create_user TO 'websp'@'%';
+GRANT EXECUTE ON PROCEDURE sqli_lab.sp_search_users_unsafe TO 'websp'@'%';
+```
+
+預期：
+
+```text
+websp SELECT users                    → FAIL
+websp INSERT users                    → FAIL
+websp UPDATE users                    → FAIL
+websp DELETE users                    → FAIL
+websp CALL sp_get_user_by_id          → OK
+websp CALL sp_search_users            → OK
+websp CALL sp_create_user             → OK
+websp CALL sp_search_users_unsafe     → OK
+websp CALL 未授權 SP                  → FAIL
+```
+
+---
+
+## Stored Procedures
+
+所有 Stored Procedures 建立時必須使用：
+
+```sql
 SQL SECURITY DEFINER
+```
 
-SP：
-- sp_user_list()
-- sp_user_get(IN p_id INT)
-- sp_user_create(IN p_username VARCHAR(50), IN p_email VARCHAR(100), IN p_role VARCHAR(20))
-- sp_user_update(IN p_id INT, IN p_username VARCHAR(50), IN p_email VARCHAR(100), IN p_role VARCHAR(20))
-- sp_user_delete(IN p_id INT)
+且 DEFINER 必須是：
 
-安全 SP 不得使用 CONCAT 動態 SQL。
+```sql
+'sp_owner'@'%'
+```
 
-額外建立故意不安全 SP：
+不要用 root 當 DEFINER。
 
-sp_user_search_unsafe(IN p_keyword VARCHAR(100))
+---
 
-內容故意使用：
-SET @sql = CONCAT("SELECT id, username, email, role FROM users WHERE username LIKE '%", p_keyword, "%'");
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+### 安全 SP
 
-加註 SQL COMMENT 說明：此 SP 故意不安全，僅供教學。
+請建立：
 
-mysql/02_websp.sql：
-USE sqli_lab;
+```text
+sp_get_user_by_id(IN p_id INT)
+```
 
-CREATE USER IF NOT EXISTS 'websp'@'%' IDENTIFIED BY 'websp_pass';
+用途：
 
-只授權 EXECUTE：
+* 依 id 查詢 user
+* 不使用動態 SQL
 
-GRANT EXECUTE ON PROCEDURE sqli_lab.sp_user_list TO 'websp'@'%';
-GRANT EXECUTE ON PROCEDURE sqli_lab.sp_user_get TO 'websp'@'%';
-GRANT EXECUTE ON PROCEDURE sqli_lab.sp_user_create TO 'websp'@'%';
-GRANT EXECUTE ON PROCEDURE sqli_lab.sp_user_update TO 'websp'@'%';
-GRANT EXECUTE ON PROCEDURE sqli_lab.sp_user_delete TO 'websp'@'%';
-GRANT EXECUTE ON PROCEDURE sqli_lab.sp_user_search_unsafe TO 'websp'@'%';
+---
 
-不得授權 websp table SELECT/INSERT/UPDATE/DELETE。
+```text
+sp_search_users(IN p_keyword VARCHAR(100))
+```
 
-CREATE USER IF NOT EXISTS 'webtable_user'@'%' IDENTIFIED BY 'webtable_pass';
+用途：
 
-授權 webtable_user 直接讀寫 users table：
+* 搜尋 username / email
+* 不使用動態 SQL
+* 使用安全參數處理
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON sqli_lab.users TO 'webtable_user'@'%';
+---
 
-不得授權 webtable_user EXECUTE SP（與 websp 對比教學用）。
-FLUSH PRIVILEGES;
+```text
+sp_create_user(
+    IN p_username VARCHAR(50),
+    IN p_email VARCHAR(100),
+    IN p_password_plain VARCHAR(100),
+    IN p_role VARCHAR(30)
+)
+```
 
-mysql/03_sample_data.sql：
-插入假資料：
-- alice / alice@example.test / student
-- bob / bob@example.test / teacher
-- charlie / charlie@example.test / student
-- admin_demo / admin@example.test / admin
-- test01 / test01@example.test / student
-不得使用真實個資。
+用途：
 
-requests/unsafe-post.req：
-完整 HTTP request，目標 localhost:8080/unsafe-post.php，POST keyword=a。
+* 新增 user
+* 不使用動態 SQL
 
-requests/safe-post.req：
-完整 HTTP request，目標 localhost:8080/safe-post.php，POST keyword=a。
+---
 
-requests/callsp-post.req：
-若 callsp 僅 GET，可放註解或建立 POST 範例；sqlmap 可用 -r 測試。
+### 危險 SP
 
-scripts/sqlmap-unsafe.sh：
-#!/usr/bin/env bash
-set -e
-sqlmap -u "http://localhost:8080/unsafe.php?id=1" -p id --batch
-sqlmap -u "http://localhost:8080/unsafe.php?id=1" -p id --dbs --batch
-sqlmap -u "http://localhost:8080/unsafe.php?id=1" -p id -D sqli_lab --tables --batch
-sqlmap -u "http://localhost:8080/unsafe.php?id=1" -p id -D sqli_lab -T users --columns --batch
-sqlmap -u "http://localhost:8080/unsafe.php?id=1" -p id -D sqli_lab -T users --dump --batch
+請建立：
 
-scripts/sqlmap-safe.sh：
-#!/usr/bin/env bash
-set -e
-sqlmap -u "http://localhost:8080/safe.php?id=1" -p id --batch
+```text
+sp_search_users_unsafe(IN p_keyword VARCHAR(100))
+```
 
-scripts/sqlmap-callsp.sh：
-#!/usr/bin/env bash
-set -e
-sqlmap -u "http://localhost:8080/callsp.php?action=get&id=1" -p id --batch
+要求：
 
-scripts/sqlmap-sp-unsafe.sh：
-#!/usr/bin/env bash
-set -e
-sqlmap -u "http://localhost:8080/sp-unsafe.php?keyword=a" -p keyword --batch
+* 內部故意使用 `CONCAT`
+* 使用 `PREPARE`
+* 使用 `EXECUTE`
+* 故意讓它有 SQL Injection 風險
+* 用來示範 Stored Procedure 不是自動安全
 
-scripts/sqlmap-post-unsafe.sh：
-#!/usr/bin/env bash
-set -e
-sqlmap -r requests/unsafe-post.req -p keyword --batch
-sqlmap -r requests/unsafe-post.req -p keyword -D sqli_lab -T users --dump --batch
+---
 
-scripts/test-websp-permission.sh：
-#!/usr/bin/env bash
-set -e
-echo "Expect FAIL: websp direct SELECT"
-docker compose exec mysql mysql -uwebsp -pwebsp_pass sqli_lab -e "SELECT * FROM users;" || true
-echo "Expect OK: websp CALL SP"
-docker compose exec mysql mysql -uwebsp -pwebsp_pass sqli_lab -e "CALL sp_user_list();"
-echo "Expect OK: webtable_user direct SELECT"
-docker compose exec mysql mysql -uwebtable_user -pwebtable_pass sqli_lab -e "SELECT * FROM users;"
-echo "Expect FAIL: webtable_user CALL SP"
-docker compose exec mysql mysql -uwebtable_user -pwebtable_pass sqli_lab -e "CALL sp_user_list();" || true
+## setup.php
 
-chmod +x scripts/*.sh
+`setup.php` 必須：
 
-README.md：
-繁體中文，簡潔，包含：
+1. 使用 root 連線 MySQL
+2. 可重複執行
+3. 建立 database
+4. 建立 users table
+5. 匯入 sample data
+6. 建立 MySQL users：
+
+   * sp_owner
+   * webtable
+   * websp
+7. 建立 Stored Procedures
+8. 授權
+9. 執行權限檢查
+10. 顯示每一步 OK / FAIL
+
+畫面至少顯示：
+
+```text
+[OK] connected as root
+[OK] database created or exists
+[OK] users table created or exists
+[OK] sample data inserted or refreshed
+[OK] sp_owner created or exists
+[OK] webtable created or exists
+[OK] websp created or exists
+[OK] procedures created
+[OK] grants applied
+[OK] permission check completed
+```
+
+若失敗需顯示錯誤訊息，方便教學除錯。
+
+---
+
+## public/config.php
+
+請提供簡單 DB 連線設定。
+
+至少支援三種連線：
+
+```text
+root setup connection
+webtable connection
+websp connection
+```
+
+其他 Lab 頁面不得使用 root connection。
+
+---
+
+## public/index.php
+
+首頁需列出所有 Lab 入口。
+
+每個入口需顯示：
+
+* 頁面名稱
+* 使用 DB 帳號
+* 是否故意不安全
+* 教學重點
+
+至少包含：
+
+```text
+setup.php              初始化環境
+unsafe.php             GET SQL Injection，使用 webtable
+post-unsafe.php        POST SQL Injection，使用 webtable
+safe-pdo.php           PDO Prepared Statement，使用 webtable
+callsp.php             Stored Procedure + 最小權限，使用 websp
+sp-unsafe.php          SP 內動態 SQL Injection，使用 websp
+permission-check.php   權限驗證
+```
+
+---
+
+## unsafe.php
+
+要求：
+
+* 使用 `webtable`
+* 使用 GET 參數：
+
+```text
+id
+```
+
+* 故意使用 SQL 字串串接
+* 可被 SQL Injection
+* 顯示實際 SQL 語句，方便教學
+* 預設提供範例連結：
+
+```text
+?id=1
+?id=1 OR 1=1
+```
+
+---
+
+## post-unsafe.php
+
+要求：
+
+* 使用 `webtable`
+* 使用 POST 參數：
+
+```text
+username
+```
+
+* 故意使用 SQL 字串串接
+* 可被 SQL Injection
+* 提供 HTML form
+* 顯示實際 SQL 語句，方便教學
+
+---
+
+## safe-pdo.php
+
+要求：
+
+* 使用 `webtable`
+* 使用 PDO Prepared Statement
+* 不可用字串串接 SQL
+* 使用 GET 參數：
+
+```text
+id
+```
+
+* sqlmap 應掃不到 SQL Injection
+* 頁面需說明：
+
+  * 此頁仍然直連 table
+  * 但透過 Prepared Statement 防止 SQL Injection
+  * 這是語法層防護，不是權限層防護
+
+---
+
+## callsp.php
+
+要求：
+
+* 使用 `websp`
+* 呼叫安全 SP：
+
+  * `sp_get_user_by_id`
+  * `sp_search_users`
+* 不直接查詢 `users`
+* 顯示：
+
+  * websp 無 table CRUD 權限
+  * websp 只能 CALL 已授權 SP
+  * SP 透過 `SQL SECURITY DEFINER` 使用 `sp_owner` 權限執行
+
+---
+
+## sp-unsafe.php
+
+要求：
+
+* 使用 `websp`
+* 呼叫危險 SP：
+
+```text
+sp_search_users_unsafe
+```
+
+* 用來示範：
+
+  * Stored Procedure 不是自動安全
+  * 如果 SP 內部用動態 SQL 串接輸入，仍可能 SQL Injection
+* 頁面需顯示警告文字
+
+---
+
+## permission-check.php
+
+必須測試並表格顯示：
+
+### websp
+
+```text
+SELECT users                    → FAIL，符合預期
+INSERT users                    → FAIL，符合預期
+UPDATE users                    → FAIL，符合預期
+DELETE users                    → FAIL，符合預期
+CALL sp_get_user_by_id          → OK
+CALL sp_search_users            → OK
+CALL sp_create_user             → OK
+CALL sp_search_users_unsafe     → OK
+CALL 未授權 SP                  → FAIL，符合預期
+```
+
+### webtable
+
+```text
+SELECT users                    → OK
+INSERT users                    → OK
+UPDATE users                    → OK
+DELETE users                    → OK
+CALL sp_get_user_by_id          → FAIL，符合預期
+CALL sp_search_users            → FAIL，符合預期
+CALL sp_create_user             → FAIL，符合預期
+CALL sp_search_users_unsafe     → FAIL，符合預期
+```
+
+---
+
+## sqlmap scripts
+
+建立以下 scripts，且必須可直接執行：
+
+```text
+scripts/sqlmap-unsafe.sh
+scripts/sqlmap-post-unsafe.sh
+scripts/sqlmap-safe-pdo.sh
+scripts/sqlmap-callsp.sh
+scripts/sqlmap-sp-unsafe.sh
+```
+
+每個 script 使用：
+
+```text
+--batch
+--level=2
+--risk=1
+```
+
+URL 使用：
+
+```text
+http://localhost:8080/...
+```
+
+POST 測試需正確使用：
+
+```text
+--data
+```
+
+---
+
+## requests
+
+建立 sqlmap request files：
+
+```text
+requests/unsafe.txt
+requests/post-unsafe.txt
+requests/safe-pdo.txt
+requests/callsp.txt
+requests/sp-unsafe.txt
+```
+
+內容需可被 sqlmap `-r` 使用。
+
+---
+
+## scripts/test-websp-permission.sh
+
+要求：
+
+* 可在本機執行
+* 驗證 websp 不能直接 SELECT users
+* 驗證 websp 可以 CALL 已授權 SP
+* 驗證 webtable 可以 SELECT users
+* 驗證 webtable 不能 CALL SP
+
+---
+
+## README.md
+
+README 必須包含：
+
 1. 專案目的
-2. 架構：
+2. 架構圖
+3. 檔案結構
+4. 啟動指令
+5. 停止指令
+6. 重建 DB 指令
+7. setup.php 初始化方式
+8. Adminer 登入資訊
+9. 每個 Lab 頁面的用途
+10. sqlmap 測試流程
+11. 權限模型說明
+12. `webtable` vs `websp` 對比
+13. DEFINER / SQL SECURITY DEFINER 說明
+14. Stored Procedure 不是自動安全的說明
+15. Prepared Statement 說明
+16. 最小權限說明
+17. 密碼明文風險說明
+18. 安全提醒
 
+---
+
+## README 架構圖
+
+請放入簡單文字圖：
+
+```text
+Browser
+  ↓
 PHP 8.2 Apache
-  ↓ PDO
-MySQL 8.4
-  ↑
+  ├─ unsafe.php / post-unsafe.php / safe-pdo.php
+  │    ↓ webtable
+  │    ↓ direct CRUD users
+  │
+  └─ callsp.php / sp-unsafe.php
+       ↓ websp
+       ↓ CALL only
+       ↓ Stored Procedure
+       ↓ SQL SECURITY DEFINER
+       ↓ sp_owner
+       ↓ CRUD users
+
 Adminer
+  ↓
+MySQL 8.4
+```
 
-3. 啟動：
+---
 
-docker compose up -d --build
+## README 教學流程
 
-4. 首次初始化（必要）：
+請包含：
 
-開啟 http://localhost:8080/setup.php 完成初始化與建立第一組網站登入帳號。
-未完成此步驟前，網站登入失敗屬正常行為。
+```text
+A. docker compose up -d --build
+B. 開啟 http://localhost:8080/setup.php 初始化
+C. 開啟 unsafe.php 示範 GET SQL Injection
+D. 使用 sqlmap 掃 unsafe.php
+E. 開啟 post-unsafe.php 示範 POST SQL Injection
+F. 使用 sqlmap 掃 post-unsafe.php
+G. 開啟 safe-pdo.php 示範 Prepared Statement
+H. 使用 sqlmap 掃 safe-pdo.php，應找不到 SQL Injection
+I. 開啟 callsp.php 示範 Stored Procedure + 最小權限
+J. 開啟 permission-check.php 驗證 websp / webtable 權限差異
+K. 開啟 sp-unsafe.php 示範 SP 內動態 SQL 仍可能 SQL Injection
+L. 使用 sqlmap 掃 sp-unsafe.php
+```
 
-5. 停止：
+---
 
-docker compose down
+## Adminer 登入資訊
 
-6. 重建 DB：
+README 需提供：
 
-docker compose down -v
-docker compose up -d --build
+### root
 
-7. 網址：
-PHP: http://localhost:8080
-Adminer: http://localhost:8081
+```text
+Server: mysql
+Username: root
+Password: rootpass
+Database: sqli_lab
+```
 
-8. Adminer 登入：
-root:
-Server mysql
-Username root
-Password rootpass
-Database sqli_lab
+### sp_owner
 
-websp:
-Server mysql
-Username websp
-Password websp_pass
-Database sqli_lab
+```text
+Server: mysql
+Username: sp_owner
+Password: sp_owner_pass
+Database: sqli_lab
+```
 
-webtable_user:
-Server mysql
-Username webtable_user
-Password webtable_pass
-Database sqli_lab
-（可直接 SELECT/INSERT/UPDATE/DELETE users，但 CALL SP 失敗，與 websp 對比）
+說明：
 
-9. 教學流程：
-A unsafe.php
-B sqlmap unsafe
-C safe.php
-D sqlmap safe
-E callsp.php
-F sp-unsafe.php 說明 SP 內動態 SQL 仍危險
-G Adminer 用 websp 登入測 SELECT 失敗、CALL 成功
-H scripts/test-websp-permission.sh
+```text
+此帳號只作為 SP DEFINER 教學觀察用，不給 PHP Lab 頁面使用。
+```
 
-10. sqlmap：
-./scripts/sqlmap-unsafe.sh
-./scripts/sqlmap-safe.sh
-./scripts/sqlmap-callsp.sh
-./scripts/sqlmap-sp-unsafe.sh
-./scripts/sqlmap-post-unsafe.sh
+### webtable
 
-11. 權限模型：
-- root: 初始化
-- sp_owner: SP DEFINER，有 users CRUD
-- websp: 只能 EXECUTE 指定 SP，不能直接 CRUD table（最小權限示範）
-- webtable_user: 可直接對 users table SELECT/INSERT/UPDATE/DELETE，但不能 CALL SP（對比 websp 教學用）
+```text
+Server: mysql
+Username: webtable
+Password: webtable_pass
+Database: sqli_lab
+```
 
-12. DEFINER / SQL SECURITY DEFINER：
-- SP 執行時用 DEFINER 權限
-- websp 只要 EXECUTE
-- 不要 root 當 DEFINER
-- sp_owner 只給必要權限
+說明：
 
-13. 安全提醒：
-- 僅限本機 Docker Lab
-- 禁止掃描未授權網站
-- 正式環境不要公開 Adminer
-- 正式環境需防火牆/VPN/Log/備份/最小權限
+```text
+可直接 CRUD users，但不可 CALL SP。
+```
 
-14. 教學總結：
-Prepared Statement 防止輸入變 SQL 指令。
-Stored Procedure 封裝資料操作，但不是自動安全。
-最小權限降低漏洞發生後的傷害。
-sqlmap 用於驗證防護，不是攻擊未授權目標。
+### websp
 
-風格：
-- 簡單 PHP，無框架
-- 簡單 HTML/CSS
-- 使用 CDN
-- 每頁顯示教學免責提醒
-- 假資料 only
-- 不要產生大型依賴
-- 不要使用 composer
-- 完成後執行：
-  docker compose config
-  chmod +x scripts/*.sh
+```text
+Server: mysql
+Username: websp
+Password: websp_pass
+Database: sqli_lab
+```
 
-最後輸出：
-- 檔案清單
-- docker compose up -d --build
-- unsafe 測試指令
-- safe 測試指令
-- websp 權限測試指令
-- 不要輸出完整檔案內容
+說明：
 
+```text
+不可直接 CRUD users，只能 CALL 明確授權的 SP。
+```
+
+---
+
+## 安全提醒
+
+README 必須明確寫：
+
+```text
+本專案僅限本機 Docker Lab 教學使用。
+禁止掃描、測試、攻擊未授權網站。
+正式環境不要公開 Adminer。
+正式環境不要使用明文密碼。
+正式環境不要將 root 密碼放進 Web 可讀設定。
+正式環境不要使用 root 作為 SP DEFINER。
+正式環境需搭配防火牆、VPN、Log、Backup、最小權限。
+Stored Procedure 不是自動安全，內部若使用動態 SQL 串接輸入，仍可能 SQL Injection。
+```
+
+---
+
+## 教學總結
+
+README 最後請整理：
+
+```text
+Prepared Statement：防止輸入變成 SQL 指令。
+Stored Procedure：封裝資料操作入口。
+SQL SECURITY DEFINER：讓 SP 用 sp_owner 權限執行。
+websp：只拿到被授權的 SP 按鈕，不能直接摸 table。
+webtable：傳統直連 table 帳號，權限較大。
+最小權限：降低漏洞發生後的傷害。
+sqlmap：用於驗證防護，不是攻擊未授權目標。
+```
+
+---
+
+## 輸出要求
+
+請直接產生完整檔案。
+
+完成後只列：
+
+1. 檔案清單
+2. 啟動指令
+3. 初始化網址
+4. sqlmap 測試指令
+5. 權限驗證指令
+
+不要輸出長篇教學說明。
+不要問問題。

