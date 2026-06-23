@@ -45,6 +45,13 @@ docker compose up -d --build
 - Password: websp_pass
 - Database: sqli_lab
 
+### webtable_user
+- Server: mysql
+- Username: webtable_user
+- Password: webtable_pass
+- Database: sqli_lab
+- 能直接對 users 表 SELECT/INSERT/UPDATE/DELETE，但 CALL SP 失敗（與 websp 對比）
+
 ## 教學流程
 1. **A** unsafe.php - 示範 SQL Injection (GET)
 2. **B** sqlmap unsafe - 用 sqlmap 掃描 unsafe.php
@@ -67,7 +74,8 @@ docker compose up -d --build
 ## 權限模型
 - **root**: 初始化 DB
 - **sp_owner**: SP DEFINER，有 users CRUD
-- **websp**: PHP 使用，只能 EXECUTE 指定 SP，不能直接 CRUD table
+- **websp**: PHP 使用，只能 EXECUTE 指定 SP，不能直接 CRUD table（最小權限示範）
+- **webtable_user**: 可直接對 users table SELECT/INSERT/UPDATE/DELETE，但不能 CALL SP（對比 websp 教學用）
 
 ## DEFINER / SQL SECURITY DEFINER
 - SP 執行時用 DEFINER（sp_owner）權限
